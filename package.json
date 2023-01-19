@@ -1,0 +1,29 @@
+{
+  "name": "abc11ty",
+  "version": "1.0.0",
+  "description": "Auntie Boo Crafts",
+  "main": "index.js",
+  "scripts": {
+    "dev": "npx @11ty/eleventy --serve",
+    "build": "npx @11ty/eleventy"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/cleverswine"
+  },
+  "author": {
+    "name": "cleverswine",
+    "url": "https://cleverswine.net/"
+  },
+  "license": "MIT",
+  "keywords": [],
+  "devDependencies": {    
+  },
+  "dependencies": {
+    "@11ty/eleventy": "^1.0.2",
+    "@11ty/eleventy-fetch": "^3.0.0",
+    "@11ty/eleventy-img": "^2.0.1",
+    "node-html-parser": "^6.1.4",
+    "rss-parser": "^3.12.0"
+  }
+}
