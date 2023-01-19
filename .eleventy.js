@@ -3,10 +3,4 @@ module.exports = function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy("img");
   eleventyConfig.addPassthroughCopy("favicon.ico");
   eleventyConfig.addPassthroughCopy("apple-touch-icon.png");
-  return {
-    dir: {
-      input: ".",
-      output: "docs"
-    }
-  }
 };
