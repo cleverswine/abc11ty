@@ -21,20 +21,22 @@ module.exports = async function () {
     //     console.log(x);
     //     result.push(x);        
     // }
-    const url = "https://www.etsy.com/shop/auntieboocrafts";
+    let url = "https://www.etsy.com/shop/auntieboocrafts";
     let data = await EleventyFetch(url);
     // const data = fs.readFileSync('../abc.html', 'utf8');
-    var result = [];
+    let result = [];
 
-    var listings = HTMLParser.parse(data).querySelectorAll('a.listing-link');
-    listings.forEach(async element => {
-    
-        var imageUrl = element.querySelector("img").getAttribute("src");
+    let listings = HTMLParser.parse(data).querySelectorAll('a.listing-link');
+    console.log("items found:");
+    console.log(listings.length);
+    for (let i = 0; i < listings.length; i++) {
+        let element = listings[i];    
+        let imageUrl = element.querySelector("img").getAttribute("src");
         let stats = await EleventyImage(imageUrl, { widths: [340], formats: ["png"] });
-        var x = { url: element.attrs["href"], imageInfo: stats, title: element.attrs["title"], isoDate: "" };
-        console.log(x);
+        let x = { url: element.attrs["href"], imageInfo: stats, title: element.attrs["title"], isoDate: "" };
+        //console.log(x);
         result.push(x);
-    });
+    }
 
     return result;
 };
