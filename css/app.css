@@ -13,6 +13,10 @@ body.ready {
     padding: 0 20px 0 20px;
 }
 
+sl-button.etsy-link::part(base) {
+    border: 2px solid #00567b;
+}
+
 .section-container {
     position: relative;
     width: 200px;
@@ -28,21 +32,25 @@ body.ready {
     border-radius: 10px;
     border: 1px solid #00567b;
     padding: 0;
+    filter: blur(2px);
+    -webkit-filter: blur(2px);
   }
 
 .section-overlay {
     position: absolute;
-    bottom: 10%;
-    left: 2px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     background: rgb(0, 0, 0);
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(0, 0, 0, 0.5);
+    border: 2px solid #fff;
     /* Black see-through */
     color: #f1f1f1;
-    width: 198px;
+    width: 168px;
     transition: .5s ease;
     opacity: 1;
     color: white;
     font-size: 20px;
-    padding: 20px;
+    padding: 10px;
     text-align: center;
 }

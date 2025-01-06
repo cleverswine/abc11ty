@@ -3,47 +3,69 @@
         {
             "title": "Bookmarks",
             "icon": "bookmark-heart",
+            "image": "img/CQIp7Sdwja-200.png",
             "items": [
                 {
                     "title": "This is a bookmark",
                     "description": "b1",
-                    "imageName": "6CbkBv1Z6k-340.png"
+                    "imageName": "6CbkBvdfZ6k"
                 },
                 {
                     "title": "This is another one.",
                     "description": "b2",
-                    "imageName": "6CbkBv1Z6k-340.png"
+                    "imageName": "646kBv1Z6k"
                 },
                 {
                     "title": "This one is different.",
                     "description": "b3",
-                    "imageName": "6CbkBv1Z6k-340.png"
+                    "imageName": "6CbkBvzzz6k"
                 },
                 {
                     "title": "Hey look at me!",
                     "description": "b4",
-                    "imageName": "6CbkBv1Z6k-340.png"
+                    "imageName": "kjhdf7hnk"
+                },
+                {
+                    "title": "Bookmark goblin",
+                    "description": "b1",
+                    "imageName": "pplqwkojdi9999"
+                },
+                {
+                    "title": "Grim Reaper bookmark",
+                    "description": "b2",
+                    "imageName": "slkdnslka8787"
+                },
+                {
+                    "title": "Pachinko",
+                    "description": "b3",
+                    "imageName": "352345trg"
+                },
+                {
+                    "title": "I have a longer description",
+                    "description": "b4",
+                    "imageName": "sfdgsdfg"
                 }
             ]
         },
         {
             "title": "Hair Clips",
             "icon": "paperclip",
+            "image": "img/9KNlIPLoT3-200.png",
             "items": [
                 {
                     "title": "lksdjlksdfjlkdfj",
                     "description": "kjsldkjladkf",
-                    "imageName": "6CbkBv1Z6k-340.png"
+                    "imageName": "6CbkBv1Z6k"
                 },
                 {
                     "title": "lksdjlksdfjlkdfj",
                     "description": "kjsldkjladkf",
-                    "imageName": "6CbkBv1Z6k-340.png"
+                    "imageName": "6CbkBv1Z6k"
                 },
                 {
                     "title": "lksdjlksdfjlkdfj",
                     "description": "kjsldkjladkf",
-                    "imageName": "6CbkBv1Z6k-340.png"
+                    "imageName": "6CbkBv1Z6k"
                 },
                 {
                     "title": "lksdjlksdfjlkdfj",
@@ -55,6 +77,7 @@
         {
             "title": "Badge Reels",
             "icon": "person-badge",
+            "image": "img/LwwM5qRrwK-200.png",
             "items": [
                 {
                     "title": "lksdjlksdfjlkdfj",
@@ -81,6 +104,7 @@
         {
             "title": "Glitter Pens",
             "icon": "pen",
+            "image": "img/j4dj7SmY1F-200.png",
             "items": [
                 {
                     "title": "lksdjlksdfjlkdfj",
@@ -107,6 +131,7 @@
         {
             "title": "Key Chains",
             "icon": "key",
+            "image": "img/Fiz5qobQmm-200.png",
             "items": [
                 {
                     "title": "lksdjlksdfjlkdfj",

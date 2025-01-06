@@ -2,19 +2,19 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8"/>
     <link rel="manifest" href="site.webmanifest">
-    <link rel="icon" href="/favicon.ico" />
+    <link rel="icon" href="/favicon.ico"/>
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <meta name="description"
-        content="Auntie Boo Crafts - specializing in bookmarks, hair clips, glitter pens, key chains, and badge reels.">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          content="Auntie Boo Crafts - specializing in bookmarks, hair clips, glitter pens, key chains, and badge reels.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Auntie Boo Crafts</title>
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.19.1/cdn/themes/light.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.19.1/cdn/themes/light.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flexboxgrid/6.3.1/flexboxgrid.min.css"
-        type="text/css">
-    <link rel="stylesheet" href="/css/app.css" type="text/css" />
+          type="text/css">
+    <link rel="stylesheet" href="/css/app.css" type="text/css"/>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,112 +23,115 @@
 
 <body>
 
-    <div class="container">
+<div class="container">
 
-        <div class="row center-xs" style="margin-bottom: 1em;">
-            <div class="col">
-                <img src="/img/logo2.png" alt="Auntie Boo Crafts" width="591" height="392" />
-                <div style="color: #00567b; font-size: 1.3em; font-weight: bold;">
-                    Welcome to Auntie Boo Crafts!
-                </div>
+    <div class="row center-xs" style="margin-bottom: 1em;">
+        <div class="col">
+            <img src="/img/logo.png" alt="Auntie Boo Crafts" width="591" height="392"/>
+            <div style="color: #00567b; font-size: 1.3em; font-weight: bold;">
+                Welcome to Auntie Boo Crafts!
             </div>
         </div>
+    </div>
 
+    <div class="row center-xs">
+        <div class="col-xs-12 col-sm-10">
+            <div>
+                I'm passionate about creating handcrafted and personalized items. I specialize in bookmarks, hair
+                clips, glitter pens, key chains, and badge reels. I have something for every price point. Almost all
+                items can be customized. I love working with customers to create something unique and personal.
+            </div>
+
+            <p>
+                <sl-button class="etsy-link" href="https://www.etsy.com/shop/AuntieBooCrafts" target="_blank" variant="default" size="large" pill>
+                    <sl-icon slot="prefix" name="bag-heart"></sl-icon>
+                    Visit my shop on Etsy
+                </sl-button>
+            </p>
+        </div>
+    </div>
+
+    <sl-details summary="1">
         <div class="row center-xs">
-            <div class="col-xs-12 col-sm-10">
-                <div>
-                    I'm passionate about creating handcrafted and personalized items. I specialize in bookmarks, hair
-                    clips, glitter pens, key chains, and badge reels. I have something for every price point. Almost all
-                    items can be customized. I love working with customers to create something unique and personal.
-                </div>
-
-                <p>
-                    <a href="https://www.etsy.com/shop/AuntieBooCrafts"
-                        style="color: #00567b; font-size: 1.1em; font-weight: bold;">Visit
-                        my shop on Etsy</a>
-                </p>
-            </div>
-        </div>
-
-        <sl-details summary="1">
-            <div class="row center-xs">
-                {%- for section in portfolio.sections -%}
-                <div class="col">
-                    <div class="section-container">
-                        <img src="https://picsum.photos/seed/{{section.icon}}/200/150" class="section-image" width="200" height="150" />
-                        <div class="section-overlay">
-                            {{ section.title }}
-                        </div>
+            {%- for section in portfolio.sections -%}
+            <div class="col">
+                <div class="section-container">
+                    <img src="https://picsum.photos/seed/{{section.icon}}/200/150" class="section-image" width="200"
+                         height="150"/>
+                    <div class="section-overlay">
+                        {{ section.title }}
                     </div>
                 </div>
-                {%- endfor -%}
             </div>
-        </sl-details>
+            {%- endfor -%}
+        </div>
+    </sl-details>
 
-        <sl-details summary="2">
-            <div class="row center-xs">
-                {%- for section in portfolio.sections -%}
-                <div class="col" style="padding: 0 8px 0 8px;">
-                    <sl-button variant="default" size="large" pill>
-                        <sl-icon slot="prefix" name="{{ section.icon }}"></sl-icon>
-                        {{ section.title }}
-                    </sl-button>
-                </div>
-                {%- endfor -%}
+    <sl-details summary="2">
+        <div class="row center-xs">
+            {%- for section in portfolio.sections -%}
+            <div class="col" style="padding: 0 8px 0 8px;">
+                <sl-button variant="default" size="large">
+                    <sl-icon slot="prefix" name="{{ section.icon }}"></sl-icon>
+                    {{ section.title }}
+                </sl-button>
             </div>
-        </sl-details>
+            {%- endfor -%}
+        </div>
+    </sl-details>
 
-        <sl-details summary="3">
-            <div class="row center-xs">
-                {%- for section in portfolio.sections -%}
-                <div class="col" style="padding: 0 10px 0 10px;">
+    <sl-details summary="3">
+        <div class="row center-xs">
+            {%- for section in portfolio.sections -%}
+            <div class="col" style="padding: 0 14px 0 14px;">
                     <span style="font-family: 'Playwrite AU SA', serif; font-size: 1.3em; font-weight: bold;">
                         {%- if section.title == "Bookmarks" -%}
-                            <a href="#" style="text-decoration: underline; text-underline-offset: 10px; color: #00567b;">{{ section.title }}</a>
+                            <a href="#"
+                               style="text-decoration: underline; text-underline-offset: 10px; color: #00567b;">{{ section.title }}</a>
                         {%- else -%}
                             <a href="#" style="text-decoration: none; color: #00567b;">{{ section.title }}</a>
                         {%- endif -%}
                     </span>
-                </div>
-                {%- endfor -%}
-            </div>
-        </sl-details>
-
-        <div class="row center-xs" style="margin-top: 2em;">
-            {%- for item in portfolio.sections[0].items -%}
-            <div class="col" style="margin-right: 8px; margin-bottom: 8px;;">
-                <sl-card>
-                    <img slot="image" src="https://picsum.photos/seed/{{item.description}}/300/200" />
-                    {{ item.title }}
-                </sl-card>
             </div>
             {%- endfor -%}
         </div>
+    </sl-details>
 
-        <div class="row" style="margin-top: 2em;">
-            <div class="col-xs-12">
-                <div>
-                    &#169; Auntie Boo Crafts 2022
-                </div>
-                <div>
-                    <a href="#" style="color: #00567b">Back to top</a>
-                </div>
-            </div>
+    <div class="row center-xs" style="margin-top: 2em;">
+        {%- for item in portfolio.sections[0].items -%}
+        <div class="col" style="margin: 0 1em 1em 1em;">
+            <sl-card>
+                <img slot="image" src="https://picsum.photos/seed/{{item.imageName}}/300/200"/>
+                {{ item.title }}
+            </sl-card>
         </div>
-
+        {%- endfor -%}
     </div>
 
-    <script type="module"
+    <div class="row" style="margin-top: 2em;">
+        <div class="col-xs-12">
+            <div>
+                &#169; Auntie Boo Crafts 2022
+            </div>
+            <div>
+                <a href="#" style="color: #00567b">Back to top</a>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script type="module"
         src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.19.1/cdn/shoelace-autoloader.js"></script>
 
-    <script type="module">
-        // await Promise.allSettled([
-        //     customElements.whenDefined('sl-icon')
-        // ]);
+<script type="module">
+    // await Promise.allSettled([
+    //     customElements.whenDefined('sl-icon')
+    // ]);
 
-        document.body.classList.add('ready');
-    </script>
-    <script src="/js/app.js"></script>
+    document.body.classList.add('ready');
+</script>
+<script src="/js/app.js"></script>
 </body>
 
 </html>
