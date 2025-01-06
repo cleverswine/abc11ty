@@ -2,6 +2,33 @@
     "sections": [
         {
             "title": "Bookmarks",
+            "icon": "bookmark-heart",
+            "items": [
+                {
+                    "title": "This is a bookmark",
+                    "description": "b1",
+                    "imageName": "6CbkBv1Z6k-340.png"
+                },
+                {
+                    "title": "This is another one.",
+                    "description": "b2",
+                    "imageName": "6CbkBv1Z6k-340.png"
+                },
+                {
+                    "title": "This one is different.",
+                    "description": "b3",
+                    "imageName": "6CbkBv1Z6k-340.png"
+                },
+                {
+                    "title": "Hey look at me!",
+                    "description": "b4",
+                    "imageName": "6CbkBv1Z6k-340.png"
+                }
+            ]
+        },
+        {
+            "title": "Hair Clips",
+            "icon": "paperclip",
             "items": [
                 {
                     "title": "lksdjlksdfjlkdfj",
@@ -27,6 +54,59 @@
         },
         {
             "title": "Badge Reels",
+            "icon": "person-badge",
+            "items": [
+                {
+                    "title": "lksdjlksdfjlkdfj",
+                    "description": "kjsldkjladkf",
+                    "imageName": "6CbkBv1Z6k-340.png"
+                },
+                {
+                    "title": "lksdjlksdfjlkdfj",
+                    "description": "kjsldkjladkf",
+                    "imageName": "6CbkBv1Z6k-340.png"
+                },
+                {
+                    "title": "lksdjlksdfjlkdfj",
+                    "description": "kjsldkjladkf",
+                    "imageName": "6CbkBv1Z6k-340.png"
+                },
+                {
+                    "title": "lksdjlksdfjlkdfj",
+                    "description": "kjsldkjladkf",
+                    "imageName": "6CbkBv1Z6k-340.png"
+                }
+            ]
+        },
+        {
+            "title": "Glitter Pens",
+            "icon": "pen",
+            "items": [
+                {
+                    "title": "lksdjlksdfjlkdfj",
+                    "description": "kjsldkjladkf",
+                    "imageName": "6CbkBv1Z6k-340.png"
+                },
+                {
+                    "title": "lksdjlksdfjlkdfj",
+                    "description": "kjsldkjladkf",
+                    "imageName": "6CbkBv1Z6k-340.png"
+                },
+                {
+                    "title": "lksdjlksdfjlkdfj",
+                    "description": "kjsldkjladkf",
+                    "imageName": "6CbkBv1Z6k-340.png"
+                },
+                {
+                    "title": "lksdjlksdfjlkdfj",
+                    "description": "kjsldkjladkf",
+                    "imageName": "6CbkBv1Z6k-340.png"
+                }
+            ]
+        },
+        {
+            "title": "Key Chains",
+            "icon": "key",
             "items": [
                 {
                     "title": "lksdjlksdfjlkdfj",

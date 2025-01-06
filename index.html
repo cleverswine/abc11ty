@@ -7,19 +7,23 @@
     <link rel="icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <meta name="description"
-        content="Auntie Boo Crafts - specializing inbookmarks, hair clips, glitter pens, key chains, and badge reels.">
+        content="Auntie Boo Crafts - specializing in bookmarks, hair clips, glitter pens, key chains, and badge reels.">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Aunti Boo Crafts</title>
+    <title>Auntie Boo Crafts</title>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.19.1/cdn/themes/light.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flexboxgrid/6.3.1/flexboxgrid.min.css"
         type="text/css">
     <link rel="stylesheet" href="/css/app.css" type="text/css" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playwrite+AU+SA:wght@100..400&display=swap" rel="stylesheet">
 </head>
 
 <body>
 
-    <div class="container" style="border: 1px solid red;">
+    <div class="container">
 
         <div class="row center-xs" style="margin-bottom: 1em;">
             <div class="col">
@@ -46,36 +50,62 @@
             </div>
         </div>
 
-        <sl-divider></sl-divider>
-
-    
-        <div class="row" style="margin-bottom: 1em;">
-            {%- for section in portfolio.sections -%}
-            <div class="col">
-                <div class="section-container">
-                    <img src="https://placecats.com/millie/250/150" class="section-image" width="250" height="150" />
-                    <div class="section-overlay">
-                        {{ section.title }}
+        <sl-details summary="1">
+            <div class="row center-xs">
+                {%- for section in portfolio.sections -%}
+                <div class="col">
+                    <div class="section-container">
+                        <img src="https://picsum.photos/seed/{{section.icon}}/200/150" class="section-image" width="200" height="150" />
+                        <div class="section-overlay">
+                            {{ section.title }}
+                        </div>
                     </div>
                 </div>
+                {%- endfor -%}
             </div>
-            {%- endfor -%}
-        </div>
+        </sl-details>
 
-        <sl-divider></sl-divider>
+        <sl-details summary="2">
+            <div class="row center-xs">
+                {%- for section in portfolio.sections -%}
+                <div class="col" style="padding: 0 8px 0 8px;">
+                    <sl-button variant="default" size="large" pill>
+                        <sl-icon slot="prefix" name="{{ section.icon }}"></sl-icon>
+                        {{ section.title }}
+                    </sl-button>
+                </div>
+                {%- endfor -%}
+            </div>
+        </sl-details>
 
-        <div class="row">
+        <sl-details summary="3">
+            <div class="row center-xs">
+                {%- for section in portfolio.sections -%}
+                <div class="col" style="padding: 0 10px 0 10px;">
+                    <span style="font-family: 'Playwrite AU SA', serif; font-size: 1.3em; font-weight: bold;">
+                        {%- if section.title == "Bookmarks" -%}
+                            <a href="#" style="text-decoration: underline; text-underline-offset: 10px; color: #00567b;">{{ section.title }}</a>
+                        {%- else -%}
+                            <a href="#" style="text-decoration: none; color: #00567b;">{{ section.title }}</a>
+                        {%- endif -%}
+                    </span>
+                </div>
+                {%- endfor -%}
+            </div>
+        </sl-details>
+
+        <div class="row center-xs" style="margin-top: 2em;">
             {%- for item in portfolio.sections[0].items -%}
             <div class="col" style="margin-right: 8px; margin-bottom: 8px;;">
                 <sl-card>
-                    <img slot="image" src="https://placecats.com/300/200" />
+                    <img slot="image" src="https://picsum.photos/seed/{{item.description}}/300/200" />
                     {{ item.title }}
                 </sl-card>
             </div>
             {%- endfor -%}
         </div>
 
-        <div class="row">
+        <div class="row" style="margin-top: 2em;">
             <div class="col-xs-12">
                 <div>
                     &#169; Auntie Boo Crafts 2022

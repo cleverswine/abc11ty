@@ -7,19 +7,23 @@
     <link rel="icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <meta name="description"
-        content="Auntie Boo Crafts - specializing inbookmarks, hair clips, glitter pens, key chains, and badge reels.">
+        content="Auntie Boo Crafts - specializing in bookmarks, hair clips, glitter pens, key chains, and badge reels.">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Aunti Boo Crafts</title>
+    <title>Auntie Boo Crafts</title>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.19.1/cdn/themes/light.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flexboxgrid/6.3.1/flexboxgrid.min.css"
         type="text/css">
     <link rel="stylesheet" href="/css/app.css" type="text/css" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playwrite+AU+SA:wght@100..400&display=swap" rel="stylesheet">
 </head>
 
 <body>
 
-    <div class="container" style="border: 1px solid red;">
+    <div class="container">
 
         <div class="row center-xs" style="margin-bottom: 1em;">
             <div class="col">
@@ -46,50 +50,111 @@
             </div>
         </div>
 
-        <sl-divider></sl-divider>
+        <sl-details summary="1">
+            <div class="row center-xs"><div class="col">
+                    <div class="section-container">
+                        <img src="https://picsum.photos/seed/bookmark-heart/200/150" class="section-image" width="200" height="150" />
+                        <div class="section-overlay">
+                            Bookmarks
+                        </div>
+                    </div>
+                </div><div class="col">
+                    <div class="section-container">
+                        <img src="https://picsum.photos/seed/paperclip/200/150" class="section-image" width="200" height="150" />
+                        <div class="section-overlay">
+                            Hair Clips
+                        </div>
+                    </div>
+                </div><div class="col">
+                    <div class="section-container">
+                        <img src="https://picsum.photos/seed/person-badge/200/150" class="section-image" width="200" height="150" />
+                        <div class="section-overlay">
+                            Badge Reels
+                        </div>
+                    </div>
+                </div><div class="col">
+                    <div class="section-container">
+                        <img src="https://picsum.photos/seed/pen/200/150" class="section-image" width="200" height="150" />
+                        <div class="section-overlay">
+                            Glitter Pens
+                        </div>
+                    </div>
+                </div><div class="col">
+                    <div class="section-container">
+                        <img src="https://picsum.photos/seed/key/200/150" class="section-image" width="200" height="150" />
+                        <div class="section-overlay">
+                            Key Chains
+                        </div>
+                    </div>
+                </div></div>
+        </sl-details>
 
-    
-        <div class="row" style="margin-bottom: 1em;"><div class="col">
-                <div class="section-container">
-                    <img src="https://placecats.com/millie/250/150" class="section-image" width="250" height="150" />
-                    <div class="section-overlay">
+        <sl-details summary="2">
+            <div class="row center-xs"><div class="col" style="padding: 0 8px 0 8px;">
+                    <sl-button variant="default" size="large" pill>
+                        <sl-icon slot="prefix" name="bookmark-heart"></sl-icon>
                         Bookmarks
-                    </div>
-                </div>
-            </div><div class="col">
-                <div class="section-container">
-                    <img src="https://placecats.com/millie/250/150" class="section-image" width="250" height="150" />
-                    <div class="section-overlay">
+                    </sl-button>
+                </div><div class="col" style="padding: 0 8px 0 8px;">
+                    <sl-button variant="default" size="large" pill>
+                        <sl-icon slot="prefix" name="paperclip"></sl-icon>
+                        Hair Clips
+                    </sl-button>
+                </div><div class="col" style="padding: 0 8px 0 8px;">
+                    <sl-button variant="default" size="large" pill>
+                        <sl-icon slot="prefix" name="person-badge"></sl-icon>
                         Badge Reels
-                    </div>
-                </div>
+                    </sl-button>
+                </div><div class="col" style="padding: 0 8px 0 8px;">
+                    <sl-button variant="default" size="large" pill>
+                        <sl-icon slot="prefix" name="pen"></sl-icon>
+                        Glitter Pens
+                    </sl-button>
+                </div><div class="col" style="padding: 0 8px 0 8px;">
+                    <sl-button variant="default" size="large" pill>
+                        <sl-icon slot="prefix" name="key"></sl-icon>
+                        Key Chains
+                    </sl-button>
+                </div></div>
+        </sl-details>
+
+        <sl-details summary="3">
+            <div class="row center-xs"><div class="col" style="padding: 0 10px 0 10px;">
+                    <span style="font-family: 'Playwrite AU SA', serif; font-size: 1.3em; font-weight: bold;"><a href="#" style="text-decoration: underline; text-underline-offset: 10px; color: #00567b;">Bookmarks</a></span>
+                </div><div class="col" style="padding: 0 10px 0 10px;">
+                    <span style="font-family: 'Playwrite AU SA', serif; font-size: 1.3em; font-weight: bold;"><a href="#" style="text-decoration: none; color: #00567b;">Hair Clips</a></span>
+                </div><div class="col" style="padding: 0 10px 0 10px;">
+                    <span style="font-family: 'Playwrite AU SA', serif; font-size: 1.3em; font-weight: bold;"><a href="#" style="text-decoration: none; color: #00567b;">Badge Reels</a></span>
+                </div><div class="col" style="padding: 0 10px 0 10px;">
+                    <span style="font-family: 'Playwrite AU SA', serif; font-size: 1.3em; font-weight: bold;"><a href="#" style="text-decoration: none; color: #00567b;">Glitter Pens</a></span>
+                </div><div class="col" style="padding: 0 10px 0 10px;">
+                    <span style="font-family: 'Playwrite AU SA', serif; font-size: 1.3em; font-weight: bold;"><a href="#" style="text-decoration: none; color: #00567b;">Key Chains</a></span>
+                </div></div>
+        </sl-details>
+
+        <div class="row center-xs" style="margin-top: 2em;"><div class="col" style="margin-right: 8px; margin-bottom: 8px;;">
+                <sl-card>
+                    <img slot="image" src="https://picsum.photos/seed/b1/300/200" />
+                    This is a bookmark
+                </sl-card>
+            </div><div class="col" style="margin-right: 8px; margin-bottom: 8px;;">
+                <sl-card>
+                    <img slot="image" src="https://picsum.photos/seed/b2/300/200" />
+                    This is another one.
+                </sl-card>
+            </div><div class="col" style="margin-right: 8px; margin-bottom: 8px;;">
+                <sl-card>
+                    <img slot="image" src="https://picsum.photos/seed/b3/300/200" />
+                    This one is different.
+                </sl-card>
+            </div><div class="col" style="margin-right: 8px; margin-bottom: 8px;;">
+                <sl-card>
+                    <img slot="image" src="https://picsum.photos/seed/b4/300/200" />
+                    Hey look at me!
+                </sl-card>
             </div></div>
 
-        <sl-divider></sl-divider>
-
-        <div class="row"><div class="col" style="margin-right: 8px; margin-bottom: 8px;;">
-                <sl-card>
-                    <img slot="image" src="https://placecats.com/300/200" />
-                    lksdjlksdfjlkdfj
-                </sl-card>
-            </div><div class="col" style="margin-right: 8px; margin-bottom: 8px;;">
-                <sl-card>
-                    <img slot="image" src="https://placecats.com/300/200" />
-                    lksdjlksdfjlkdfj
-                </sl-card>
-            </div><div class="col" style="margin-right: 8px; margin-bottom: 8px;;">
-                <sl-card>
-                    <img slot="image" src="https://placecats.com/300/200" />
-                    lksdjlksdfjlkdfj
-                </sl-card>
-            </div><div class="col" style="margin-right: 8px; margin-bottom: 8px;;">
-                <sl-card>
-                    <img slot="image" src="https://placecats.com/300/200" />
-                    lksdjlksdfjlkdfj
-                </sl-card>
-            </div></div>
-
-        <div class="row">
+        <div class="row" style="margin-top: 2em;">
             <div class="col-xs-12">
                 <div>
                     &#169; Auntie Boo Crafts 2022
