@@ -1,0 +1,33 @@
+{
+  "sections": [
+    {
+      "title": "Bookmarks",
+      "items": [
+        {
+          "title": "This is a bookmark",
+          "imageName": "6CbkBvdfZ6k.png"
+        },
+        {
+          "title": "This is another one.",
+          "imageName": "646kBv1Z6k.png"
+        }
+      ]
+    },
+    {
+      "title": "Hair Clips",
+      "items": []
+    },
+    {
+      "title": "Badge Reels",
+      "items": []
+    },
+    {
+      "title": "Glitter Pens",
+      "items": []
+    },
+    {
+      "title": "Key Chains",
+      "items": []
+    }
+  ]
+}
