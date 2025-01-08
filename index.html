@@ -34,16 +34,16 @@
         </div>
     </div>
 
-    <div class="row center-xs">
+    <div class="row center-xs" style="margin-bottom: 1em;">
         <div class="col-xs-12 col-sm-10">
             <div>
                 I'm passionate about creating handcrafted and personalized items. I specialize in bookmarks, hair
                 clips, glitter pens, key chains, and badge reels. I have something for every price point. Almost all
                 items can be customized. I love working with customers to create something unique and personal.
             </div>
-
             <p>
-                <sl-button class="etsy-link" href="https://www.etsy.com/shop/AuntieBooCrafts" target="_blank" variant="default" size="large" pill>
+                <sl-button class="etsy-link" href="https://www.etsy.com/shop/AuntieBooCrafts" target="_blank"
+                           variant="default" size="large" pill>
                     <sl-icon slot="prefix" name="bag-heart"></sl-icon>
                     Visit my shop on Etsy
                 </sl-button>
@@ -51,62 +51,82 @@
         </div>
     </div>
 
-    <sl-details summary="1">
-        <div class="row center-xs">
-            {%- for section in portfolio.sections -%}
-            <div class="col">
-                <div class="section-container">
-                    <img src="https://picsum.photos/seed/{{section.icon}}/200/150" class="section-image" width="200"
-                         height="150"/>
-                    <div class="section-overlay">
-                        {{ section.title }}
-                    </div>
+
+    <sl-tab-group class="section-tab-group">
+
+        <sl-tab slot="nav" panel="all" class="tab-item">
+            <div class="section-container">
+                <img src="https://picsum.photos/seed/all/200/150" class="section-image" width="200" height="150"/>
+                <div class="section-overlay">
+                    All Items
                 </div>
             </div>
-            {%- endfor -%}
-        </div>
-    </sl-details>
+        </sl-tab>
 
-    <sl-details summary="2">
-        <div class="row center-xs">
-            {%- for section in portfolio.sections -%}
-            <div class="col" style="padding: 0 8px 0 8px;">
-                <sl-button variant="default" size="large">
-                    <sl-icon slot="prefix" name="{{ section.icon }}"></sl-icon>
+        {%- for section in portfolio.sections -%}
+        <sl-tab slot="nav" panel="{{ section.icon }}" class="tab-item">
+            <div class="section-container">
+                <img src="https://picsum.photos/seed/{{section.icon}}/200/150" class="section-image" width="200"
+                     height="150"/>
+                <div class="section-overlay">
                     {{ section.title }}
-                </sl-button>
+                </div>
             </div>
-            {%- endfor -%}
-        </div>
-    </sl-details>
-
-    <sl-details summary="3">
-        <div class="row center-xs">
-            {%- for section in portfolio.sections -%}
-            <div class="col" style="padding: 0 14px 0 14px;">
-                    <span style="font-family: 'Playwrite AU SA', serif; font-size: 1.3em; font-weight: bold;">
-                        {%- if section.title == "Bookmarks" -%}
-                            <a href="#"
-                               style="text-decoration: underline; text-underline-offset: 10px; color: #00567b;">{{ section.title }}</a>
-                        {%- else -%}
-                            <a href="#" style="text-decoration: none; color: #00567b;">{{ section.title }}</a>
-                        {%- endif -%}
-                    </span>
-            </div>
-            {%- endfor -%}
-        </div>
-    </sl-details>
-
-    <div class="row center-xs" style="margin-top: 2em;">
-        {%- for item in portfolio.sections[0].items -%}
-        <div class="col" style="margin: 0 1em 1em 1em;">
-            <sl-card>
-                <img slot="image" src="https://picsum.photos/seed/{{item.imageName}}/300/200"/>
-                {{ item.title }}
-            </sl-card>
-        </div>
+        </sl-tab>
         {%- endfor -%}
-    </div>
+
+
+        <sl-tab-panel name="all">
+            <div class="row center-xs">
+                {%- for section in portfolio.sections -%}
+                {%- for item in section.items -%}
+                <div class="col portfolio-item" style="margin: 0 1em 1em 1em;">
+                    <sl-card class="portfolio-card">
+                        <img slot="image" src="https://picsum.photos/seed/{{item.imageName}}/300/200"/>
+                        <div style="font-weight: bold;">{{ item.title }}</div>
+                        <div style="font-size: 0.9em; margin-top: 0.9em;">{{ item.description }}</div>
+                        <sl-button class="etsy-link-small" href="https://www.etsy.com/shop/AuntieBooCrafts"
+                                   target="_blank"
+                                   variant="text">
+                            <sl-icon slot="prefix" name="bag-heart"></sl-icon>
+                            Buy this on Etsy
+                        </sl-button>
+                    </sl-card>
+                </div>
+                {%- endfor -%}
+                {%- endfor -%}
+
+            </div>
+        </sl-tab-panel>
+
+
+        {%- for section in portfolio.sections -%}
+        <sl-tab-panel name="{{ section.icon }}">
+            <div class="row center-xs">
+
+                {%- for item in section.items -%}
+                <div class="col portfolio-item" style="margin: 0 1em 1em 1em;">
+                    <sl-card class="portfolio-card">
+                        <img slot="image" src="https://picsum.photos/seed/{{item.imageName}}/300/200"/>
+                        <div style="font-weight: bold;">{{ item.title }}</div>
+                        <div style="font-size: 0.9em; margin-top: 0.9em;">{{ item.description }}</div>
+                        <sl-button class="etsy-link-small" href="https://www.etsy.com/shop/AuntieBooCrafts"
+                                   target="_blank"
+                                   variant="text">
+                            <sl-icon slot="prefix" name="bag-heart"></sl-icon>
+                            Buy this on Etsy
+                        </sl-button>
+                    </sl-card>
+                </div>
+                {%- endfor -%}
+
+            </div>
+        </sl-tab-panel>
+        {%- endfor -%}
+
+    </sl-tab-group>
+
+    <sl-divider></sl-divider>
 
     <div class="row" style="margin-top: 2em;">
         <div class="col-xs-12">

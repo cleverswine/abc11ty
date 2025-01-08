@@ -13,24 +13,52 @@ body.ready {
     padding: 0 20px 0 20px;
 }
 
+sl-tab-group::part(body) {
+    padding-top: 1.5em;
+}
+
+sl-tab-group::part(tabs) {
+    border-top: solid var(--track-width) var(--track-color);
+}
+
+sl-tab-group::part(nav) {
+    display: flex;
+    justify-content: center;
+}
+
+sl-card.portfolio-card {
+    width: 300px;
+}
+
+sl-card.portfolio-card::part(body) {
+    padding-bottom: 2px;
+}
+
 sl-button.etsy-link::part(base) {
     border: 2px solid #00567b;
+}
+
+sl-button.etsy-link-small::part(label) {
+    color: #00567b;
+}
+
+sl-button.etsy-link-small::part(prefix) {
+    color: #00567b;
 }
 
 .section-container {
     position: relative;
     width: 200px;
-    margin-right: 8px;
+    margin: 0;
+    border: 1px solid #00567b;
+    border-radius: 10px;
   }
-
-  * {box-sizing: border-box}
 
 .section-image {
     display: block;
     width: 100%;
     height: auto;
     border-radius: 10px;
-    border: 1px solid #00567b;
     padding: 0;
     filter: blur(2px);
     -webkit-filter: blur(2px);
@@ -45,12 +73,16 @@ sl-button.etsy-link::part(base) {
     background: rgba(0, 0, 0, 0.5);
     border: 2px solid #fff;
     /* Black see-through */
-    color: #f1f1f1;
-    width: 168px;
+    width: 148px;
     transition: .5s ease;
     opacity: 1;
     color: white;
     font-size: 20px;
     padding: 10px;
     text-align: center;
+}
+
+/* The "show" class is added to the filtered elements */
+.show {
+    display: block;
 }
