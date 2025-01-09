@@ -51,80 +51,41 @@
         </div>
     </div>
 
-
-    <sl-tab-group class="section-tab-group">
-
-        <sl-tab slot="nav" panel="all" class="tab-item">
-            <div class="section-container">
-                <img src="https://picsum.photos/seed/all/200/150" class="section-image" width="200" height="150"/>
-                <div class="section-overlay">
-                    All Items
-                </div>
-            </div>
-        </sl-tab>
-
+    <div class="tabs__pills row center-xs" style="margin-bottom: 2em;">
         {%- for section in portfolio.sections -%}
-        <sl-tab slot="nav" panel="{{ section.icon }}" class="tab-item">
-            <div class="section-container">
+        <div class="col">
+            <button data-id="{{ section.icon }}" class="section-button">
                 <img src="https://picsum.photos/seed/{{section.icon}}/200/150" class="section-image" width="200"
                      height="150"/>
                 <div class="section-overlay">
                     {{ section.title }}
                 </div>
-            </div>
-        </sl-tab>
+            </button>
+        </div>
         {%- endfor -%}
+    </div>
 
+    <sl-divider></sl-divider>
 
-        <sl-tab-panel name="all">
-            <div class="row center-xs">
-                {%- for section in portfolio.sections -%}
-                {%- for item in section.items -%}
-                <div class="col portfolio-item" style="margin: 0 1em 1em 1em;">
-                    <sl-card class="portfolio-card">
-                        <img slot="image" src="https://picsum.photos/seed/{{item.imageName}}/300/200"/>
-                        <div style="font-weight: bold;">{{ item.title }}</div>
-                        <div style="font-size: 0.9em; margin-top: 0.9em;">{{ item.description }}</div>
-                        <sl-button class="etsy-link-small" href="https://www.etsy.com/shop/AuntieBooCrafts"
-                                   target="_blank"
-                                   variant="text">
-                            <sl-icon slot="prefix" name="bag-heart"></sl-icon>
-                            Buy this on Etsy
-                        </sl-button>
-                    </sl-card>
-                </div>
-                {%- endfor -%}
-                {%- endfor -%}
-
-            </div>
-        </sl-tab-panel>
-
-
+    <div class="row center-xs tabs__panels">
         {%- for section in portfolio.sections -%}
-        <sl-tab-panel name="{{ section.icon }}">
-            <div class="row center-xs">
-
-                {%- for item in section.items -%}
-                <div class="col portfolio-item" style="margin: 0 1em 1em 1em;">
-                    <sl-card class="portfolio-card">
-                        <img slot="image" src="https://picsum.photos/seed/{{item.imageName}}/300/200"/>
-                        <div style="font-weight: bold;">{{ item.title }}</div>
-                        <div style="font-size: 0.9em; margin-top: 0.9em;">{{ item.description }}</div>
-                        <sl-button class="etsy-link-small" href="https://www.etsy.com/shop/AuntieBooCrafts"
-                                   target="_blank"
-                                   variant="text">
-                            <sl-icon slot="prefix" name="bag-heart"></sl-icon>
-                            Buy this on Etsy
-                        </sl-button>
-                    </sl-card>
-                </div>
-                {%- endfor -%}
-
-            </div>
-        </sl-tab-panel>
+        {%- for item in section.items -%}
+        <div class="col {{ section.icon }} active" style="margin: 0 1em 1em 1em;">
+            <sl-card class="portfolio-card">
+                <img slot="image" src="https://picsum.photos/seed/{{item.imageName}}/300/200"/>
+                <div style="font-weight: bold;">{{ item.title }}</div>
+                <div style="font-size: 0.9em; margin-top: 0.9em;">{{ item.description }}</div>
+                <sl-button class="etsy-link-small" href="https://www.etsy.com/shop/AuntieBooCrafts"
+                           target="_blank"
+                           variant="text">
+                    <sl-icon slot="prefix" name="bag-heart"></sl-icon>
+                    Buy this on Etsy
+                </sl-button>
+            </sl-card>
+        </div>
         {%- endfor -%}
-
-    </sl-tab-group>
+        {%- endfor -%}
+    </div>
 
     <sl-divider></sl-divider>
 

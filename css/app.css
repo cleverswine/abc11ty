@@ -13,19 +13,6 @@ body.ready {
     padding: 0 20px 0 20px;
 }
 
-sl-tab-group::part(body) {
-    padding-top: 1.5em;
-}
-
-sl-tab-group::part(tabs) {
-    border-top: solid var(--track-width) var(--track-color);
-}
-
-sl-tab-group::part(nav) {
-    display: flex;
-    justify-content: center;
-}
-
 sl-card.portfolio-card {
     width: 300px;
 }
@@ -46,13 +33,25 @@ sl-button.etsy-link-small::part(prefix) {
     color: #00567b;
 }
 
-.section-container {
+.tabs__panels > div {
+    display: none;
+}
+
+.tabs__panels > div.active {
+    display: block;
+}
+
+.section-button {
     position: relative;
     width: 200px;
-    margin: 0;
+    margin: 0 4px 0 4px;
     border: 1px solid #00567b;
     border-radius: 10px;
-  }
+}
+
+.section-button.active {
+    border: 4px solid #00567b;
+}
 
 .section-image {
     display: block;
@@ -62,7 +61,7 @@ sl-button.etsy-link-small::part(prefix) {
     padding: 0;
     filter: blur(2px);
     -webkit-filter: blur(2px);
-  }
+}
 
 .section-overlay {
     position: absolute;
@@ -80,9 +79,4 @@ sl-button.etsy-link-small::part(prefix) {
     font-size: 20px;
     padding: 10px;
     text-align: center;
-}
-
-/* The "show" class is added to the filtered elements */
-.show {
-    display: block;
 }
