@@ -3,7 +3,6 @@
 
 <head>
     <meta charset="UTF-8"/>
-    <link rel="manifest" href="site.webmanifest">
     <link rel="icon" href="/favicon.ico"/>
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <meta name="description"
@@ -15,10 +14,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flexboxgrid/6.3.1/flexboxgrid.min.css"
           type="text/css">
     <link rel="stylesheet" href="/css/app.css" type="text/css"/>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playwrite+AU+SA:wght@100..400&display=swap" rel="stylesheet">
 </head>
 
 <body>
@@ -27,7 +22,7 @@
 
     <div class="row center-xs" style="margin-bottom: 1em;">
         <div class="col">
-            <img src="/img/logo.png" alt="Auntie Boo Crafts" width="591" height="392"/>
+            <img src="/img/logo.png" class="responsive-logo-img" alt="Auntie Boo Crafts" width="591" height="392"/>
             <div style="color: #00567b; font-size: 1.3em; font-weight: bold;">
                 Welcome to Auntie Boo Crafts!
             </div>
@@ -54,13 +49,13 @@
     <div class="tabs__pills row center-xs" style="margin-bottom: 2em;">
         {%- for section in portfolio.sections -%}
         <div class="col">
-            <button data-id="{{ section.icon }}" class="section-button">
+            <sl-button data-id="{{ section.icon }}" class="section-button">
                 <img src="https://picsum.photos/seed/{{section.icon}}/200/150" class="section-image" width="200"
                      height="150"/>
                 <div class="section-overlay">
                     {{ section.title }}
                 </div>
-            </button>
+            </sl-button>
         </div>
         {%- endfor -%}
     </div>
@@ -106,10 +101,12 @@
         src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.19.1/cdn/shoelace-autoloader.js"></script>
 
 <script type="module">
-    // await Promise.allSettled([
-    //     customElements.whenDefined('sl-icon')
-    // ]);
-
+    await Promise.allSettled([
+        customElements.whenDefined('sl-card'),
+        customElements.whenDefined('sl-icon'),
+        customElements.whenDefined('sl-button'),
+        customElements.whenDefined('sl-divider')
+    ]);
     document.body.classList.add('ready');
 </script>
 <script src="/js/app.js"></script>
