@@ -1,0 +1,16 @@
+
+sl-card.portfolio-card {
+    width: 300px;
+}
+
+sl-card.portfolio-card::part(body) {
+    padding-bottom: 2px;
+}
+
+sl-button.etsy-link-small::part(label) {
+    color: #00567b;
+}
+
+sl-button.etsy-link-small::part(prefix) {
+    color: #00567b;
+}

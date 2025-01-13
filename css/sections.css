@@ -1,0 +1,74 @@
+.section-button-container {
+    position: relative;
+    width: 200px;
+    height: 150px;
+    margin: 0 .5em 1.5em .5em;
+    opacity: 1;
+    cursor: pointer;
+    border-radius: 10px;
+}
+
+.section-button-container img {
+    border-radius: 20px;
+    border: 2px solid black;
+}
+
+.section-button-container img:hover {
+    opacity: 0.7;
+}
+
+.section-button-overlay {
+    position: absolute; /* Position the background text */
+    bottom: 34px; /* At the bottom. Use top:0 to append it to the top */
+    left: 2px;
+    background: rgb(255, 255, 255); /* Fallback color */
+    background: rgba(255, 255, 255, 0.5); /* Black background with 0.5 opacity */
+    color: #000; /* Grey text */
+    width: 100%; /* Full width */
+    padding: 20px 0 20px 0; /* Some padding */
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+.tabs__panels > div {
+    display: none;
+}
+
+.tabs__panels > div.active {
+    display: block;
+}
+
+/*sl-button.section-button {*/
+/*    position: relative;*/
+/*    width: 200px;*/
+/*    height: 150px;*/
+
+/*}*/
+/*.section-button-wrapper {*/
+/*    padding: 1px;*/
+/*    border: 1px solid black;*/
+/*}*/
+
+/*sl-button.section-button.active > div {*/
+/*    font-weight: bold;*/
+/*}*/
+
+/*sl-button.section-button::part(label) {*/
+/*    padding: 0;*/
+/*    margin: 0;*/
+/*    display: inline-flex;*/
+/*}*/
+
+/*.section-overlay {*/
+/*    position: absolute;*/
+/*    left: 0;*/
+/*    bottom: 35%;*/
+/*    background: rgb(255, 255, 255); !* Fallback color *!*/
+/*    background: rgba(255, 255, 255, 0.4);*/
+/*    color: #000;*/
+/*    width: 100%;*/
+/*    padding: 4px 0 4px 0;*/
+/*    text-transform: uppercase;*/
+/*    font-size: 1.3em;*/
+/*    text-align: center;*/
+/*}*/

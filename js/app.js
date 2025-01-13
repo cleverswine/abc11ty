@@ -1,4 +1,4 @@
-const tabButtons = document.querySelectorAll('.section-button');
+const tabButtons = document.querySelectorAll('.section-button-container');
 const tabContents = document.querySelectorAll('.tabs__panels > div');
 
 if (tabButtons && tabContents) {

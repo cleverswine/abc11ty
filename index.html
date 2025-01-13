@@ -14,6 +14,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flexboxgrid/6.3.1/flexboxgrid.min.css"
           type="text/css">
     <link rel="stylesheet" href="/css/app.css" type="text/css"/>
+    <link rel="stylesheet" href="/css/sections.css" type="text/css"/>
+    <link rel="stylesheet" href="/css/items.css" type="text/css"/>
 </head>
 
 <body>
@@ -46,16 +48,13 @@
         </div>
     </div>
 
-    <div class="tabs__pills row center-xs" style="margin-bottom: 2em;">
+    <div class="row center-xs">
         {%- for section in portfolio.sections -%}
         <div class="col">
-            <sl-button data-id="{{ section.icon }}" class="section-button">
-                <img src="/img/sectionbg.png" class="section-image" width="200"
-                     height="150"/>
-                <div class="section-overlay">
-                    {{ section.title }}
-                </div>
-            </sl-button>
+            <div data-id="{{ section.icon }}" class="section-button-container">
+                <img src="/img/sectionbg.png" alt="{{ section.title }}" width="200" height="150"/>
+                <div class="section-button-overlay">{{ section.title }}</div>
+            </div>
         </div>
         {%- endfor -%}
     </div>
