@@ -25,7 +25,7 @@ app.MapPost("/add", async (HttpRequest request, [FromServices] ItemRepository it
     =>
 {
     var form = await request.ReadFormAsync();
-    return new RazorComponentResult<Items>(new {ItemModels = await itemRepository.AddOrUpdateItem(new ItemModel(form["Title"].First() ?? "UNK"))});
+    return new RazorComponentResult<Items>(new {ItemModels = await itemRepository.AddOrUpdateItem(new ItemModel(form["title"].First() ?? "UNK"))});
 });
 
 // Get edit form
