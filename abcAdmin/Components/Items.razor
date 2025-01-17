@@ -1,0 +1,13 @@
+@using AbcAdmin.Models
+
+<div id="items">
+    @foreach (var item in ItemModels)
+    {
+        <Item ItemModel="item"></Item>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public required List<ItemModel> ItemModels { get; set; }
+}

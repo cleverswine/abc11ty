@@ -1,0 +1,21 @@
+@using AbcAdmin.Models
+
+<form hx-target="this" hx-swap="outerHTML">
+    <sl-card>
+        <strong>
+            @ItemModel.Title
+        </strong>
+        <br/>
+        @ItemModel.Description
+        <div slot="footer">
+            <sl-button hx-get="/edit/@ItemModel.Id" variant="primary" pill>Edit</sl-button>
+        </div>
+    </sl-card>
+</form>
+
+@code {
+
+    [Parameter]
+    public required ItemModel ItemModel { get; set; }
+
+}
