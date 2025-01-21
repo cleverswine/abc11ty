@@ -2,24 +2,21 @@
 @using AbcAdmin.Models
 @layout Layout
 
-<form hx-post="/add" hx-target="#items">
-    <sl-card>
-        <sl-input help-text="Title" name="title"/>
-        <br/>
-        <sl-input help-text="Description" name="description"/>
-        <div slot="footer">
-            <sl-button type="submit" variant="primary" size="small" pill>Add</sl-button>
-        </div>
-    </sl-card>
+<div class="title">Home</div>
 
+<form hx-post="/add" hx-target="#items">
+    <input type="text" name="Title" placeholder="title" />
+    <input type="text" name="Description" placeholder="description" />
+    <sl-button type="submit">
+        Hello
+    </sl-button>
+        
     <div id="items">
         <Items ItemModels="ItemModels"></Items>
     </div>
 </form>
 
 @code {
-
     [Parameter]
     public required List<ItemModel> ItemModels { get; set; }
-
 }

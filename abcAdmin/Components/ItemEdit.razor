@@ -2,11 +2,11 @@
 
 <form hx-put="/edit/@ItemModel.Id" hx-target="this" hx-swap="outerHTML">
     <sl-card>
-        <sl-input help-text="Title" value="@ItemModel.Title"/>
+        <sl-input label="Title" help-text="Title" value="@ItemModel.Title"/>
         <br/>
         <sl-input help-text="Description" name="description" value="@ItemModel.Description"/>
         <div slot="footer">
-            <sl-button type="submit" variant="primary" size="small" pill>Save</sl-button>
+            <sl-button type="submit" variant="primary" pill>Save</sl-button>
         </div>
     </sl-card>
 </form>
