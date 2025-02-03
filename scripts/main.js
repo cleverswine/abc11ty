@@ -2,6 +2,20 @@ const fs = require('node:fs');
 const path = require('node:path');
 const {createInterface} = require('node:readline');
 
+// COLLAPSIBLE SECTIONS
+
+// [ +new ]
+
+// [# Bookmarks (edit) ]
+//  [ +new ] [# foo (edit)] [# foo (edit)]
+
+// [# Badge Reels (edit) ]
+//  [ +new ] [# foo (edit)] [# foo (edit)]
+
+// [# Hair Clips (edit) ]
+//  [ +new ] [# foo (edit)] [# foo (edit)]
+
+
 const folderPath = "./testData";
 //
 // // list files and folders
