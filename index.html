@@ -10,24 +10,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Auntie Boo Crafts</title>
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/themes/light.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flexboxgrid/6.3.1/flexboxgrid.min.css" type="text/css">
-    <link rel="stylesheet" href="/css/app.css" type="text/css"/>
-    <link rel="stylesheet" href="/css/sections.css" type="text/css"/>
-    <link rel="stylesheet" href="/css/items.css" type="text/css"/>
+    <link rel="stylesheet" href="/css/bootstrap.min.css" type="text/css">
 </head>
 
 <body>
 
 <div class="container">
 
-    <div class="row center-xs" style="margin-bottom: 1em;">
-        <div class="col">
-            <img src="/img/logo.png" class="responsive-logo-img" alt="Auntie Boo Crafts" width="591" height="392"/>
+    <div class="mx-auto justify-content-center mb-1">
+            <img src="/img/logo.png" class="img-fluid" alt="Auntie Boo Crafts" style="max-width: 591px;" />
             <div style="color: #00567b; font-size: 1.3em; font-weight: bold;">
                 Welcome to Auntie Boo Crafts!
             </div>
-        </div>
     </div>
 
     <div class="row center-xs" style="margin-bottom: 1em;">
@@ -38,46 +32,31 @@
                 items can be customized. I love working with customers to create something unique and personal.
             </div>
             <p>
-                <sl-button class="etsy-link" href="https://www.etsy.com/shop/AuntieBooCrafts" target="_blank"
-                           variant="default" size="large" pill>
-                    <sl-icon slot="prefix" name="bag-heart"></sl-icon>
+                <a class="btn btn-outline-primary" href="https://www.etsy.com/shop/AuntieBooCrafts" target="_blank">
                     Visit my shop on Etsy
-                </sl-button>
+                </a>
             </p>
         </div>
     </div>
 
-    <div class="row center-xs">
-        {%- for section in portfolio.sections -%}
-        <div class="col">
-            <div data-id="{{ section.icon }}" class="section-button-container">
-                <img src="/img/sectionbg.png" alt="{{ section.title }}" width="200" height="150"/>
-                <div class="section-button-overlay">{{ section.title }}</div>
-            </div>
-        </div>
-        {%- endfor -%}
-    </div>
-
-    <sl-divider></sl-divider>
-
-    <div class="row center-xs tabs__panels">
+    <div class="row">
         {%- for item in boo -%}
-        <div class="col active" style="margin: 0 1em 1em 1em;">
-            <sl-card class="portfolio-card">
-                <img slot="image" src="{{ item.imageInfo.png[0].url }}" alt="{{ item.title }}" />
-                <div style="font-size: 0.9em; margin-top: 0.9em;">{{ item.title }}</div>
-                <sl-button class="etsy-link-small" href="{{ item.url }}"
-                           target="_blank"
-                           variant="text">
-                    <sl-icon slot="prefix" name="bag-heart"></sl-icon>
-                    Buy this on Etsy
-                </sl-button>
-            </sl-card>
+        <div class="col-xs-12 col-sm-6 col-md-4">
+
+            <div class="card" style="width: 18rem;">
+                <img src="{{ item.imageInfo.png[0].url }}" class="card-img-top" alt="{{ item.title }}" />
+                <div class="card-body">
+                    <h5 class="card-title">Card title</h5>
+                    <p class="card-text">
+                        {{ item.title }}
+                    </p>
+                    <a href="{{ item.url }}" class="btn btn-outline-primary">Buy this on Etsy</a>
+                </div>
+            </div>
+
         </div>
         {%- endfor -%}
     </div>
-
-    <sl-divider></sl-divider>
 
     <div class="row" style="margin-top: 2em;">
         <div class="col-xs-12">
@@ -92,18 +71,7 @@
 
 </div>
 
-<script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/shoelace-autoloader.js"></script>
-
-<script type="module">
-    await Promise.allSettled([
-        customElements.whenDefined('sl-card'),
-        customElements.whenDefined('sl-icon'),
-        customElements.whenDefined('sl-button'),
-        customElements.whenDefined('sl-divider')
-    ]);
-    document.body.classList.add('ready');
-</script>
-<script src="/js/app.js"></script>
+<script src="/js/bootstrap.min.js"></script>
 </body>
 
 </html>
