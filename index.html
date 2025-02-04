@@ -11,46 +11,44 @@
     <title>Auntie Boo Crafts</title>
 
     <link rel="stylesheet" href="/css/bootstrap.min.css" type="text/css">
+    <link rel="stylesheet" href="/css/bootstrap-icons.min.css" type="text/css">
+    <link rel="stylesheet" href="/css/app.css" type="text/css">
 </head>
 
 <body>
 
 <div class="container">
 
-    <div class="mx-auto justify-content-center mb-1">
-            <img src="/img/logo.png" class="img-fluid" alt="Auntie Boo Crafts" style="max-width: 591px;" />
-            <div style="color: #00567b; font-size: 1.3em; font-weight: bold;">
-                Welcome to Auntie Boo Crafts!
-            </div>
+    <div class="text-center w-100 mb-4">
+        <img src="/img/logo.png" class="img-fluid" alt="Auntie Boo Crafts" style="width:100%; max-width: 591px;"/>
+        <div style="color: #00567b; font-size: 1.3em; font-weight: bold;">
+            Welcome to Auntie Boo Crafts!
+        </div>
+        <div class="my-2">
+            I'm passionate about creating handcrafted and personalized items. I specialize in bookmarks, hair
+            clips, glitter pens, key chains, and badge reels. I have something for every price point. Almost all
+            items can be customized. I love working with customers to create something unique and personal.
+        </div>
+        <p>
+            <a class="btn btn-outline-primary" href="https://www.etsy.com/shop/AuntieBooCrafts" target="_blank">
+                <i class="bi bi-bag-heart"></i> Visit my shop on Etsy
+            </a>
+        </p>
     </div>
 
-    <div class="row center-xs" style="margin-bottom: 1em;">
-        <div class="col-xs-12 col-sm-10">
-            <div>
-                I'm passionate about creating handcrafted and personalized items. I specialize in bookmarks, hair
-                clips, glitter pens, key chains, and badge reels. I have something for every price point. Almost all
-                items can be customized. I love working with customers to create something unique and personal.
-            </div>
-            <p>
-                <a class="btn btn-outline-primary" href="https://www.etsy.com/shop/AuntieBooCrafts" target="_blank">
-                    Visit my shop on Etsy
-                </a>
-            </p>
-        </div>
-    </div>
 
     <div class="row">
         {%- for item in boo -%}
-        <div class="col-xs-12 col-sm-6 col-md-4">
+        <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3 p-2">
 
-            <div class="card" style="width: 18rem;">
-                <img src="{{ item.imageInfo.png[0].url }}" class="card-img-top" alt="{{ item.title }}" />
-                <div class="card-body">
+            <div class="card border-secondary">
+                <img src="{{ item.imageInfo.png[0].url }}" class="card-img-top" alt="{{ item.title }}"/>
+                <div class="card-body text-center">
                     <h5 class="card-title">Card title</h5>
-                    <p class="card-text">
+                    <p class="card-text mb-1">
                         {{ item.title }}
                     </p>
-                    <a href="{{ item.url }}" class="btn btn-outline-primary">Buy this on Etsy</a>
+                    <a href="{{ item.url }}" class="card-link" target="_blank">Buy this on Etsy</a>
                 </div>
             </div>
 

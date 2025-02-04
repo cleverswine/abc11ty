@@ -1,24 +1,17 @@
 body {
-    opacity: 0;
     font-family: "Avenir", "Next,sans-serif", serif;
-/*"Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif !important;*/
 }
 
-body.ready {
-    opacity: 1;
-    transition: 0.25s opacity;
+.btn-outline-primary {
+    --bs-btn-border-color: #00567b;
+    --bs-btn-color: #00567b;
+    --bs-btn-active-bg: #00567b;
+    --bs-btn-hover-bg: #00567b;
+    --bs-btn-hover-border-color: #00567b;
 }
 
-.responsive-logo-img {
-    width: 100%;
-    max-width: 591px;
-    height: auto;
-}
-
-sl-button.etsy-link::part(base) {
-    border: 2px solid #00567b;
-}
-
-.container {
-    padding: 0 20px 0 20px;
+.card-link {
+    --bs-link-color: #00567b;
+    --bs-link-hover-bg: #00567b;
+    color: #00567b;
 }
