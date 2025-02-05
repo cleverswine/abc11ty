@@ -1,0 +1,17 @@
+body {
+    font-family: "Avenir", "Next,sans-serif", serif;
+}
+
+.btn-outline-primary {
+    --bs-btn-border-color: #00567b;
+    --bs-btn-color: #00567b;
+    --bs-btn-active-bg: #00567b;
+    --bs-btn-hover-bg: #00567b;
+    --bs-btn-hover-border-color: #00567b;
+}
+
+.card-link {
+    --bs-link-color: #00567b;
+    --bs-link-hover-bg: #00567b;
+    color: #00567b;
+}

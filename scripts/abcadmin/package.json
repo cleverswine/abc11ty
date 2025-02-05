@@ -2,18 +2,23 @@
   "name": "abcadmin",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "serve": "npx @11ty/eleventy --serve",
+    "build": "npx @11ty/eleventy",
+    "clean": "rm -rf _site"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@11ty/eleventy": "^3.0.0",
     "@11ty/eleventy-fetch": "^5.0.2",
     "@11ty/eleventy-img": "^6.0.1",
     "handlebars": "^4.7.8",
-    "node-html-parser": "^7.0.1"
-  },
-  "type": "module"
+    "node-html-parser": "^7.0.1",
+    "bootstrap": "^5.3.3",
+    "bootstrap-icons": "^1.11.3"
+  }
 }

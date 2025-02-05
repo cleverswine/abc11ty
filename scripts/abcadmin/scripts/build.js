@@ -58,7 +58,7 @@ for (let i = 0; i < listings.length; i++) {
     result.push(x);
 }
 
-fs.writeFile("boo.json", JSON.stringify(result, null, 2), err => {
+fs.writeFile("_data/boo.json", JSON.stringify(result, null, 2), err => {
     if (err) {
         console.error(err);
     } else {
