@@ -2,7 +2,6 @@ import * as fs from 'node:fs';
 import * as parser from 'node-html-parser';
 import Fetch from "@11ty/eleventy-fetch";
 import Image from "@11ty/eleventy-img";
-// import Image from "@11ty/eleventy-img";
 
 let result = [];
 
@@ -33,26 +32,39 @@ function delay(time) {
 
 async function getSectionItems(sectionId) {
     //if (sectionId !== '38581786') return [];
+    console.log(`fetching page ${sectionId} in 3 seconds...`);
     await delay(3000);
 
     let items = [];
 
     // let data = fs.readFileSync('scripts/boo-section.html', 'utf8');
-    let data = await Fetch(`https://www.etsy.com/shop/AuntieBooCrafts?section_id=${sectionId}`, {
-        duration: "1d",
-        type: "html",
-        fetchOptions: {headers: trickyHeaders,},
-    });
+    let data = ""; //fs.readFileSync('scripts/boo.html', 'utf8');
+    try {
+        data = await Fetch(`https://www.etsy.com/shop/AuntieBooCrafts?section_id=${sectionId}`, {
+            duration: "1d",
+            type: "html",
+            fetchOptions: { headers: trickyHeaders, },
+        });
+        console.log(`fetched page ${sectionId}`)
+    } catch (e) {
+        console.log(e);
+        return [];
+    }
 
     parsedData = parser.parse(data);
-    let listings = parsedData.querySelectorAll('a.listing-link');
+    let listingsSection = parsedData.querySelectorAll('div.responsive-listing-grid')[0];
+    let listings = listingsSection.querySelectorAll('a.listing-link');
+    console.log(`found ${listings.length} listings`);
     for (let i = 0; i < listings.length; i++) {
         let listing = listings[i];
         let imageUrl = listing.querySelector("img").getAttribute("src");
         let imgStats = await Image(imageUrl, { widths: [340], formats: ["png"] });
+        let title = listing.attrs["title"];
+        let id = listing.attrs["data-listing-id"];
         items.push({
-            title: listing.attrs["title"].split(",")[0],
-            description: listing.attrs["title"],
+            id: id,
+            title: title.split(",")[0],
+            description: title,
             image: imgStats.png[0].url,
             etsyPage: listing.attrs["href"].split("?")[0]
         });
@@ -65,11 +77,10 @@ try {
     data = await Fetch("https://www.etsy.com/shop/auntieboocrafts", {
         duration: "1d",
         type: "html",
-        fetchOptions: {headers: trickyHeaders,},
+        fetchOptions: { headers: trickyHeaders, },
     });
 } catch (e) {
     console.log(e);
-    return;
 }
 
 let parsedData = parser.parse(data);
@@ -77,12 +88,13 @@ let sectionButtons = parsedData.querySelectorAll('button.wt-menu__item');
 for (let i = 0; i < sectionButtons.length; i++) {
     let sectionButton = sectionButtons[i];
     if (sectionButton.hasAttribute('data-section-id')) {
+        console.log(`processing ${sectionButton.innerHTML.trim()}`);
         let sectionId = sectionButton.getAttribute('data-section-id');
         if (sectionId !== '0') {
             let sectionObj = {
                 sectionId: sectionId,
                 sectionTitle: sectionButton.innerHTML.trim().split("(")[0].trim(),
-                items: getSectionItems(sectionId)
+                items: await getSectionItems(sectionId)
             };
 
             result.push(sectionObj)
