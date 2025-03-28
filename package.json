@@ -2,6 +2,7 @@
   "name": "abc11ty",
   "version": "1.0.0",
   "description": "Auntie Boo Crafts",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "serve": "npx @11ty/eleventy --serve",
@@ -23,8 +24,9 @@
   "dependencies": {
     "@11ty/eleventy": "^3.0.0",
     "@11ty/eleventy-fetch": "^5.0.0",
-    "@11ty/eleventy-img": "^5.0.0",
-    "node-html-parser": "^6.1.11",
-    "rss-parser": "^3.13.0"
+    "@11ty/eleventy-img": "^6.0.0",
+    "node-html-parser": "^7.0.0",
+    "bootstrap": "^5.3.3",
+    "bootstrap-icons": "^1.11.3"
   }
 }

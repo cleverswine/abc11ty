@@ -2,128 +2,103 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
-    <link rel="manifest" href="site.webmanifest">
-    <link rel="icon" href="/favicon.ico" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <meta charset="UTF-8"/>
+    <link rel="icon" href="favicon.ico"/>
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <meta name="description"
-        content="Auntie Boo Crafts - specializing in tumblers, mugs, glitter pens, key chains, badge reels, phone grips and bag charms.">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Aunti Boo Crafts</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
-    <script src="https://kit.fontawesome.com/9a8dff0768.js" crossorigin="anonymous"></script>
-    <style>
-        .custom-tooltip {
-            --bs-tooltip-bg: #00567b;
-        }
+          content="Auntie Boo Crafts - specializing in bookmarks, hair clips, glitter pens, key chains, and badge reels.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Auntie Boo Crafts</title>
 
-        .gallery {
-            display: grid;
-            grid-gap: 10px;
-            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-            grid-auto-rows: 300px;
-            grid-auto-flow: dense;
-        }
-
-        .gallery .item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-    </style>
+    <link rel="stylesheet" href="css/bootstrap.min.css" type="text/css">
+    <link rel="stylesheet" href="css/bootstrap-icons.min.css" type="text/css">
+    <link rel="stylesheet" href="css/app.css" type="text/css">
 </head>
 
 <body>
-    <main>
-        <section class="text-center container">
-            <div class="row py-lg-2">
-                <div class="col-lg-10 col-md-8 mx-auto">
-                    <img src="/img/logo2.png" class="img-fluid" alt="Auntie Boo Crafts" width="591" height="392" />
-                    <p class="lead" style="color: #00567b">
-                        Welcome to Auntie Boo Crafts!
-                    </p>
-                    <p class="text-muted">
-                        I'm passionate about creating handcrafted and personalized items. I
-                        specialize in bookmarks, hair clips, glitter pens, key chains, and badge reels.
-                        I have something for every price point.
-                        Almost all items can be customized. I love working with customers to
-                        create something unique and personal.
-                    </p>
-                    <p class="lead">
-                        <a href="https://www.etsy.com/shop/AuntieBooCrafts" style="color: #00567b">Visit my shop on
-                            Etsy</a>
-                    </p>
-                </div>
-            </div>
-        </section>
 
-        <div class="pb-5 pt-2 bg-light">
-            <div class="container">
-                <div class="text-center">
-                    <h2 class="border-bottom border-top py-2 my-4" style="color: #00567b">
-                        Recent Work
-                    </h2>
-                </div>
+<div class="container mb-4">
 
-                <div class="gallery">
-                    {%- for rssItem in rss -%}
-                    <div class="item">
-                        <a href="{{ rssItem.url }}" target="_blank" data-bs-toggle="tooltip"
-                            data-bs-custom-class="custom-tooltip" data-bs-title="{{ rssItem.title }}">
-                            <img class="rounded border border-1 shadow-sm" src="{{ rssItem.imageInfo.png[0].url }}"
-                                alt="{{ rssItem.title }}" aria-placeholder="{{ rssItem.title }}" />
+    <div class="text-center w-100 mb-4">
+        <img src="img/logo.png" class="img-fluid" alt="Auntie Boo Crafts" style="width:100%; max-width: 591px;"/>
+        <div style="color: #00567b; font-size: 1.3em; font-weight: bold;">
+            Welcome to Auntie Boo Crafts!
+        </div>
+        <div class="my-2">
+            I'm passionate about creating handcrafted and personalized items. I specialize in bookmarks, hair
+            clips, glitter pens, key chains, and badge reels. I have something for every price point. Almost all
+            items can be customized. I love working with customers to create something unique and personal.
+        </div>
+        <p>
+            <a class="btn btn-outline-primary rounded-pill" href="https://www.etsy.com/shop/AuntieBooCrafts"
+               target="_blank">
+                <i class="bi bi-bag-heart"></i> Visit my shop on Etsy
+            </a>
+        </p>
+    </div>
+
+</div>
+
+<div class="flex-column flex-md-row text-center p-1" style="background-color: #00567b;">
+    {% for section in boo %}
+    <button data-role="nav" data-id="{{ section.sectionId }}" class="btn bp-2 text-uppercase text-white">
+        {{ section.sectionTitle }}
+    </button>
+    {% endfor %}
+</div>
+
+<div class="container mt-3">
+
+    {% for section in boo %}
+    {% if section.sectionId != "0" %}
+    <div data-role="item" data-section-id="{{ section.sectionId }}" class="mb-2">
+        <h4>{{ section.sectionTitle }}</h4>
+        <div class="row" id="item-grid">
+            {% assign these_products = .section.items | where: "show", true  | sort: "order" %}
+            {%- for item in these_products -%}
+
+            <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3 p-2" id="{{ item.id }}">
+                <div class="card border-secondary">
+                    <img src="{{ item.image }}" class="card-img-top" alt="{{ item.title }}"/>
+                    <div class="card-body text-center">
+                        <h5 class="card-title">{{ item.title | truncate: 40 }}</h5>
+
+                        <a class="card-link" href="{{ item.etsyPage }}" target="_blank">
+                            Buy this on Etsy
                         </a>
                     </div>
-                    {%- endfor -%}
-                </div>
-
-                <div class="text-center">
-                    <p class="border-bottom border-top py-2 my-4" style="color: #00567b">
-                        <a href="https://www.etsy.com/shop/AuntieBooCrafts" style="color: #00567b">Find more at my shop
-                            on Etsy &gt;&gt;</a>
-                    </p>
                 </div>
             </div>
-        </div>
-    </main>
 
-    <footer class="text-muted py-5">
-        <div class="container">
-            <div class="row">
-                <div class="col-xs-12 col-md-4 text-sm-center text-md-start">
-                    &#169; Auntie Boo Crafts 2022
-                </div>
-                <div class="col-xs-12 col-md-4 text-sm-center text-md-center">
-                    <a href="https://www.etsy.com/shop/AuntieBooCrafts" target="_blank" type="button"
-                        class="btn rounded-circle btn-outline-secondary me-2">
-                        <i class="fa-brands fa-etsy"></i>
-                    </a>
-                    <a href="https://www.etsy.com/shop/auntieboocrafts/rss" target="_blank" type="button"
-                        class="btn rounded-circle btn-outline-secondary me-2">
-                        <i class="fa-solid fa-rss"></i>
-                    </a>
-                </div>
-                <div class="col-xs-12 col-md-4 text-sm-center text-md-end">
-                    <a href="#" style="color: #00567b">Back to top</a>
-                </div>
+            {%- endfor -%}
+        </div>
+    </div>
+    {% endif %}
+    {%- endfor -%}
+
+    <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
+        <div class="col-md-4 d-flex align-items-center">
+            <span class="mb-3 mb-md-0 text-body-secondary">&copy; 2024 Auntie Boo Crafts</span>
+        </div>
+
+        <div class="nav col-md-4 justify-content-end d-flex">
+            <div class="ms-3">
+                <a class="text-body-secondary" href="https://www.etsy.com/shop/AuntieBooCrafts">
+                    <i class="bi bi-bag-heart-fill"></i>
+                </a>
+            </div>
+            <div class="ms-3">
+                <a class="text-body-secondary" href="https://www.etsy.com/shop/auntieboocrafts/rss">
+                    <i class="bi bi-rss-fill"></i>
+                </a>
             </div>
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"
-        integrity="sha384-oBqDVmMz9ATKxIep9tiCxS/Z9fNfEXiDAYTujMAeBAsjFuCZSmKbSSUnQlmh/jp3"
-        crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"
-        integrity="sha384-mQ93GR66B00ZXjt0YO5KlohRA5SY2XofN4zfuZxLkoj1gXtW8ANNCe9d5Y3eG5eD"
-        crossorigin="anonymous"></script>
-    <script>
-        //$(document).ready(function () {
-        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
-        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
-        //});
-    </script>
+</div>
 
+<script src="js/bootstrap.min.js"></script>
+<script src="js/app.js"></script>
 </body>
 
 </html>
