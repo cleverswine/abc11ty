@@ -232,6 +232,15 @@
     "sectionTitle": "Badge Reels",
     "items": [
       {
+        "id": "1843555554",
+        "show": true,
+        "order": 0,
+        "title": "Blue Heart Badge Reel for Nurse",
+        "description": "Blue Heart Badge Reel for Nurse, Key Card Holder, Glitter ID Holder for Teacher, Office Access Card, Beaded Badge Holder, Blue Valentine Day",
+        "image": "img-product/1843555554.png",
+        "etsyPage": "https://www.etsy.com/listing/1843555554/blue-heart-badge-reel-for-nurse-key-card"
+      },
+      {
         "id": "1248733358",
         "show": true,
         "order": 0,
@@ -329,15 +338,6 @@
         "description": "Nursing Student Badge Reel for Healthcare, Leopard Print Nurse in Progress Badge Clip for work, Student Nurse Gifts for Women, Beaded Badge",
         "image": "img-product/1452507244.png",
         "etsyPage": "https://www.etsy.com/listing/1452507244/nursing-student-badge-reel-for"
-      },
-      {
-        "id": "1843555554",
-        "show": true,
-        "order": 0,
-        "title": "Blue Heart Badge Reel for Nurse",
-        "description": "Blue Heart Badge Reel for Nurse, Key Card Holder, Glitter ID Holder for Teacher, Office Access Card, Beaded Badge Holder, Blue Valentine Day",
-        "image": "img-product/1843555554.png",
-        "etsyPage": "https://www.etsy.com/listing/1843555554/blue-heart-badge-reel-for-nurse-key-card"
       },
       {
         "id": "1264127416",
@@ -459,6 +459,15 @@
     "sectionId": "39028304",
     "sectionTitle": "Lanyards",
     "items": [
+      {
+        "id": "1298168805",
+        "show": true,
+        "order": 0,
+        "title": "Personalized Teacher Lanyard",
+        "description": "Personalized Teacher Lanyard, Custom Teacher Appreciation Gift from Student, Notebook Paper Badge Reel, Apple, Pencil, Back to School",
+        "image": "img-product/1298168805.png",
+        "etsyPage": "https://www.etsy.com/listing/1298168805/personalized-teacher-lanyard-custom"
+      },
       {
         "id": "1447358811",
         "show": true,
@@ -602,15 +611,6 @@
         "description": "Personalized Teacher Lanyard with ID Holder, Custom New Teacher Gifts for Coworkers, Cute Beaded Badge Holder Lanyard with Name, Best Gifts",
         "image": "img-product/1274297190.png",
         "etsyPage": "https://www.etsy.com/listing/1274297190/personalized-teacher-lanyard-with-id"
-      },
-      {
-        "id": "1298168805",
-        "show": true,
-        "order": 0,
-        "title": "Personalized Teacher Lanyard",
-        "description": "Personalized Teacher Lanyard, Custom Teacher Appreciation Gift from Student, Notebook Paper Badge Reel, Apple, Pencil, Back to School",
-        "image": "img-product/1298168805.png",
-        "etsyPage": "https://www.etsy.com/listing/1298168805/personalized-teacher-lanyard-custom"
       }
     ]
   },
@@ -703,6 +703,24 @@
     "sectionTitle": "Hair Clips",
     "items": [
       {
+        "id": "1740946448",
+        "show": true,
+        "order": 0,
+        "title": "Teacher Claw Clip",
+        "description": "Teacher Claw Clip, Personalized Notebook Paper, Custom Teacher Gift, Teacher Appreciation Gift from Student, Hair Clips Claw, Back to School",
+        "image": "img-product/1740946448.png",
+        "etsyPage": "https://www.etsy.com/listing/1740946448/teacher-claw-clip-personalized-notebook"
+      },
+      {
+        "id": "1878594142",
+        "show": true,
+        "order": 0,
+        "title": "Personalized Basketball Hair Claw for Girls",
+        "description": "Personalized Basketball Hair Claw for Girls, Basketball Mom Gift, Little Sister Biggest Fan Basketball Hair Accessory for Teenage Girls",
+        "image": "img-product/1878594142.png",
+        "etsyPage": "https://www.etsy.com/listing/1878594142/personalized-basketball-hair-claw-for"
+      },
+      {
         "id": "1816477566",
         "show": true,
         "order": 0,
@@ -773,15 +791,6 @@
         "description": "Personalized Crayon Teacher Claw Clip, Custom Teacher Hair Accessory for Teacher Appreciation from Student, Cute Hair Clip for Girls",
         "image": "img-product/1765864866.png",
         "etsyPage": "https://www.etsy.com/listing/1765864866/personalized-crayon-teacher-claw-clip"
-      },
-      {
-        "id": "1740946448",
-        "show": true,
-        "order": 0,
-        "title": "Teacher Claw Clip",
-        "description": "Teacher Claw Clip, Personalized Notebook Paper, Custom Teacher Gift, Teacher Appreciation Gift from Student, Hair Clips Claw, Back to School",
-        "image": "img-product/1740946448.png",
-        "etsyPage": "https://www.etsy.com/listing/1740946448/teacher-claw-clip-personalized-notebook"
       }
     ]
   },
@@ -822,6 +831,15 @@
     "sectionId": "53305770",
     "sectionTitle": "Digital Patterns",
     "items": [
+      {
+        "id": "1878951244",
+        "show": true,
+        "order": 0,
+        "title": "70s Retro Floral Digital Print",
+        "description": "70s Retro Floral Digital Print, Pastel Vintage Bundle PNG, Commercial Use Seamless Pattern,  Design for Fabric Print, Digital Scrapbook Pape",
+        "image": "img-product/1878951244.png",
+        "etsyPage": "https://www.etsy.com/listing/1878951244/70s-retro-floral-digital-print-pastel"
+      },
       {
         "id": "1889330413",
         "show": true,
