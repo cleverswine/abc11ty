@@ -3,6 +3,7 @@ import * as parser from 'node-html-parser';
 import Fetch from "@11ty/eleventy-fetch";
 import Image from "@11ty/eleventy-img";
 
+const ignoreSections = ["Christmas", "On sale"]
 let result = [];
 
 let trickyHeaders = {
@@ -94,16 +95,20 @@ let sectionButtons = parsedData.querySelectorAll('button.wt-menu__item');
 for (let i = 0; i < sectionButtons.length; i++) {
     let sectionButton = sectionButtons[i];
     if (sectionButton.hasAttribute('data-section-id')) {
-        console.log(`processing ${sectionButton.innerHTML.trim()}`);
+        console.log("===========================================");
+        console.log(`found section ${sectionButton.innerHTML.trim()}`);
+        let sectionTitle = sectionButton.innerHTML.trim().split("(")[0].trim();
         let sectionId = sectionButton.getAttribute('data-section-id');
-        if (sectionId !== '0') {
+        if (ignoreSections.indexOf(sectionTitle) === -1 && sectionId !== '0') {
+            console.log(`processing section ${sectionTitle}`)
             let sectionObj = {
                 sectionId: sectionId,
-                sectionTitle: sectionButton.innerHTML.trim().split("(")[0].trim(),
+                sectionTitle: sectionTitle,
                 items: await getSectionItems(sectionId)
             };
-
             result.push(sectionObj)
+        } else {
+            console.log(`ignoring section ${sectionTitle}`)
         }
     }
 }
