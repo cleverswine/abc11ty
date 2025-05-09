@@ -57,15 +57,13 @@
             {% assign these_products = .section.items | where: "show", true  | sort: "order" %}
             {%- for item in these_products -%}
 
-            <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3 p-2" id="{{ item.id }}">
+            <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3 p-3" id="{{ item.id }}">
                 <div class="card border-secondary">
-                    <img src="{{ item.image }}" class="card-img-top" alt="{{ item.title }}"/>
-                    <div class="card-body text-center">
-                        <h5 class="card-title">{{ item.title | truncate: 40 }}</h5>
-
-                        <a class="card-link" href="{{ item.etsyPage }}" target="_blank">
-                            Buy this on Etsy
-                        </a>
+                    <a href="{{ item.etsyPage }}" target="_blank" class="stretched-link">
+                        <img src="{{ item.image }}" class="card-img-top border border-bottom border-secondary" alt="{{ item.title }}"/>
+                    </a>
+                    <div class="card-body text-center p-2">
+                        <p class="card-text text-truncate">{{ item.title }}</p>
                     </div>
                 </div>
             </div>
