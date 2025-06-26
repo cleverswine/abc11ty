@@ -113,4 +113,5 @@ for (let i = 0; i < sectionButtons.length; i++) {
     }
 }
 
+fs.copyFileSync('_data/boo.json', '_data/boo-old.json');
 fs.writeFileSync('_data/boo.json', JSON.stringify(result, null, 2));
