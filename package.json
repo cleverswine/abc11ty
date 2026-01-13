@@ -22,11 +22,11 @@
   "devDependencies": {    
   },
   "dependencies": {
-    "@11ty/eleventy": "^3.0.0",
-    "@11ty/eleventy-fetch": "^5.0.0",
-    "@11ty/eleventy-img": "^6.0.0",
-    "node-html-parser": "^7.0.0",
-    "bootstrap": "^5.3.3",
-    "bootstrap-icons": "^1.11.3"
+    "@11ty/eleventy": "^3.1.2",
+    "@11ty/eleventy-fetch": "^5.1.1",
+    "@11ty/eleventy-img": "^6.0.4",
+    "node-html-parser": "^7.0.2",
+    "bootstrap": "^5.3.8",
+    "bootstrap-icons": "^1.13.1"
   }
 }
