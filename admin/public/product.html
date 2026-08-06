@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Edit Product — Admin</title>
+  <link rel="stylesheet" href="/assets/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="/assets/css/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="/vendor/quill/quill.snow.css" />
+  <link rel="stylesheet" href="/css/admin.css" />
+</head>
+<body>
+  <div id="admin-nav"></div>
+
+  <main class="container pb-5" style="max-width: 860px;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h1 class="h3 mb-0" id="page-title">New Product</h1>
+      <a href="/index.html" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Back to products
+      </a>
+    </div>
+
+    <form id="product-form">
+      <div class="mb-3">
+        <label class="form-label" for="title">Title</label>
+        <input type="text" class="form-control" id="title" required />
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Description</label>
+        <div id="description-editor"></div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Images</label>
+        <div class="mb-2">
+          <input type="file" id="image-input" accept="image/*" class="form-control" multiple />
+        </div>
+        <div id="image-grid" class="image-grid"></div>
+        <div class="form-text">Click the star on an image to make it the main image.</div>
+      </div>
+
+      <div class="mb-3 form-check">
+        <input type="checkbox" class="form-check-input" id="featured" />
+        <label class="form-check-label" for="featured">Featured (show on main screen)</label>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Categories</label>
+        <div id="category-chips" class="mb-2"></div>
+        <div class="input-group">
+          <input type="text" class="form-control" id="category-input" list="category-options" placeholder="Add a category and press Enter" />
+          <datalist id="category-options"></datalist>
+          <button type="button" class="btn btn-outline-secondary" id="add-category-btn">Add</button>
+        </div>
+      </div>
+
+      <div class="row mb-3">
+        <div class="col-md-4">
+          <label class="form-label" for="link-label">External link label</label>
+          <input type="text" class="form-control" id="link-label" placeholder="e.g. Etsy" />
+        </div>
+        <div class="col-md-8">
+          <label class="form-label" for="link-url">External link URL</label>
+          <input type="url" class="form-control" id="link-url" placeholder="https://www.etsy.com/listing/..." />
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+        <button type="button" class="btn btn-outline-danger d-none" id="delete-btn">
+          <i class="bi bi-trash"></i> Delete product
+        </button>
+        <div class="ms-auto">
+          <a href="/index.html" class="btn btn-link">Cancel</a>
+          <button type="submit" class="btn btn-primary">Save Product</button>
+        </div>
+      </div>
+    </form>
+  </main>
+
+  <script src="/vendor/quill/quill.js"></script>
+  <script src="/js/nav.js"></script>
+  <script src="/js/product-edit.js"></script>
+</body>
+</html>

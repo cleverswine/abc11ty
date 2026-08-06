@@ -1,0 +1,18 @@
+{
+  "name": "abc11ty-admin",
+  "version": "1.0.0",
+  "description": "Self-hosted admin app for managing product listings and site settings for the 11ty site",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.21.2",
+    "multer": "^2.2.0",
+    "quill": "^2.0.3",
+    "sanitize-html": "^2.17.6",
+    "sortablejs": "^1.15.6"
+  }
+}

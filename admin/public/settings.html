@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Site Settings — Admin</title>
+  <link rel="stylesheet" href="/assets/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="/assets/css/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="/css/admin.css" />
+</head>
+<body>
+  <div id="admin-nav"></div>
+
+  <main class="container pb-5" style="max-width: 860px;">
+    <h1 class="h3 mb-3">Site Settings</h1>
+
+    <form id="settings-form">
+      <fieldset class="mb-4">
+        <legend class="h5">General</legend>
+        <div class="mb-3">
+          <label class="form-label" for="site-title">Site title</label>
+          <input type="text" class="form-control" id="site-title" />
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="site-description">Site description</label>
+          <textarea class="form-control" id="site-description" rows="3"></textarea>
+        </div>
+      </fieldset>
+
+      <fieldset class="mb-4">
+        <legend class="h5">SEO</legend>
+        <div class="mb-3">
+          <label class="form-label" for="seo-title">Meta title</label>
+          <input type="text" class="form-control" id="seo-title" />
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="seo-description">Meta description</label>
+          <textarea class="form-control" id="seo-description" rows="2"></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Social share image (og:image)</label>
+          <div class="d-flex align-items-center gap-3">
+            <img id="og-image-preview" src="" alt="" class="product-thumb d-none" />
+            <input type="file" id="og-image-input" accept="image/*" class="form-control" />
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="mb-4">
+        <legend class="h5 d-flex justify-content-between align-items-center">
+          Contact methods
+          <button type="button" class="btn btn-sm btn-outline-secondary" id="add-contact-btn">
+            <i class="bi bi-plus-lg"></i> Add
+          </button>
+        </legend>
+        <div id="contact-rows"></div>
+      </fieldset>
+
+      <fieldset class="mb-4">
+        <legend class="h5 d-flex justify-content-between align-items-center">
+          Social links
+          <button type="button" class="btn btn-sm btn-outline-secondary" id="add-social-btn">
+            <i class="bi bi-plus-lg"></i> Add
+          </button>
+        </legend>
+        <div id="social-rows"></div>
+      </fieldset>
+
+      <div class="pt-3 border-top text-end">
+        <span id="save-status" class="text-success me-3 d-none">Saved</span>
+        <button type="submit" class="btn btn-primary">Save Settings</button>
+      </div>
+    </form>
+  </main>
+
+  <script src="/js/nav.js"></script>
+  <script src="/js/settings.js"></script>
+</body>
+</html>
