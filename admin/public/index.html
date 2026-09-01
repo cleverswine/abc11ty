@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Products — Admin</title>
+  <link rel="stylesheet" href="/assets/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="/assets/css/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="/css/admin.css" />
+</head>
+<body>
+  <div id="admin-nav"></div>
+
+  <main class="container pb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h1 class="h3 mb-0">Products</h1>
+      <a href="/product.html" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> New Product
+      </a>
+    </div>
+    <p class="text-muted small">Drag the handle to reorder products. Order here controls the order 11ty renders them in.</p>
+
+    <div id="product-list" class="list-group"></div>
+    <div id="empty-state" class="empty-state d-none">
+      <p>No products yet.</p>
+      <a href="/product.html" class="btn btn-primary">Create your first product</a>
+    </div>
+  </main>
+
+  <script src="/vendor/sortablejs/Sortable.min.js"></script>
+  <script src="/js/nav.js"></script>
+  <script src="/js/products.js"></script>
+</body>
+</html>
