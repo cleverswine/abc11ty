@@ -13,7 +13,12 @@ services:
       # but guarantees the dev server notices changes admin/ writes to
       # _data/boo.json and picks up a rebuild + live reload.
       - CHOKIDAR_USEPOLLING=true
-    command: sh -c "npm install && npm run serve"
+    # Docker creates the node_modules volume owned by root the first time
+    # it's mounted, so chown it once as root, then drop to the image's
+    # unprivileged "node" user (uid/gid 1000) for the actual install/serve -
+    # everything written to the bind-mounted ./web ends up owned by a
+    # regular user, not root.
+    command: sh -c "chown -R node:node node_modules && su node -c 'npm install && npm run serve'"
 
   admin:
     image: node:20-alpine
@@ -32,8 +37,8 @@ services:
       # the site as reachable from a browser on this machine/network - used
       # by the admin page's "Preview site" link. Update this if you change
       # the web service's host port mapping above.
-      - SITE_URL=http://localhost:9080
-    command: sh -c "npm install && npm start"
+      - SITE_URL=http://192.168.50.210:9080
+    command: sh -c "chown -R node:node node_modules && su node -c 'npm install && npm start'"
 
 volumes:
   web_node_modules:

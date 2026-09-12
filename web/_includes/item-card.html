@@ -19,8 +19,16 @@
 <div class="modal fade" id="img-modal-{{ item.id }}" tabindex="-1" aria-labelledby="img-modal-label-{{ item.id }}" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="img-modal-label-{{ item.id }}">{{ item.title }}</h5>
+            <div class="modal-header align-items-start">
+                <div>
+                    <h5 class="modal-title mb-1" id="img-modal-label-{{ item.id }}">{{ item.title }}</h5>
+                    {% if item.description %}
+                    {% assign description_paragraphs = item.description | split: "\n" %}
+                    {% for paragraph in description_paragraphs %}
+                    <p class="text-muted small {% if forloop.last %}mb-0{% else %}mb-2{% endif %}">{{ paragraph }}</p>
+                    {% endfor %}
+                    {% endif %}
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
