@@ -53,8 +53,19 @@ npm install    # first time only
 npm start      # or: npm run admin, from the repo root
 ```
 
-Then open <http://localhost:4321>. Etsy-sourced sections/items render
-read-only (grey background); anything tagged `"manual": true` is fully
+Or run both the site and the admin tool together with `docker compose up`
+(see `docker-compose.yml`) — the two containers share the same `web/`
+directory, so an edit saved in admin shows up immediately in the site's dev
+server. The admin service reads a `SITE_URL` env var (set in
+`docker-compose.yml`, pointing at the site's *host*-mapped port) and uses it
+to power the "Preview site" link in the admin header; update that env var if
+you change the `web` service's port mapping. Running `admin/server.js`
+directly (not via compose) leaves `SITE_URL` unset, so that link just stays
+hidden.
+
+Then open <http://localhost:4321> (or <http://localhost:9321> via compose).
+Etsy-sourced sections/items render read-only (grey background); anything
+tagged `"manual": true` is fully
 editable — add/edit/delete/reorder items, subcategories, and whole manual
 sections, plus toggle `pinned`/`show`/description on any section (including
 Etsy ones, since those three fields are always hand-set anyway). Each item's

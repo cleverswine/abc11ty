@@ -567,4 +567,14 @@ itemModalForm.addEventListener('submit', async (e) => {
     }
 });
 
+async function loadConfig() {
+    let config = await api('GET', '/api/config');
+    if (config.siteUrl) {
+        let link = document.getElementById('preview-link');
+        link.href = config.siteUrl;
+        link.hidden = false;
+    }
+}
+
 loadAll();
+loadConfig();

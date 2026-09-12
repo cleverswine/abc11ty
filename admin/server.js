@@ -76,6 +76,12 @@ function sanitizeItemInput(body) {
     };
 }
 
+// ---- config ----
+
+app.get('/api/config', (req, res) => {
+    res.json({siteUrl: process.env.SITE_URL || null});
+});
+
 // ---- sections ----
 
 app.get('/api/boo', (req, res) => {
