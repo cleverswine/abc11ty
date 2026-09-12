@@ -1,0 +1,15 @@
+{
+  "name": "abc11ty-admin",
+  "version": "1.0.0",
+  "description": "Local-only admin tool for editing the manually-added parts of _data/boo.json",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.21.2",
+    "multer": "^2.3.0"
+  }
+}

@@ -61,70 +61,27 @@
         {% if section.sectionDescription %}
         <p class="text-body-secondary text-center">{{ section.sectionDescription }}</p>
         {% endif %}
-        {% assign these_products = section.items | where: "show", true | sort: "order" %}
-        {% assign subcategory_groups = these_products | group_by: "subcategory" %}
-        {% for group in subcategory_groups %}
-        {% if group.name %}
-        <h5 class="text-center text-body-secondary mt-3">{{ group.name }}</h5>
-        {% endif %}
+        {% assign these_products = section.items | where: "show", true %}
+        {% if these_products.size > 0 %}
         <div class="row" id="item-grid">
-            {%- for item in group.items -%}
-
-            <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3 p-3" id="{{ item.id }}">
-                <div class="card border-secondary">
-                    {% if item.manual %}
-                    <a href="#" data-bs-toggle="modal" data-bs-target="#img-modal-{{ item.id }}" class="stretched-link">
-                        <img src="{{ item.image }}" class="card-img-top border border-bottom border-secondary" alt="{{ item.title }}"/>
-                    </a>
-                    {% else %}
-                    <a href="{{ item.etsyPage }}" target="_blank" class="stretched-link">
-                        <img src="{{ item.image }}" class="card-img-top border border-bottom border-secondary" alt="{{ item.title }}"/>
-                    </a>
-                    {% endif %}
-                    <div class="card-body text-center p-2">
-                        <p class="card-text text-truncate">{{ item.title }}</p>
-                    </div>
-                </div>
-            </div>
-
-            {% if item.manual %}
-            <div class="modal fade" id="img-modal-{{ item.id }}" tabindex="-1" aria-labelledby="img-modal-label-{{ item.id }}" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="img-modal-label-{{ item.id }}">{{ item.title }}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            {% if item.images and item.images.size > 1 %}
-                            <div id="carousel-{{ item.id }}" class="carousel slide">
-                                <div class="carousel-inner">
-                                    {% for img in item.images %}
-                                    <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                                        <img src="{{ img }}" class="d-block w-100" alt="{{ item.title }}"/>
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                                <button class="carousel-control-prev" type="button" data-bs-target="#carousel-{{ item.id }}" data-bs-slide="prev">
-                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                                    <span class="visually-hidden">Previous</span>
-                                </button>
-                                <button class="carousel-control-next" type="button" data-bs-target="#carousel-{{ item.id }}" data-bs-slide="next">
-                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                                    <span class="visually-hidden">Next</span>
-                                </button>
-                            </div>
-                            {% else %}
-                            <img src="{{ item.images[0] | default: item.image }}" class="d-block w-100" alt="{{ item.title }}"/>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-
-            {%- endfor -%}
+            {% for item in these_products %}
+            {% render "item-card.html", item: item %}
+            {% endfor %}
         </div>
+        {% endif %}
+
+        {% for group in section.subcategories %}
+        {% if group.show != false %}
+        {% assign group_products = group.items | where: "show", true %}
+        {% if group_products.size > 0 %}
+        <h5 class="text-center text-body-secondary mt-3">{{ group.name }}</h5>
+        <div class="row" id="item-grid">
+            {% for item in group_products %}
+            {% render "item-card.html", item: item %}
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endif %}
         {% endfor %}
     </div>
     {% endif %}

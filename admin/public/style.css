@@ -1,0 +1,325 @@
+:root {
+    --accent: #6d6df6;
+    --accent-soft: rgba(109, 109, 246, 0.16);
+    --etsy-muted: #9a9fae;
+    --radius-lg: 0.9rem;
+    --radius-md: 0.6rem;
+
+    --bs-body-bg: #101218;
+    --bs-body-color: #e7e8ee;
+    --bs-border-color: rgba(255, 255, 255, 0.09);
+    --bs-secondary-bg: #1b1e27;
+    --bs-tertiary-bg: #171a21;
+    --bs-primary: var(--accent);
+    --bs-primary-rgb: 109, 109, 246;
+    --bs-link-color: var(--accent);
+    --bs-link-hover-color: #8888ff;
+    --bs-border-radius: var(--radius-md);
+    --bs-border-radius-sm: 0.4rem;
+    --bs-border-radius-lg: var(--radius-lg);
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+    letter-spacing: -0.01px;
+}
+
+/* icons are decorative and sit inside clickable controls whose handlers key
+   off the button element itself (data-action etc.) - without this, a click
+   landing exactly on the glyph would target the <i> instead of the button. */
+i.bi {
+    pointer-events: none;
+}
+
+code {
+    color: #f2a4c7;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 0.1rem 0.35rem;
+    border-radius: 0.3rem;
+    font-size: 0.85em;
+}
+
+/* ---- header ---- */
+
+.admin-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgba(16, 18, 24, 0.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--bs-border-color);
+}
+
+.admin-logo {
+    font-weight: 700;
+    font-size: 1.15rem;
+    letter-spacing: -0.02em;
+}
+
+.admin-hint {
+    background: var(--bs-tertiary-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    color: var(--bs-secondary-color, #b6b9c4);
+    font-size: 0.88rem;
+    margin-bottom: 1.25rem;
+}
+
+.badge-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 0.3rem;
+    vertical-align: middle;
+}
+
+.badge-dot-etsy {
+    background: var(--etsy-muted);
+}
+
+.badge-dot-manual {
+    background: var(--accent);
+    margin-left: 0.75rem;
+}
+
+.show-indicator {
+    color: var(--bs-secondary-color, #6b7080);
+    font-size: 1.4rem;
+    opacity: 0.7;
+}
+
+/* ---- section cards ---- */
+
+#sections > details {
+    border-radius: var(--radius-lg) !important;
+    border: 1px solid var(--bs-border-color) !important;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    margin-bottom: 1rem !important;
+}
+
+#sections > details[open] {
+    border-color: rgba(109, 109, 246, 0.35) !important;
+}
+
+#sections > details > summary {
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+    padding: 0.9rem 1.1rem !important;
+    transition: background-color 0.12s ease-in-out;
+}
+
+#sections > details > summary::-webkit-details-marker {
+    display: none;
+}
+
+#sections > details > summary:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+#sections > details > summary::before {
+    content: "\25B8";
+    display: inline-block;
+    margin-right: 0.6rem;
+    color: var(--bs-secondary-color, #8b8fa0);
+    transition: transform 0.15s ease-in-out;
+}
+
+#sections > details[open] > summary::before {
+    transform: rotate(90deg);
+}
+
+.new-section-card {
+    border-radius: var(--radius-lg);
+    border: 1px dashed var(--bs-border-color);
+    background: transparent;
+}
+
+/* ---- items ---- */
+
+.item-row {
+    position: relative;
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 2.5rem 0.75rem 0.75rem;
+    margin-bottom: 0.5rem;
+    background: var(--bs-tertiary-bg);
+    transition: border-color 0.12s ease-in-out;
+}
+
+.show-indicator-corner {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+    font-size: 1.15rem;
+}
+
+.item-row:hover {
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+.etsy-readonly {
+    background: transparent;
+    opacity: 0.75;
+}
+
+.etsy-readonly:hover {
+    opacity: 1;
+}
+
+/* ---- icon-only buttons (item-level actions, reorder controls) ---- */
+
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    border: none;
+    background: transparent;
+    border-radius: 0.4rem;
+    color: var(--bs-secondary-color, #8b8fa0);
+    cursor: pointer;
+    transition: background-color 0.12s ease-in-out, color 0.12s ease-in-out;
+}
+
+.btn-icon:hover {
+    background: rgba(255, 255, 255, 0.07);
+    color: var(--bs-body-color);
+}
+
+.btn-icon.btn-icon-danger:hover {
+    background: rgba(255, 90, 90, 0.14);
+    color: #ff8787;
+}
+
+.btn-icon.btn-icon-warning {
+    color: #ffb84d;
+}
+
+.btn-icon.btn-icon-warning:hover {
+    background: rgba(255, 184, 77, 0.14);
+    color: #ffc766;
+}
+
+.btn-icon:disabled {
+    color: rgba(255, 255, 255, 0.15);
+    cursor: default;
+    background: transparent;
+}
+
+.reorder-stack {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.item-row img {
+    width: 140px;
+    height: 105px;
+    object-fit: cover;
+    border-radius: 0.4rem;
+    flex: 0 0 auto;
+}
+
+/* ---- image thumbnail strip (per manual item, on the page) ---- */
+
+.thumb-strip {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.6rem;
+}
+
+.thumb-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.15rem;
+    background: var(--bs-secondary-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--radius-md);
+    padding: 0.25rem;
+}
+
+.thumb-chip img {
+    width: 110px;
+    height: 110px;
+    object-fit: cover;
+    border-radius: 0.35rem;
+}
+
+.thumb-upload-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 110px;
+    height: 110px;
+    border: 1px dashed var(--bs-border-color);
+    border-radius: var(--radius-md);
+    color: var(--bs-secondary-color, #8b8fa0);
+    font-size: 2.2rem;
+    cursor: pointer;
+}
+
+.thumb-upload-label:hover {
+    color: var(--bs-body-color);
+    border-color: var(--bs-secondary-color, #8b8fa0);
+}
+
+.btn-arrow {
+    border: none;
+    background: none;
+    padding: 0 0.2rem;
+    line-height: 1;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--bs-secondary-color, #8b8fa0);
+    cursor: pointer;
+}
+
+.btn-arrow:hover {
+    color: var(--bs-body-color);
+}
+
+.btn-arrow:disabled {
+    color: var(--bs-border-color);
+    cursor: default;
+    opacity: 0.4;
+}
+
+/* ---- subcategories ---- */
+
+.subcategory-block {
+    background: var(--accent-soft);
+    border: 1px solid rgba(109, 109, 246, 0.25);
+    border-radius: var(--radius-md);
+    padding: 0.9rem 1rem;
+    margin: 0.9rem 0;
+}
+
+/* ---- add-item modal ---- */
+
+dialog {
+    color: var(--bs-body-color);
+    background: var(--bs-secondary-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    width: min(520px, 92vw);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+dialog::backdrop {
+    background: rgba(6, 7, 10, 0.7);
+    backdrop-filter: blur(2px);
+}
+
+dialog .form-select:disabled,
+dialog .form-control:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}

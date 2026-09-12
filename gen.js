@@ -5,7 +5,10 @@ import Image from "@11ty/eleventy-img";
 
 const ignoreSections = ["Christmas", "On sale"]
 const skipFetch = process.argv.includes('--skip-fetch');
+const booPath = '_data/boo.json';
 let result = [];
+
+let previousBoo = fs.existsSync(booPath) ? JSON.parse(fs.readFileSync(booPath, 'utf8')) : null;
 
 let trickyHeaders = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
@@ -71,10 +74,9 @@ async function getSectionItems(sectionId) {
         items.push({
             id: productId,
             show: true,
-            order: 0,
             title: title.split(",")[0],
             description: title,
-            image: imgStats.png[0].outputPath,
+            images: [imgStats.png[0].outputPath],
             etsyPage: listing.attrs["href"].split("?")[0]
         });
     }
@@ -82,8 +84,12 @@ async function getSectionItems(sectionId) {
 }
 
 if (skipFetch) {
-    console.log('--skip-fetch passed, reusing sections already in _data/boo.json instead of hitting Etsy');
-    result = JSON.parse(fs.readFileSync('_data/boo.json', 'utf8'));
+    console.log('--skip-fetch passed, reusing Etsy-sourced sections already in _data/boo.json instead of hitting Etsy');
+    // drop manual sections/items here - preserveManualContent() below adds them back,
+    // so this is just the "no new scrape happened" baseline it merges onto.
+    result = (previousBoo || [])
+        .filter(section => !section.manual)
+        .map(section => ({...section, items: section.items.filter(item => !item.manual)}));
 } else {
     let data = "";
     try {
@@ -120,67 +126,46 @@ if (skipFetch) {
     }
 }
 
-function flattenManualItems(manualSection) {
-    // manual items can be listed flat (section.items) and/or grouped under
-    // section.subcategories - both end up as a flat list tagged with a
-    // "subcategory" field, which is what index.html actually groups on.
-    let items = (manualSection.items || []).map(item => ({...item, manual: true}));
-    for (let group of manualSection.subcategories || []) {
-        // a hidden subcategory hides all of its items; index.html already
-        // filters items on "show", so folding the group's flag into each
-        // item's "show" hides the whole group (and its heading) for free.
-        let groupShown = group.show !== false;
-        for (let item of group.items || []) {
-            items.push({
-                ...item,
-                subcategory: group.name,
-                manual: true,
-                show: item.show !== false && groupShown,
-            });
-        }
+function preserveManualContent(freshResult, previousBoo) {
+    if (!previousBoo) {
+        return freshResult;
     }
-    return items;
-}
+    // sections tagged "manual" (no matching Etsy section) are carried forward
+    // untouched, subcategories and all - gen.js never has to understand their
+    // internal shape, it just never overwrites anything tagged manual.
+    let manualOnlySections = previousBoo.filter(section => section.manual);
 
-function mergeManualData(result) {
-    let manualPath = '_data/boo-manual.json';
-    if (!fs.existsSync(manualPath)) {
-        return result;
-    }
-    // drop artifacts from a previous merge so re-running (e.g. with --skip-fetch) is idempotent
-    result = result.filter(s => !s.manual);
-    for (let section of result) {
-        section.items = section.items.filter(item => !item.manual);
-        delete section.pinned;
-        delete section.sectionDescription;
-        delete section.show;
-    }
-    let manualSections = JSON.parse(fs.readFileSync(manualPath, 'utf8'));
-    for (let manualSection of manualSections) {
-        let manualItems = flattenManualItems(manualSection);
-        let existing = result.find(s => s.sectionId === manualSection.sectionId);
-        if (existing) {
-            existing.items.push(...manualItems);
-            if (manualSection.pinned) {
-                existing.pinned = true;
-            }
-            if (manualSection.sectionDescription) {
-                existing.sectionDescription = manualSection.sectionDescription;
-            }
-            if (typeof manualSection.show === 'boolean') {
-                existing.show = manualSection.show;
-            }
-        } else {
-            let {items, subcategories, ...sectionFields} = manualSection;
-            result.push({...sectionFields, manual: true, items: manualItems});
+    for (let section of freshResult) {
+        let previousSection = previousBoo.find(s => s.sectionId === section.sectionId && !s.manual);
+        if (!previousSection) {
+            continue;
+        }
+        // manual items appended onto a real Etsy section carry their own
+        // "manual" tag per item, so they're easy to pick back out and re-append.
+        let manualItems = (previousSection.items || []).filter(item => item.manual);
+        section.items.push(...manualItems);
+        // raw Etsy scrapes never set these fields, so their presence here can
+        // only mean they were set by hand - safe to always carry forward.
+        if (typeof previousSection.pinned === 'boolean') {
+            section.pinned = previousSection.pinned;
+        }
+        if (previousSection.sectionDescription) {
+            section.sectionDescription = previousSection.sectionDescription;
+        }
+        if (typeof previousSection.show === 'boolean') {
+            section.show = previousSection.show;
         }
     }
+
+    let combined = [...freshResult, ...manualOnlySections];
     // pinned sections float to the top, preserving relative order otherwise
-    result.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
-    return result;
+    combined.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+    return combined;
 }
 
-result = mergeManualData(result);
+result = preserveManualContent(result, previousBoo);
 
-fs.copyFileSync('_data/boo.json', '_data/boo-old.json');
-fs.writeFileSync('_data/boo.json', JSON.stringify(result, null, 2));
+if (previousBoo) {
+    fs.copyFileSync(booPath, '_data/boo-old.json');
+}
+fs.writeFileSync(booPath, JSON.stringify(result, null, 2));
