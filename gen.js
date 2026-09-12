@@ -120,6 +120,28 @@ if (skipFetch) {
     }
 }
 
+function flattenManualItems(manualSection) {
+    // manual items can be listed flat (section.items) and/or grouped under
+    // section.subcategories - both end up as a flat list tagged with a
+    // "subcategory" field, which is what index.html actually groups on.
+    let items = (manualSection.items || []).map(item => ({...item, manual: true}));
+    for (let group of manualSection.subcategories || []) {
+        // a hidden subcategory hides all of its items; index.html already
+        // filters items on "show", so folding the group's flag into each
+        // item's "show" hides the whole group (and its heading) for free.
+        let groupShown = group.show !== false;
+        for (let item of group.items || []) {
+            items.push({
+                ...item,
+                subcategory: group.name,
+                manual: true,
+                show: item.show !== false && groupShown,
+            });
+        }
+    }
+    return items;
+}
+
 function mergeManualData(result) {
     let manualPath = '_data/boo-manual.json';
     if (!fs.existsSync(manualPath)) {
@@ -131,10 +153,11 @@ function mergeManualData(result) {
         section.items = section.items.filter(item => !item.manual);
         delete section.pinned;
         delete section.sectionDescription;
+        delete section.show;
     }
     let manualSections = JSON.parse(fs.readFileSync(manualPath, 'utf8'));
     for (let manualSection of manualSections) {
-        let manualItems = (manualSection.items || []).map(item => ({...item, manual: true}));
+        let manualItems = flattenManualItems(manualSection);
         let existing = result.find(s => s.sectionId === manualSection.sectionId);
         if (existing) {
             existing.items.push(...manualItems);
@@ -144,8 +167,12 @@ function mergeManualData(result) {
             if (manualSection.sectionDescription) {
                 existing.sectionDescription = manualSection.sectionDescription;
             }
+            if (typeof manualSection.show === 'boolean') {
+                existing.show = manualSection.show;
+            }
         } else {
-            result.push({...manualSection, manual: true, items: manualItems});
+            let {items, subcategories, ...sectionFields} = manualSection;
+            result.push({...sectionFields, manual: true, items: manualItems});
         }
     }
     // pinned sections float to the top, preserving relative order otherwise

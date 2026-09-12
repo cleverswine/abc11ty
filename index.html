@@ -39,26 +39,36 @@
 
 </div>
 
-<div class="flex-column flex-md-row text-center p-1" style="background-color: #00567b;">
+<div class="abc-nav">
+    <button data-role="nav" data-id="0">
+        All
+    </button>
     {% for section in boo %}
-    <button data-role="nav" data-id="{{ section.sectionId }}" class="btn bp-2 fw-bold text-white">
+    {% if section.show != false %}
+    <button data-role="nav" data-id="{{ section.sectionId }}">
         {{ section.sectionTitle }}
     </button>
+    {% endif %}
     {% endfor %}
 </div>
 
 <div class="container mt-3">
 
     {% for section in boo %}
-    {% if section.sectionId != "0" %}
+    {% if section.sectionId != "0" and section.show != false %}
     <div data-role="item" data-section-id="{{ section.sectionId }}" class="mb-2">
         <h4>{{ section.sectionTitle }}</h4>
         {% if section.sectionDescription %}
         <p class="text-body-secondary text-center">{{ section.sectionDescription }}</p>
         {% endif %}
+        {% assign these_products = section.items | where: "show", true | sort: "order" %}
+        {% assign subcategory_groups = these_products | group_by: "subcategory" %}
+        {% for group in subcategory_groups %}
+        {% if group.name %}
+        <h5 class="text-center text-body-secondary mt-3">{{ group.name }}</h5>
+        {% endif %}
         <div class="row" id="item-grid">
-            {% assign these_products = .section.items | where: "show", true  | sort: "order" %}
-            {%- for item in these_products -%}
+            {%- for item in group.items -%}
 
             <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3 p-3" id="{{ item.id }}">
                 <div class="card border-secondary">
@@ -115,13 +125,14 @@
 
             {%- endfor -%}
         </div>
+        {% endfor %}
     </div>
     {% endif %}
     {%- endfor -%}
 
     <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
         <div class="col-md-4 d-flex align-items-center">
-            <span class="mb-3 mb-md-0 text-body-secondary">&copy; 2025 Auntie Boo Crafts</span>
+            <span class="mb-3 mb-md-0 text-body-secondary">&copy; {{ 'now' | date: "%Y" }} Auntie Boo Crafts</span>
         </div>
 
         <div class="nav col-md-4 justify-content-end d-flex">

@@ -58,23 +58,41 @@ sections in `boo.json`:
     "sectionTitle": "Live Events",
     "sectionDescription": "These are items that are available at live events.",
     "pinned": true,
+    "show": true,
     "items": [
       {
-        "id": "live-events-1",
+        "id": "live-events-misc",
         "show": true,
         "order": 0,
-        "title": "Composition Notebook",
-        "description": "Composition Notebook",
-        "image": "img-product/live-events-1.png",
-        "images": ["img-product/live-events-1.png", "img-product/live-events-2.png"],
+        "title": "Something without a subcategory",
+        "description": "Something without a subcategory",
+        "image": "img-product/live-events-misc.png",
         "etsyPage": "https://www.etsy.com/shop/AuntieBooCrafts"
+      }
+    ],
+    "subcategories": [
+      {
+        "name": "Composition Notebooks",
+        "show": true,
+        "items": [
+          {
+            "id": "live-events-1",
+            "show": true,
+            "order": 0,
+            "title": "Composition Notebook",
+            "description": "Composition Notebook",
+            "image": "img-product/live-events-1.png",
+            "images": ["img-product/live-events-1.png", "img-product/live-events-2.png"],
+            "etsyPage": "https://www.etsy.com/shop/AuntieBooCrafts"
+          }
+        ]
       }
     ]
   }
 ]
 ```
 
-- **`sectionId` matches an existing Etsy section** — the entry's `items` are
+- **`sectionId` matches an existing Etsy section** — the entry's items are
   appended to that section's items on every merge.
 - **`sectionId` doesn't match any Etsy section** — the whole entry becomes a
   new, fully hand-made section (this is how "Live Events" was added).
@@ -83,16 +101,32 @@ sections in `boo.json`:
 - **`pinned`** — optional; set `true` to float that section to the front of
   the nav/listing, ahead of unpinned sections. Order among pinned sections
   (and among unpinned ones) is otherwise preserved.
+- **`show`** — optional, at both the section level and the subcategory-group
+  level; set `false` to hide it entirely (nav button and content for a
+  section, or the sub-heading and its items for a subcategory group) without
+  deleting the data. Defaults to shown if omitted — same convention as the
+  existing per-item `show`. A hidden subcategory is really just a shortcut
+  for setting `show: false` on every item in that group.
 - **`images`** — optional array of image paths for an item. Items added via
   `boo-manual.json` are clickable and open an image-viewer modal instead of
   linking out to Etsy; if `images` has more than one entry the modal shows a
   Bootstrap carousel, otherwise it shows a single image (falling back to
   `image` if `images` is omitted). Etsy-sourced items are unaffected and
   still link straight to their Etsy listing.
+- **`subcategories`** — optional array of `{ "name": ..., "items": [...] }`
+  groups. Each group's items render together under a `name` sub-heading
+  within the section (e.g. "Live Events" groups items under "Composition
+  Notebooks", "Bookmarks", "Hair Clips", "Paperclips", "Sticky Notes"). A
+  section can mix a flat top-level `items` list (no sub-heading) with
+  `subcategories` (grouped) — use whichever reads more naturally for that
+  section; a section with no `subcategories` renders as a single flat grid,
+  same as before.
 - Product images for manual items should be placed in `img-product/` (resize
   to 340px wide to match the Etsy-scraped images — see how `gen.js` calls
   `@11ty/eleventy-img` for the exact settings).
 
-Every section/item merged in from `boo-manual.json` is tagged with
-`"manual": true` in the generated `boo.json`, which is how `index.html`
-decides to render the modal/carousel behavior instead of an Etsy link.
+`gen.js` flattens `subcategories` back into a single `items` list (each item
+tagged with a `subcategory` field) before merging, and every section/item
+merged in from `boo-manual.json` is tagged with `"manual": true` in the
+generated `boo.json` — that's how `index.html` decides to group by
+subcategory and render the modal/carousel behavior instead of an Etsy link.
