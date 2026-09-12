@@ -1,5 +1,38 @@
 [
   {
+    "sectionId": "live-events",
+    "sectionTitle": "Live Events",
+    "sectionDescription": "These are items that are available at live events.",
+    "pinned": true,
+    "items": [
+      {
+        "id": "live-events-1",
+        "show": true,
+        "order": 0,
+        "title": "Composition Notebook",
+        "description": "Composition Notebook",
+        "image": "img-product/live-events-1.png",
+        "etsyPage": "https://www.etsy.com/shop/AuntieBooCrafts",
+        "manual": true
+      },
+      {
+        "id": "live-events-2",
+        "show": true,
+        "order": 1,
+        "title": "K-Pop Composition Notebook",
+        "description": "K-Pop Composition Notebook",
+        "image": "img-product/kpop-notebook-1.png",
+        "images": [
+          "img-product/kpop-notebook-1.png",
+          "img-product/kpop-notebook-2.png"
+        ],
+        "etsyPage": "https://www.etsy.com/shop/AuntieBooCrafts",
+        "manual": true
+      }
+    ],
+    "manual": true
+  },
+  {
     "sectionId": "38581786",
     "sectionTitle": "Keychains",
     "items": [

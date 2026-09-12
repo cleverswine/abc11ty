@@ -4,6 +4,7 @@ import Fetch from "@11ty/eleventy-fetch";
 import Image from "@11ty/eleventy-img";
 
 const ignoreSections = ["Christmas", "On sale"]
+const skipFetch = process.argv.includes('--skip-fetch');
 let result = [];
 
 let trickyHeaders = {
@@ -80,39 +81,79 @@ async function getSectionItems(sectionId) {
     return items;
 }
 
-let data = "";
-try {
-    data = await Fetch("https://www.etsy.com/shop/auntieboocrafts", {
-        duration: "1d",
-        type: "html",
-        fetchOptions: {headers: trickyHeaders,},
-    });
-} catch (e) {
-    console.log(e);
-}
+if (skipFetch) {
+    console.log('--skip-fetch passed, reusing sections already in _data/boo.json instead of hitting Etsy');
+    result = JSON.parse(fs.readFileSync('_data/boo.json', 'utf8'));
+} else {
+    let data = "";
+    try {
+        data = await Fetch("https://www.etsy.com/shop/auntieboocrafts", {
+            duration: "1d",
+            type: "html",
+            fetchOptions: {headers: trickyHeaders,},
+        });
+    } catch (e) {
+        console.log(e);
+    }
 
-let parsedData = parser.parse(data);
-let sectionButtons = parsedData.querySelectorAll('button.wt-menu__item');
-for (let i = 0; i < sectionButtons.length; i++) {
-    let sectionButton = sectionButtons[i];
-    if (sectionButton.hasAttribute('data-section-id')) {
-        console.log("===========================================");
-        console.log(`found section ${sectionButton.innerHTML.trim()}`);
-        let sectionTitle = sectionButton.innerHTML.trim().split("(")[0].trim();
-        let sectionId = sectionButton.getAttribute('data-section-id');
-        if (ignoreSections.indexOf(sectionTitle) === -1 && sectionId !== '0') {
-            console.log(`processing section ${sectionTitle}`)
-            let sectionObj = {
-                sectionId: sectionId,
-                sectionTitle: sectionTitle,
-                items: await getSectionItems(sectionId)
-            };
-            result.push(sectionObj)
-        } else {
-            console.log(`ignoring section ${sectionTitle}`)
+    let parsedData = parser.parse(data);
+    let sectionButtons = parsedData.querySelectorAll('button.wt-menu__item');
+    for (let i = 0; i < sectionButtons.length; i++) {
+        let sectionButton = sectionButtons[i];
+        if (sectionButton.hasAttribute('data-section-id')) {
+            console.log("===========================================");
+            console.log(`found section ${sectionButton.innerHTML.trim()}`);
+            let sectionTitle = sectionButton.innerHTML.trim().split("(")[0].trim();
+            let sectionId = sectionButton.getAttribute('data-section-id');
+            if (ignoreSections.indexOf(sectionTitle) === -1 && sectionId !== '0') {
+                console.log(`processing section ${sectionTitle}`)
+                let sectionObj = {
+                    sectionId: sectionId,
+                    sectionTitle: sectionTitle,
+                    items: await getSectionItems(sectionId)
+                };
+                result.push(sectionObj)
+            } else {
+                console.log(`ignoring section ${sectionTitle}`)
+            }
         }
     }
 }
+
+function mergeManualData(result) {
+    let manualPath = '_data/boo-manual.json';
+    if (!fs.existsSync(manualPath)) {
+        return result;
+    }
+    // drop artifacts from a previous merge so re-running (e.g. with --skip-fetch) is idempotent
+    result = result.filter(s => !s.manual);
+    for (let section of result) {
+        section.items = section.items.filter(item => !item.manual);
+        delete section.pinned;
+        delete section.sectionDescription;
+    }
+    let manualSections = JSON.parse(fs.readFileSync(manualPath, 'utf8'));
+    for (let manualSection of manualSections) {
+        let manualItems = (manualSection.items || []).map(item => ({...item, manual: true}));
+        let existing = result.find(s => s.sectionId === manualSection.sectionId);
+        if (existing) {
+            existing.items.push(...manualItems);
+            if (manualSection.pinned) {
+                existing.pinned = true;
+            }
+            if (manualSection.sectionDescription) {
+                existing.sectionDescription = manualSection.sectionDescription;
+            }
+        } else {
+            result.push({...manualSection, manual: true, items: manualItems});
+        }
+    }
+    // pinned sections float to the top, preserving relative order otherwise
+    result.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+    return result;
+}
+
+result = mergeManualData(result);
 
 fs.copyFileSync('_data/boo.json', '_data/boo-old.json');
 fs.writeFileSync('_data/boo.json', JSON.stringify(result, null, 2));
