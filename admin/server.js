@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const rootDir = path.resolve(__dirname, '..');
+const rootDir = path.resolve(__dirname, '..', 'web');
 const booPath = path.join(rootDir, '_data', 'boo.json');
 const booOldPath = path.join(rootDir, '_data', 'boo-old.json');
 const imgProductDir = path.join(rootDir, 'img-product');

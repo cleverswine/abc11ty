@@ -2,18 +2,37 @@
 
 Auntie Boo Crafts built by 11ty
 
-```shell
-# update listings
-node gen.js
-npm run build
+## Repo layout
 
-# update bootstrap
+Two independent Node projects live side by side, each with its own
+`package.json`/`node_modules`:
+
+- **`web/`** — the 11ty site itself: `index.html`, `gen.js`, `_data/boo.json`,
+  `img-product/`, `css/`, `js/`, etc. This is what Netlify builds and deploys
+  (see `netlify.toml`, which sets `base = "web"`).
+- **`admin/`** — the local-only admin tool for editing `web/_data/boo.json`
+  (see [Admin tool](#admin-tool) below).
+
+The root `package.json` is just a thin wrapper: `npm run build`/`serve`/`clean`
+delegate to `web/`, and `npm run admin` delegates to `admin/`, so most
+day-to-day commands work the same from the repo root.
+
+```shell
+# update listings (run from web/, since gen.js isn't wrapped at the root)
+cd web
+node gen.js
+cd ..
+
+# build/serve (from the repo root - delegates into web/)
+npm run build
+npm run serve
+
+# update vendored bootstrap (run from web/, where its node_modules/css live)
+cd web
 cp ./node_modules/bootstrap/dist/css/bootstrap.min.css ./css/
 cp ./node_modules/bootstrap/dist/js/bootstrap.min.js ./js/
 cp ./node_modules/bootstrap-icons/font/fonts/* ./css/fonts/
-
-# run locally
-npm run serve
+cd ..
 
 # rebuild site
 git add --all
@@ -23,8 +42,10 @@ git push
 
 ## Admin tool
 
-A small local-only admin page for editing the manual parts of `_data/boo.json`
-without hand-editing JSON lives in `admin/`:
+A small local-only admin page for editing the manual parts of
+`web/_data/boo.json` without hand-editing JSON lives in `admin/`. It resolves
+all its paths (`_data/`, `img-product/`, `css/`) relative to `web/`, so it
+always edits the site's actual data regardless of where you run it from:
 
 ```shell
 cd admin
