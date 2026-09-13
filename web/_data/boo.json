@@ -4,7 +4,7 @@
     "sectionTitle": "In Person Events",
     "sectionDescription": "These are items that are available at in person events.",
     "pinned": true,
-    "show": false,
+    "show": true,
     "manual": true,
     "subcategories": [
       {
