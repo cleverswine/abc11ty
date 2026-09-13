@@ -119,9 +119,62 @@ button[data-role="nav"].active {
     -webkit-touch-callout: none;
 }
 
+.abc-multi-img-badge {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.55);
+    color: #ffffff;
+    font-size: 0.9rem;
+    pointer-events: none;
+}
+
 .modal-body .carousel-control-prev,
 .modal-body .carousel-control-next {
     opacity: 0.9;
+}
+
+.abc-carousel-thumbs {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.abc-carousel-thumb {
+    padding: 0;
+    line-height: 0;
+    background: none;
+    border: 2px solid transparent;
+    border-radius: 0.35rem;
+    overflow: hidden;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity .15s ease-in-out, border-color .15s ease-in-out;
+}
+
+.abc-carousel-thumb img {
+    width: 56px;
+    height: 56px;
+    object-fit: cover;
+    display: block;
+}
+
+.abc-carousel-thumb:hover {
+    opacity: 1;
+}
+
+.abc-carousel-thumb.active {
+    opacity: 1;
+    border-color: #4f6fa1;
 }
 
 .modal-body .carousel-control-prev-icon,

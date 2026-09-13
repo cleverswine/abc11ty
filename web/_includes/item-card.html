@@ -9,6 +9,11 @@
             <img src="{{ item.images[0] }}" class="card-img-top border border-bottom border-secondary abc-product-img" alt="{{ item.title }}"/>
         </a>
         {% endif %}
+        {% if item.images.size > 1 %}
+        <span class="abc-multi-img-badge" title="Multiple images" aria-label="Multiple images">
+            <i class="bi bi-images"></i>
+        </span>
+        {% endif %}
         <div class="card-body text-center p-2">
             <p class="card-text text-truncate">{{ item.title }}</p>
         </div>
@@ -49,6 +54,13 @@
                         <span class="carousel-control-next-icon" aria-hidden="true"></span>
                         <span class="visually-hidden">Next</span>
                     </button>
+                </div>
+                <div class="abc-carousel-thumbs">
+                    {% for img in item.images %}
+                    <button type="button" class="abc-carousel-thumb {% if forloop.first %}active{% endif %}" data-bs-target="#carousel-{{ item.id }}" data-bs-slide-to="{{ forloop.index0 }}" aria-label="View image {{ forloop.index }} of {{ item.images.size }}">
+                        <img src="{{ img }}" alt=""/>
+                    </button>
+                    {% endfor %}
                 </div>
                 {% else %}
                 <img src="{{ item.images[0] }}" class="d-block w-100 abc-product-img" alt="{{ item.title }}"/>
