@@ -39,6 +39,16 @@ code {
     font-size: 0.85em;
 }
 
+/* ---- mobile ---- */
+
+@media (max-width: 767.98px) {
+    .container {
+        --bs-gutter-x: 0.5rem;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+}
+
 /* ---- header ---- */
 
 .admin-header {
