@@ -251,10 +251,13 @@ sectionsEl.addEventListener('click', async (e) => {
 
     if (target.matches('[data-remove-image]')) {
         if (!itemCard0) return;
-        if (!confirm('Remove this image?')) return;
         let itemId = itemCard0.dataset.itemCard;
         let item = findItemInBoo(sectionId, subcategoryName0, itemId);
         let path = target.closest('.thumb-chip').dataset.path;
+        let message = `Remove this image from "${item.title}"?\n\n` +
+            `This will remove it from the item's image list, so it will no longer show on the site or in the image-viewer modal.\n\n` +
+            `This cannot be undone from here - the image file itself will remain in img-product/ on disk, but you would need to manually add it back to this item if you change your mind.`;
+        if (!confirm(message)) return;
         let images = (item.images || []).filter(p => p !== path);
         await api('PATCH', itemUrl(sectionId, subcategoryName0, itemId), {images});
         await loadAll();
@@ -286,7 +289,18 @@ sectionsEl.addEventListener('click', async (e) => {
     }
 
     if (action === 'delete-section') {
-        if (!confirm('Delete this whole section?')) return;
+        let section = findSectionInBoo(sectionId);
+        let subcats = section.subcategories || [];
+        let subItems = subcats.flatMap(g => g.items || []);
+        let totalItems = (section.items || []).length + subItems.length;
+        let message = `Delete the section "${section.sectionTitle}"?\n\n` +
+            `This will permanently delete:\n` +
+            `- The section itself, including its title, description, and pinned/visibility settings\n` +
+            `- ${totalItems} item${totalItems === 1 ? '' : 's'} in it` +
+            (subcats.length ? `, including ${subItems.length} inside ${subcats.length} subcategor${subcats.length === 1 ? 'y' : 'ies'}\n` : '\n') +
+            (subcats.length ? `- ${subcats.length} subcategor${subcats.length === 1 ? 'y' : 'ies'}\n` : '') +
+            `\nThis cannot be undone. (Image files in img-product/ are not deleted from disk - only removed from this section's data.)`;
+        if (!confirm(message)) return;
         await api('DELETE', `/api/sections/${encodeURIComponent(sectionId)}`);
         await loadAll();
         return;
@@ -311,7 +325,14 @@ sectionsEl.addEventListener('click', async (e) => {
     }
 
     if (action === 'delete-subcategory') {
-        if (!confirm('Delete this subcategory and all its items?')) return;
+        let group = findSubcategoryInBoo(sectionId, subcategoryName);
+        let items = group.items || [];
+        let message = `Delete the subcategory "${group.name}"?\n\n` +
+            `This will permanently delete:\n` +
+            `- The subcategory itself, including its visibility setting\n` +
+            `- ${items.length} item${items.length === 1 ? '' : 's'} inside it\n` +
+            `\nThis cannot be undone. (Image files in img-product/ are not deleted from disk - only removed from this subcategory's data.)`;
+        if (!confirm(message)) return;
         await api('DELETE', `/api/sections/${encodeURIComponent(sectionId)}/subcategories/${encodeURIComponent(subcategoryName)}`);
         await loadAll();
         return;
@@ -337,7 +358,14 @@ sectionsEl.addEventListener('click', async (e) => {
     }
 
     if (action === 'delete-item') {
-        if (!confirm('Delete this item?')) return;
+        let item = findItemInBoo(sectionId, subcategoryName, itemId);
+        let images = item.images || [];
+        let message = `Delete the item "${item.title}"?\n\n` +
+            `This will permanently delete:\n` +
+            `- The item itself, including its title, description, and Etsy link\n` +
+            `- Its ${images.length} image reference${images.length === 1 ? '' : 's'}\n` +
+            `\nThis cannot be undone. (Image files in img-product/ are not deleted from disk - only this item's reference to them.)`;
+        if (!confirm(message)) return;
         await api('DELETE', itemUrl(sectionId, subcategoryName, itemId));
         await loadAll();
         return;
