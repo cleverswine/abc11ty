@@ -55,6 +55,13 @@
                         <span class="visually-hidden">Next</span>
                     </button>
                 </div>
+                <div class="abc-carousel-thumbs">
+                    {% for img in item.images %}
+                    <button type="button" class="abc-carousel-thumb {% if forloop.first %}active{% endif %}" data-bs-target="#carousel-{{ item.id }}" data-bs-slide-to="{{ forloop.index0 }}" aria-label="View image {{ forloop.index }} of {{ item.images.size }}">
+                        <img src="{{ img }}" alt=""/>
+                    </button>
+                    {% endfor %}
+                </div>
                 {% else %}
                 <img src="{{ item.images[0] }}" class="d-block w-100 abc-product-img" alt="{{ item.title }}"/>
                 {% endif %}

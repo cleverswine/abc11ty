@@ -14,6 +14,17 @@ document.addEventListener('dragstart', (e) => {
     }
 });
 
+// Keep the thumbnail strip below an image-modal carousel in sync with
+// whichever slide is currently showing.
+document.querySelectorAll('.carousel').forEach((carouselEl) => {
+    carouselEl.addEventListener('slide.bs.carousel', (event) => {
+        let thumbs = carouselEl.parentElement.querySelectorAll('.abc-carousel-thumb');
+        thumbs.forEach((thumb, idx) => {
+            thumb.classList.toggle('active', idx === event.to);
+        });
+    });
+});
+
 const navButtons = document.querySelectorAll('button[data-role="nav"]');
 const itemDivs = document.querySelectorAll('div[data-role="item"]');
 

@@ -141,6 +141,42 @@ button[data-role="nav"].active {
     opacity: 0.9;
 }
 
+.abc-carousel-thumbs {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.abc-carousel-thumb {
+    padding: 0;
+    line-height: 0;
+    background: none;
+    border: 2px solid transparent;
+    border-radius: 0.35rem;
+    overflow: hidden;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity .15s ease-in-out, border-color .15s ease-in-out;
+}
+
+.abc-carousel-thumb img {
+    width: 56px;
+    height: 56px;
+    object-fit: cover;
+    display: block;
+}
+
+.abc-carousel-thumb:hover {
+    opacity: 1;
+}
+
+.abc-carousel-thumb.active {
+    opacity: 1;
+    border-color: #4f6fa1;
+}
+
 .modal-body .carousel-control-prev-icon,
 .modal-body .carousel-control-next-icon {
     background-color: rgba(0, 0, 0, 0.55);
