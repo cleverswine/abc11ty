@@ -2,11 +2,11 @@
     <div class="card border-secondary">
         {% if item.manual %}
         <a href="#" data-bs-toggle="modal" data-bs-target="#img-modal-{{ item.id }}" class="stretched-link">
-            <img src="{{ item.images[0] }}" class="card-img-top border border-bottom border-secondary" alt="{{ item.title }}"/>
+            <img src="{{ item.images[0] }}" class="card-img-top border border-bottom border-secondary abc-product-img" alt="{{ item.title }}"/>
         </a>
         {% else %}
         <a href="{{ item.etsyPage }}" target="_blank" class="stretched-link">
-            <img src="{{ item.images[0] }}" class="card-img-top border border-bottom border-secondary" alt="{{ item.title }}"/>
+            <img src="{{ item.images[0] }}" class="card-img-top border border-bottom border-secondary abc-product-img" alt="{{ item.title }}"/>
         </a>
         {% endif %}
         <div class="card-body text-center p-2">
@@ -37,7 +37,7 @@
                     <div class="carousel-inner">
                         {% for img in item.images %}
                         <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                            <img src="{{ img }}" class="d-block w-100" alt="{{ item.title }}"/>
+                            <img src="{{ img }}" class="d-block w-100 abc-product-img" alt="{{ item.title }}"/>
                         </div>
                         {% endfor %}
                     </div>
@@ -51,7 +51,7 @@
                     </button>
                 </div>
                 {% else %}
-                <img src="{{ item.images[0] }}" class="d-block w-100" alt="{{ item.title }}"/>
+                <img src="{{ item.images[0] }}" class="d-block w-100 abc-product-img" alt="{{ item.title }}"/>
                 {% endif %}
             </div>
         </div>
