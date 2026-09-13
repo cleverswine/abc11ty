@@ -67,7 +67,9 @@
             "id": "manual-fa07da88",
             "title": "Adorable Monsters",
             "description": "",
-            "images": [],
+            "images": [
+              "img-product/upload-178710bf.jpeg"
+            ],
             "etsyPage": "",
             "show": true,
             "manual": true
