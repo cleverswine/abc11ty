@@ -80,6 +80,30 @@ editing convenience only, so after saving you still need to `git add` /
 commit / push (and run `npm run build`) to actually publish a change, since
 Netlify only sees what's committed.
 
+## Image metadata cleanup
+
+Images uploaded through the admin tool are re-encoded with `sharp`, which
+strips EXIF/ICC/C2PA metadata automatically (see `admin/server.js`). To sweep
+existing images in `web/img-product/` for the same thing (e.g. after adding
+files by hand), run:
+
+```shell
+./strip-image-metadata.sh
+```
+
+This requires [`exiftool`](https://exiftool.org/) on your `PATH`:
+
+```shell
+# Debian/Ubuntu
+sudo apt install libimage-exiftool-perl
+
+# macOS
+brew install exiftool
+```
+
+It rewrites metadata in place losslessly — pixel data is untouched — and is
+safe to re-run; already-clean files are left unchanged.
+
 ## How `gen.js` works
 
 `gen.js` scrapes the Etsy shop and writes the result to `_data/boo.json`, which

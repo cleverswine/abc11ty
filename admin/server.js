@@ -1,5 +1,6 @@
 import express from 'express';
 import multer from 'multer';
+import sharp from 'sharp';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -343,22 +344,27 @@ app.put('/api/sections/:sectionId/subcategories/:name/items/order', (req, res) =
 
 const ALLOWED_IMAGE_EXT = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif']);
 const upload = multer({
-    storage: multer.diskStorage({
-        destination: (req, file, cb) => cb(null, imgProductDir),
-        filename: (req, file, cb) => {
-            let ext = path.extname(file.originalname).toLowerCase();
-            cb(null, `upload-${randomUUID().split('-')[0]}${ext}`);
-        },
-    }),
+    storage: multer.memoryStorage(),
     fileFilter: (req, file, cb) => {
         cb(null, ALLOWED_IMAGE_EXT.has(path.extname(file.originalname).toLowerCase()));
     },
     limits: {fileSize: 10 * 1024 * 1024},
 });
 
-app.post('/api/images', upload.single('image'), (req, res) => {
+app.post('/api/images', upload.single('image'), async (req, res) => {
     if (!req.file) return res.status(400).json({error: 'no image file received (or file type not allowed)'});
-    res.status(201).json({path: 'img-product/' + req.file.filename});
+    let ext = path.extname(req.file.originalname).toLowerCase();
+    let filename = `upload-${randomUUID().split('-')[0]}${ext}`;
+    try {
+        // Re-encoding through sharp drops EXIF/GPS/camera metadata unless
+        // .withMetadata() is called, which is exactly the point here.
+        let image = sharp(req.file.buffer, {animated: ext === '.gif'});
+        await image.toFile(path.join(imgProductDir, filename));
+    } catch (err) {
+        console.error('failed to process uploaded image', err);
+        return res.status(400).json({error: 'uploaded file could not be processed as an image'});
+    }
+    res.status(201).json({path: 'img-product/' + filename});
 });
 
 app.listen(PORT, () => {
