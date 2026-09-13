@@ -415,9 +415,6 @@ function openSectionModal(section) {
 
 document.getElementById('add-section-btn').addEventListener('click', () => openSectionModal(null));
 sectionModal.querySelector('[data-close-modal]').addEventListener('click', () => sectionModal.close());
-sectionModal.addEventListener('click', (e) => {
-    if (e.target === sectionModal) sectionModal.close();
-});
 
 sectionModalForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -468,9 +465,6 @@ function openSubcategoryModal(sectionId, group) {
 }
 
 subcategoryModal.querySelector('[data-close-modal]').addEventListener('click', () => subcategoryModal.close());
-subcategoryModal.addEventListener('click', (e) => {
-    if (e.target === subcategoryModal) subcategoryModal.close();
-});
 
 subcategoryModalForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -539,10 +533,6 @@ modalSectionSelect.addEventListener('change', () => {
 });
 
 itemModal.querySelector('[data-close-modal]').addEventListener('click', () => itemModal.close());
-
-itemModal.addEventListener('click', (e) => {
-    if (e.target === itemModal) itemModal.close();
-});
 
 itemModalForm.addEventListener('submit', async (e) => {
     e.preventDefault();
