@@ -43,13 +43,34 @@
           {
             "id": "live-events-3",
             "show": true,
-            "title": "Bookmark Sample",
-            "description": "Sample bookmark placeholder - replace with a real photo.",
+            "title": "Whimsical Owl Bookmark",
+            "description": "Add a little woodland charm to your reading time with this adorable owl bookmark featuring original, hand-drawn artwork. Colorful owls perch among leafy branches, flowers, and tiny hearts for a sweet, whimsical design that’s perfect for owl lovers and book lovers alike.\nEach bookmark is printed on thick, durable paper and laminated with a glossy finish, giving it a smooth, polished surface while helping protect the artwork from everyday use.",
             "etsyPage": "",
             "manual": true,
             "images": [
+              "img-product/upload-d4290fe9.jpeg",
               "img-product/sample-bookmark-1.png"
             ]
+          },
+          {
+            "id": "manual-fe61ae70",
+            "title": "Dragon In Flight",
+            "description": "Enter a world of dragons, dark castles, moonlit skies, and forbidden magic with this enchanting fantasy bookmark. Featuring a striking dragon silhouetted against a glowing full moon, a mysterious castle, and a misty mountain landscape, this bookmark is made for readers who love getting lost in fantasy and romantasy adventures.\nThe original artwork captures the darker, magical atmosphere of the stories where dragons soar, kingdoms hide secrets, and every page holds the possibility of a new adventure.",
+            "images": [
+              "img-product/upload-206bf8c4.jpeg"
+            ],
+            "etsyPage": "",
+            "show": true,
+            "manual": true
+          },
+          {
+            "id": "manual-fa07da88",
+            "title": "Adorable Monsters",
+            "description": "",
+            "images": [],
+            "etsyPage": "",
+            "show": true,
+            "manual": true
           }
         ]
       },

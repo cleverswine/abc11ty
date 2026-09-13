@@ -127,7 +127,7 @@ function manualItemCardHtml(item, canMoveUp, canMoveDown) {
                     ${imageStripHtml(item.images || [])}
                 </div>
             </div>
-            <div class="d-flex justify-content-end gap-1 mt-2">
+            <div class="d-flex justify-content-end gap-2 mt-2 item-actions">
                 ${showToggleButtonHtml(item.show)}
                 <button type="button" class="btn-icon" data-action="edit-item" title="Edit"><i class="bi bi-pencil"></i></button>
                 <button type="button" class="btn-icon btn-icon-danger" data-action="delete-item" title="Delete"><i class="bi bi-trash"></i></button>
@@ -531,6 +531,7 @@ function openItemModal(sectionId, subcategoryName, item) {
     itemModalForm.show.checked = item ? item.show !== false : true;
 
     itemModal.showModal();
+    itemModalForm.title.focus();
 }
 
 modalSectionSelect.addEventListener('change', () => {

@@ -211,6 +211,12 @@ code {
     background: transparent;
 }
 
+.item-actions .btn-icon {
+    width: 2.4rem;
+    height: 2.4rem;
+    font-size: 1.15rem;
+}
+
 .reorder-stack {
     display: flex;
     flex-direction: column;
