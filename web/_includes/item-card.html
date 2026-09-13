@@ -9,6 +9,11 @@
             <img src="{{ item.images[0] }}" class="card-img-top border border-bottom border-secondary abc-product-img" alt="{{ item.title }}"/>
         </a>
         {% endif %}
+        {% if item.images.size > 1 %}
+        <span class="abc-multi-img-badge" title="Multiple images" aria-label="Multiple images">
+            <i class="bi bi-images"></i>
+        </span>
+        {% endif %}
         <div class="card-body text-center p-2">
             <p class="card-text text-truncate">{{ item.title }}</p>
         </div>
