@@ -107,6 +107,12 @@ button[data-role="nav"].active {
     color: #00567b;
 }
 
+.abc-product-img {
+    -webkit-user-drag: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
 .modal-body .carousel-control-prev,
 .modal-body .carousel-control-next {
     opacity: 0.9;
