@@ -29,7 +29,8 @@
             "description": "K-Pop Composition Notebook",
             "images": [
               "img-product/kpop-notebook-1.png",
-              "img-product/kpop-notebook-2.png"
+              "img-product/kpop-notebook-2.png",
+              "img-product/upload-87c45709.jpeg"
             ],
             "etsyPage": "",
             "manual": true
@@ -49,15 +50,19 @@
             "manual": true,
             "images": [
               "img-product/upload-d4290fe9.jpeg",
-              "img-product/sample-bookmark-1.png"
+              "img-product/upload-6ac8a3b9.jpeg",
+              "img-product/upload-f4c96127.jpeg"
             ]
           },
           {
             "id": "manual-fe61ae70",
-            "title": "Dragon In Flight",
+            "title": "Dragon Rising",
             "description": "Enter a world of dragons, dark castles, moonlit skies, and forbidden magic with this enchanting fantasy bookmark. Featuring a striking dragon silhouetted against a glowing full moon, a mysterious castle, and a misty mountain landscape, this bookmark is made for readers who love getting lost in fantasy and romantasy adventures.\nThe original artwork captures the darker, magical atmosphere of the stories where dragons soar, kingdoms hide secrets, and every page holds the possibility of a new adventure.",
             "images": [
-              "img-product/upload-206bf8c4.jpeg"
+              "img-product/upload-206bf8c4.jpeg",
+              "img-product/upload-499d8039.jpeg",
+              "img-product/upload-87f144fc.jpeg",
+              "img-product/upload-efe28d35.jpeg"
             ],
             "etsyPage": "",
             "show": true,
@@ -66,9 +71,25 @@
           {
             "id": "manual-fa07da88",
             "title": "Adorable Monsters",
-            "description": "",
+            "description": "Make reading time a little more colorful, playful, and fun with this adorable bookmark featuring a collection of cheerful, hand-drawn monsters! With their bright colors, silly expressions, and cute personalities, these friendly little monsters are sure to bring a smile to any young reader.\nThis bookmark makes a wonderful gift for children who love monsters, colorful characters, and imaginative adventures. It’s also a fun way to encourage kids to keep reading and make their place in their favorite books.",
             "images": [
-              "img-product/upload-178710bf.jpeg"
+              "img-product/upload-ccabe25c.jpeg",
+              "img-product/upload-3fbb36a9.jpeg",
+              "img-product/upload-178710bf.jpeg",
+              "img-product/upload-a9a74b7f.jpeg"
+            ],
+            "etsyPage": "",
+            "show": true,
+            "manual": true
+          },
+          {
+            "id": "manual-e3568069",
+            "title": "Silly Goose You Stopped Reading Here",
+            "description": "Add a little charm to your reading time with this adorable hand-drawn silly goose bookmark! Featuring a cheerful goose in pink boots and a polka-dot bow, surrounded by flowers, hearts, and playful greenery, this bookmark is perfect for readers who like their books—and their bookmarks—with a sense of humor. ",
+            "images": [
+              "img-product/upload-9c1c8faf.jpeg",
+              "img-product/upload-95db4ba4.jpeg",
+              "img-product/upload-8cfda6aa.jpeg"
             ],
             "etsyPage": "",
             "show": true,
