@@ -59,7 +59,10 @@
     <div data-role="item" data-section-id="{{ section.sectionId }}" class="mb-2">
         <h4>{{ section.sectionTitle }}</h4>
         {% if section.sectionDescription %}
-        <p class="text-body-secondary text-center">{{ section.sectionDescription }}</p>
+        {% assign section_description_paragraphs = section.sectionDescription | split: "\n" %}
+        {% for paragraph in section_description_paragraphs %}
+        <p class="text-body-secondary text-center {% if forloop.last %}mb-0{% else %}mb-2{% endif %}">{{ paragraph }}</p>
+        {% endfor %}
         {% endif %}
         {% assign these_products = section.items | where: "show", true %}
         {% if these_products.size > 0 %}
