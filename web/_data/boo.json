@@ -213,8 +213,21 @@
             "etsyPage": "https://www.etsy.com/shop/AuntieBooCrafts",
             "manual": true,
             "images": [
-              "img-product/upload-4123be07.png"
+              "img-product/upload-6b2335da.jpeg",
+              "img-product/upload-78f68032.jpeg"
             ]
+          },
+          {
+            "id": "manual-fa7f11f7",
+            "title": "I Work To Support My Cat",
+            "description": "",
+            "images": [
+              "img-product/upload-5983f188.jpeg",
+              "img-product/upload-e1014a7c.jpeg"
+            ],
+            "etsyPage": "",
+            "show": true,
+            "manual": true
           }
         ]
       }
