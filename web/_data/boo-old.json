@@ -2,13 +2,13 @@
   {
     "sectionId": "live-events",
     "sectionTitle": "In Person Events",
-    "sectionDescription": "These are items that are available at in person events.",
+    "sectionDescription": "The items below are part of my in-person collection and are not currently available for online purchase. \n\nYou can shop these products at local vendor events, craft shows, and pop-up markets where Auntie Boo Crafts participates. \n\nFollow along for upcoming event dates and locations!",
     "pinned": true,
     "show": true,
     "manual": true,
     "subcategories": [
       {
-        "name": "Composition Notebooks",
+        "name": "Design A Life You Love",
         "show": true,
         "items": [
           {
@@ -19,7 +19,9 @@
             "etsyPage": "",
             "manual": true,
             "images": [
-              "img-product/live-events-1.png"
+              "img-product/upload-91fcb33c.jpeg",
+              "img-product/upload-25e74135.jpeg",
+              "img-product/upload-c7595dcb.jpeg"
             ]
           },
           {
@@ -28,7 +30,9 @@
             "title": "K-Pop Composition Notebook",
             "description": "K-Pop Composition Notebook",
             "images": [
-              "img-product/upload-bb8471de.jpeg"
+              "img-product/upload-bb8471de.jpeg",
+              "img-product/upload-55046d28.jpeg",
+              "img-product/upload-5f996bc0.jpeg"
             ],
             "etsyPage": "",
             "manual": true
