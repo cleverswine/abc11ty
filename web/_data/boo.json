@@ -2,7 +2,7 @@
   {
     "sectionId": "live-events",
     "sectionTitle": "In Person Events",
-    "sectionDescription": "These are items that are available at in person events.",
+    "sectionDescription": "These items are part of my in-person collection and are not currently available for online purchase. You can shop these products at local vendor events, craft shows, and pop-up markets where Auntie Boo Crafts participates. Follow along for upcoming event dates and locations!",
     "pinned": true,
     "show": true,
     "manual": true,
@@ -28,9 +28,7 @@
             "title": "K-Pop Composition Notebook",
             "description": "K-Pop Composition Notebook",
             "images": [
-              "img-product/kpop-notebook-1.png",
-              "img-product/kpop-notebook-2.png",
-              "img-product/upload-87c45709.jpeg"
+              "img-product/upload-bb8471de.jpeg"
             ],
             "etsyPage": "",
             "manual": true
@@ -104,13 +102,35 @@
           {
             "id": "live-events-4",
             "show": true,
-            "title": "Hair Clip Sample",
-            "description": "Sample hair clip placeholder - replace with a real photo.",
+            "title": "Football Hair Claw Clip",
+            "description": "",
             "etsyPage": "https://www.etsy.com/shop/AuntieBooCrafts",
             "manual": true,
             "images": [
-              "img-product/sample-hair-clip-1.png"
+              "img-product/upload-563b0a35.png"
             ]
+          },
+          {
+            "id": "manual-06bce2b6",
+            "title": "Pencil Hair Claw Clip",
+            "description": "",
+            "images": [
+              "img-product/upload-9b84f93e.jpg"
+            ],
+            "etsyPage": "",
+            "show": true,
+            "manual": true
+          },
+          {
+            "id": "manual-4e684e32",
+            "title": "Crayon Hair Claw Clip",
+            "description": "",
+            "images": [
+              "img-product/upload-0dda2079.png"
+            ],
+            "etsyPage": "",
+            "show": true,
+            "manual": true
           }
         ]
       },
@@ -121,13 +141,46 @@
           {
             "id": "live-events-5",
             "show": true,
-            "title": "Paperclip Sample",
-            "description": "Sample paperclip placeholder - replace with a real photo.",
+            "title": "Blue Wildflower Paperclip",
+            "description": "",
             "etsyPage": "https://www.etsy.com/shop/AuntieBooCrafts",
             "manual": true,
             "images": [
-              "img-product/sample-paperclip-1.png"
+              "img-product/upload-98c18684.jpeg"
             ]
+          },
+          {
+            "id": "manual-2669378f",
+            "title": "Highland Cow Paperclip",
+            "description": "",
+            "images": [
+              "img-product/upload-48701972.jpeg"
+            ],
+            "etsyPage": "",
+            "show": true,
+            "manual": true
+          },
+          {
+            "id": "manual-13fe7339",
+            "title": "Crime Scene Paperclip",
+            "description": "",
+            "images": [
+              "img-product/upload-466daf6f.jpeg"
+            ],
+            "etsyPage": "",
+            "show": true,
+            "manual": true
+          },
+          {
+            "id": "manual-602bf322",
+            "title": "Sunflower and Cows Paperclip",
+            "description": "",
+            "images": [
+              "img-product/upload-3879ad44.jpeg"
+            ],
+            "etsyPage": "",
+            "show": true,
+            "manual": true
           }
         ]
       },
@@ -138,12 +191,12 @@
           {
             "id": "live-events-6",
             "show": true,
-            "title": "Sticky Note Sample",
-            "description": "Sample sticky note placeholder - replace with a real photo.",
+            "title": "Bee Sticky Note",
+            "description": "",
             "etsyPage": "https://www.etsy.com/shop/AuntieBooCrafts",
             "manual": true,
             "images": [
-              "img-product/sample-sticky-note-1.png"
+              "img-product/upload-4123be07.png"
             ]
           }
         ]
