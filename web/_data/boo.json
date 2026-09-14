@@ -228,6 +228,18 @@
             "etsyPage": "",
             "show": true,
             "manual": true
+          },
+          {
+            "id": "manual-9f4b3cf9",
+            "title": "Today I Think I Will Cause Problems",
+            "description": "",
+            "images": [
+              "img-product/upload-dd048f1d.jpeg",
+              "img-product/upload-ae4c054d.jpeg"
+            ],
+            "etsyPage": "",
+            "show": true,
+            "manual": true
           }
         ]
       }
