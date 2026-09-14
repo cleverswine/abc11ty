@@ -28,13 +28,26 @@
             "id": "live-events-2",
             "show": true,
             "title": "K-Pop Composition Notebook",
-            "description": "K-Pop Composition Notebook",
+            "description": "",
             "images": [
               "img-product/upload-bb8471de.jpeg",
-              "img-product/upload-55046d28.jpeg",
-              "img-product/upload-5f996bc0.jpeg"
+              "img-product/upload-5f996bc0.jpeg",
+              "img-product/upload-55046d28.jpeg"
             ],
             "etsyPage": "",
+            "manual": true
+          },
+          {
+            "id": "manual-4e7b35d0",
+            "title": "Soccer Composition Notebook",
+            "description": "",
+            "images": [
+              "img-product/upload-86f3a20c.jpeg",
+              "img-product/upload-c76cb55b.jpeg",
+              "img-product/upload-ab74904b.jpeg"
+            ],
+            "etsyPage": "",
+            "show": true,
             "manual": true
           }
         ]
