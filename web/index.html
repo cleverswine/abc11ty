@@ -13,6 +13,12 @@
     <link rel="stylesheet" href="css/bootstrap.min.css" type="text/css">
     <link rel="stylesheet" href="css/bootstrap-icons.min.css" type="text/css">
     <link rel="stylesheet" href="css/app.css" type="text/css">
+
+    {% if env.isProduction %}
+    <!-- Cloudflare Web Analytics -->
+    <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "d67361b2416a47a9a0a46c711f2e4202"}'></script>
+    <!-- End Cloudflare Web Analytics -->
+    {% endif %}
 </head>
 
 <body>

@@ -45,13 +45,20 @@ cd web && node gen.js --skip-fetch
 # live in the site's dev server)
 docker compose up
 
+# scripts/ below all assume they're run from the repo root
+
 # sweep web/img-product/ for orphaned files (not referenced in boo.json or
 # boo-old.json) — requires jq
-./cleanup-unused-images.sh [--dry-run]
+./scripts/cleanup-unused-images.sh [--dry-run]
 
 # strip EXIF/ICC/C2PA metadata from every image in web/img-product/ in place
 # — requires exiftool; admin uploads are stripped automatically via sharp
-./strip-image-metadata.sh
+./scripts/strip-image-metadata.sh
+
+# commit + push web/_data/boo.json and web/img-product/ if either changed
+# (never boo-old.json, never anything else) — run on a schedule via cron,
+# see "Auto-sync" below
+./scripts/git-sync.sh
 
 # update vendored bootstrap assets (run from web/)
 cd web
@@ -132,6 +139,11 @@ rebuild. `app.js` also blocks right-click/drag on product images
 (`.abc-product-img`, a soft deterrent only) and keeps a carousel's thumbnail
 strip in sync with the active slide.
 
+The Cloudflare Web Analytics beacon script in `<head>` is gated behind
+`env.isProduction` (`web/_data/env.js`, true only when Netlify's `CONTEXT`
+build env var is `production`), so it never fires on local `npm run
+build`/`serve` or deploy previews.
+
 ### `admin/server.js` (local editing tool)
 
 Plain Express server + static vanilla-JS/Bootstrap frontend (`admin/public/`,
@@ -163,8 +175,32 @@ once the client hits Save.
 "Preview site" link; unset when running `server.js` directly, so the link
 stays hidden.
 
-Saving in the admin tool only updates the local `boo.json` — nothing is
-deployed until that change is committed and pushed (Netlify builds off git).
+Saving in the admin tool only updates the local `boo.json` (and, for image
+uploads, `img-product/`) — actually deploying it still requires a commit +
+push, which is handled by `scripts/git-sync.sh` on a cron schedule (see
+below), not by `server.js` itself.
+
+### Auto-sync (`scripts/git-sync.sh` + cron)
+
+`scripts/git-sync.sh` (assumes it's run from the repo root) commits and
+pushes `web/_data/boo.json` and `web/img-product/` whenever either has
+changed — never `boo-old.json`, never anything else — and no-ops cleanly
+otherwise. It's meant to run unattended, not to be wired into
+`admin/server.js` or `gen.js` directly, so that admin edits and scrapes
+make it to git (and Netlify deploys) without anyone having to remember.
+Scheduled via a user crontab entry (the `cd` matters, since the script
+assumes the repo root as its cwd):
+
+```
+*/15 * * * * cd /home/knoone/Code/abc11ty && ./scripts/git-sync.sh >> .git-sync.log 2>&1
+```
+
+Only works where this is actually set up (the machine running
+`npm run admin` locally) — the `docker compose up` `admin` container has no
+`.git` directory mounted and no `git` binary in its `node:20-alpine` image,
+so auto-sync doesn't apply there. The repo's remote (`git@github.com:...`)
+is SSH-based, so this also depends on the cron user's SSH key working with
+no passphrase prompt (cron has no SSH agent available).
 
 ### Docker compose
 

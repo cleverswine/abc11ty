@@ -15,7 +15,8 @@ if [ "${1:-}" = "--dry-run" ]; then
     dry_run=true
 fi
 
-cd "$(dirname "$0")/web"
+# assumes it's run from the repo root
+cd web
 
 referenced=$(jq -r '.[] | (.items[]?, (.subcategories[]?.items[]?)) | .images[]?' \
     _data/boo.json _data/boo-old.json | sed 's#^img-product/##' | sort -u)

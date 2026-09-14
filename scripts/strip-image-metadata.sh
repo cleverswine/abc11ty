@@ -9,7 +9,8 @@ if ! command -v exiftool >/dev/null 2>&1; then
     exit 1
 fi
 
-cd "$(dirname "$0")/web/img-product"
+# assumes it's run from the repo root
+cd web/img-product
 images=(*.png *.jpg *.jpeg *.webp *.gif)
 if [ ${#images[@]} -eq 0 ]; then
     echo "no images found in web/img-product" >&2
