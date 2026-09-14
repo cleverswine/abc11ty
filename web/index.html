@@ -83,7 +83,7 @@
         {% if group.show != false %}
         {% assign group_products = group.items | where: "show", true %}
         {% if group_products.size > 0 %}
-        <h5 class="text-center text-body-secondary mt-3">{{ group.name }}</h5>
+        <h5 class="abc-subcategory-title text-center mt-3">{{ group.name }}</h5>
         <div class="row" id="item-grid">
             {% for item in group_products %}
             {% render "item-card.html", item: item %}
