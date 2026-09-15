@@ -15,6 +15,11 @@ function isLocked(item) {
     return item.source === 'Etsy';
 }
 
+function showError(err) {
+    console.error(err);
+    statusEl.textContent = "Couldn't save — please try again.";
+}
+
 async function api(method, url, body) {
     statusEl.textContent = 'saving...';
     try {
@@ -30,9 +35,17 @@ async function api(method, url, body) {
         statusEl.textContent = 'saved ' + new Date().toLocaleTimeString();
         return res.status === 204 ? null : res.json();
     } catch (e) {
-        statusEl.textContent = 'error: ' + e.message;
+        showError(e);
         throw e;
     }
+}
+
+function slugify(s) {
+    return String(s || '')
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
 }
 
 function itemUrl(section, subcategory, itemId) {
@@ -95,14 +108,9 @@ function showIndicatorHtml(show) {
     return '<span class="show-indicator ms-1" title="visible on site"><i class="bi bi-eye"></i></span>';
 }
 
-// Icon-only toggle button, for item-level action rows (next to Edit/Delete).
-function showToggleButtonHtml(show) {
-    let hidden = show === false;
-    return `<button type="button" class="btn-icon ${hidden ? 'btn-icon-warning' : ''}" data-action="toggle-show" title="${hidden ? 'Hidden - click to show' : 'Visible - click to hide'}"><i class="bi ${hidden ? 'bi-eye-slash' : 'bi-eye'}"></i></button>`;
-}
-
-// Bordered toggle button, for section/subcategory action rows (next to the
-// bordered Edit/Delete buttons there).
+// Bordered toggle button, used everywhere a Visible/Hidden control sits next
+// to the bordered Edit/Delete buttons, so every row uses the same icon+label
+// convention.
 function showToggleBadgeHtml(show) {
     let hidden = show === false;
     return `<button type="button" class="btn btn-sm ${hidden ? 'btn-outline-warning' : 'btn-outline-secondary'}" data-action="toggle-show" title="Click to ${hidden ? 'show' : 'hide'}"><i class="bi ${hidden ? 'bi-eye-slash' : 'bi-eye'}"></i> ${hidden ? 'Hidden' : 'Visible'}</button>`;
@@ -138,10 +146,10 @@ function manualItemCardHtml(item, canMoveUp, canMoveDown) {
                     ${imageStripHtml(item.images || [])}
                 </div>
             </div>
-            <div class="d-flex justify-content-end gap-2 mt-2 item-actions">
-                ${showToggleButtonHtml(item.show)}
-                <button type="button" class="btn-icon" data-action="edit-item" title="Edit"><i class="bi bi-pencil"></i></button>
-                <button type="button" class="btn-icon btn-icon-danger" data-action="delete-item" title="Delete"><i class="bi bi-trash"></i></button>
+            <div class="d-flex flex-wrap justify-content-end gap-2 mt-2 item-actions">
+                ${showToggleBadgeHtml(item.show)}
+                <button type="button" class="btn btn-sm btn-outline-primary" data-action="edit-item"><i class="bi bi-pencil"></i> Edit</button>
+                <button type="button" class="btn btn-sm btn-outline-danger" data-action="delete-item"><i class="bi bi-trash"></i> Delete</button>
             </div>
         </div>`;
 }
@@ -156,12 +164,12 @@ function itemsListHtml(items, sectionId, subcategoryName) {
 }
 
 function addItemButtonHtml() {
-    return `<button type="button" class="btn btn-sm btn-outline-primary mt-2" data-action="open-add-item"><i class="bi bi-plus-lg"></i> Add item</button>`;
+    return `<button type="button" class="btn btn-sm btn-outline-primary mt-2" data-action="open-add-item"><i class="bi bi-plus-lg"></i> Add product</button>`;
 }
 
 function subcategoryHtml(section, group, groupIdx, totalGroups) {
     return `
-        <details class="subcategory-block" data-subcategory="${esc(group.name)}">
+        <details class="subcategory-block" data-subcategory="${esc(group.name)}" open>
             <summary class="d-flex align-items-center gap-2">
                 <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap flex-grow-1">
                     <div class="d-flex align-items-center gap-2">
@@ -200,10 +208,10 @@ function eventHtml(event, canMoveUp, canMoveDown) {
                     ${event.link ? `<a href="${esc(event.link)}" target="_blank" class="small">Link</a>` : ''}
                 </div>
             </div>
-            <div class="d-flex justify-content-end gap-2 mt-2 item-actions">
-                ${showToggleButtonHtml(event.show)}
-                <button type="button" class="btn-icon" data-action="edit-event" title="Edit"><i class="bi bi-pencil"></i></button>
-                <button type="button" class="btn-icon btn-icon-danger" data-action="delete-event" title="Delete"><i class="bi bi-trash"></i></button>
+            <div class="d-flex flex-wrap justify-content-end gap-2 mt-2 item-actions">
+                ${showToggleBadgeHtml(event.show)}
+                <button type="button" class="btn btn-sm btn-outline-primary" data-action="edit-event"><i class="bi bi-pencil"></i> Edit</button>
+                <button type="button" class="btn btn-sm btn-outline-danger" data-action="delete-event"><i class="bi bi-trash"></i> Delete</button>
             </div>
         </div>`;
 }
@@ -219,7 +227,7 @@ function addEventButtonHtml() {
 function sectionHtml(section) {
     let hasSubcategories = (section.subcategories || []).length > 0;
     return `
-        <details class="card mb-3" data-section="${esc(section.sectionId)}">
+        <details class="card mb-3" data-section="${esc(section.sectionId)}" open>
             <summary class="card-header d-flex align-items-center gap-2">
                 <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap flex-grow-1">
                     <span>
@@ -243,11 +251,11 @@ function sectionHtml(section) {
                 ${addEventButtonHtml()}
                 ` : ''}
 
-                <h3 class="h6">Subcategories</h3>
+                <h3 class="h6">Groups</h3>
                 ${(section.subcategories || []).map((g, i, arr) => subcategoryHtml(section, g, i, arr.length)).join('')}
-                <button type="button" class="btn btn-sm btn-outline-primary mt-2 mb-3" data-action="open-add-subcategory"><i class="bi bi-plus-lg"></i> Add subcategory</button>
+                <button type="button" class="btn btn-sm btn-outline-primary mt-2 mb-3" data-action="open-add-subcategory"><i class="bi bi-plus-lg"></i> Add group</button>
 
-                <h3 class="h6">${hasSubcategories ? 'Items in Category' : 'Items'}</h3>
+                <h3 class="h6">${hasSubcategories ? 'Other products' : 'Products'}</h3>
                 ${itemsListHtml(section.items || [], section.sectionId, null)}
                 ${addItemButtonHtml()}
             </div>
@@ -302,9 +310,8 @@ sectionsEl.addEventListener('click', async (e) => {
         let itemId = itemCard0.dataset.itemCard;
         let item = findItemInBoo(sectionId, subcategoryName0, itemId);
         let path = target.closest('.thumb-chip').dataset.path;
-        let message = `Remove this image from "${item.title}"?\n\n` +
-            `This will remove it from the item's image list, so it will no longer show on the site or in the image-viewer modal.\n\n` +
-            `This cannot be undone from here - the image file itself will remain in img-product/ on disk, but you would need to manually add it back to this item if you change your mind.`;
+        let message = `Remove this photo from "${item.title}"?\n\n` +
+            `It will no longer show on the site. You'd need to upload it again if you change your mind.`;
         if (!confirm(message)) return;
         let images = (item.images || []).filter(p => p !== path);
         await api('PATCH', itemUrl(sectionId, subcategoryName0, itemId), {images});
@@ -345,13 +352,10 @@ sectionsEl.addEventListener('click', async (e) => {
         let subcats = section.subcategories || [];
         let subItems = subcats.flatMap(g => g.items || []);
         let totalItems = (section.items || []).length + subItems.length;
+        let itemsPhrase = totalItems === 1 ? '1 product' : `${totalItems} products`;
+        let groupsPhrase = subcats.length ? ` and ${subcats.length === 1 ? '1 group' : `${subcats.length} groups`}` : '';
         let message = `Delete the section "${section.sectionTitle}"?\n\n` +
-            `This will permanently delete:\n` +
-            `- The section itself, including its title, description, and visibility settings\n` +
-            `- ${totalItems} item${totalItems === 1 ? '' : 's'} in it` +
-            (subcats.length ? `, including ${subItems.length} inside ${subcats.length} subcategor${subcats.length === 1 ? 'y' : 'ies'}\n` : '\n') +
-            (subcats.length ? `- ${subcats.length} subcategor${subcats.length === 1 ? 'y' : 'ies'}\n` : '') +
-            `\nThis cannot be undone. (Image files in img-product/ are not deleted from disk - only removed from this section's data.)`;
+            `This removes the section along with ${itemsPhrase}${groupsPhrase} inside it. This can't be undone.`;
         if (!confirm(message)) return;
         await api('DELETE', `/api/sections/${encodeURIComponent(sectionId)}`);
         await loadAll();
@@ -379,11 +383,9 @@ sectionsEl.addEventListener('click', async (e) => {
     if (action === 'delete-subcategory') {
         let group = findSubcategoryInBoo(sectionId, subcategoryName);
         let items = group.items || [];
-        let message = `Delete the subcategory "${group.name}"?\n\n` +
-            `This will permanently delete:\n` +
-            `- The subcategory itself, including its visibility setting\n` +
-            `- ${items.length} item${items.length === 1 ? '' : 's'} inside it\n` +
-            `\nThis cannot be undone. (Image files in img-product/ are not deleted from disk - only removed from this subcategory's data.)`;
+        let itemsPhrase = items.length === 1 ? '1 product' : `${items.length} products`;
+        let message = `Delete the group "${group.name}"?\n\n` +
+            `This removes the group along with ${itemsPhrase} inside it. This can't be undone.`;
         if (!confirm(message)) return;
         await api('DELETE', `/api/sections/${encodeURIComponent(sectionId)}/subcategories/${encodeURIComponent(subcategoryName)}`);
         await loadAll();
@@ -415,7 +417,7 @@ sectionsEl.addEventListener('click', async (e) => {
 
         if (action === 'delete-event') {
             let event = findEventInBoo(sectionId, eventId);
-            let message = `Delete the event "${event.name}"?\n\nThis cannot be undone.`;
+            let message = `Delete the event "${event.name}"?\n\nThis can't be undone.`;
             if (!confirm(message)) return;
             await api('DELETE', `/api/sections/${encodeURIComponent(sectionId)}/events/${encodeURIComponent(eventId)}`);
             await loadAll();
@@ -446,12 +448,7 @@ sectionsEl.addEventListener('click', async (e) => {
 
     if (action === 'delete-item') {
         let item = findItemInBoo(sectionId, subcategoryName, itemId);
-        let images = item.images || [];
-        let message = `Delete the item "${item.title}"?\n\n` +
-            `This will permanently delete:\n` +
-            `- The item itself, including its title, description, and Etsy link\n` +
-            `- Its ${images.length} image reference${images.length === 1 ? '' : 's'}\n` +
-            `\nThis cannot be undone. (Image files in img-product/ are not deleted from disk - only this item's reference to them.)`;
+        let message = `Delete "${item.title}"?\n\nThis can't be undone.`;
         if (!confirm(message)) return;
         await api('DELETE', itemUrl(sectionId, subcategoryName, itemId));
         await loadAll();
@@ -501,7 +498,8 @@ sectionsEl.addEventListener('change', async (e) => {
         await api('PATCH', itemUrl(sectionId, subcategoryName, itemId), {images: [...(item.images || []), path]});
         await loadAll();
     } catch (err) {
-        statusEl.textContent = 'error: ' + err.message;
+        console.error(err);
+        statusEl.textContent = "Couldn't upload the photo — please try again.";
     }
 });
 
@@ -510,11 +508,15 @@ sectionsEl.addEventListener('change', async (e) => {
 const sectionModal = document.getElementById('section-modal');
 const sectionModalForm = document.getElementById('section-modal-form');
 let sectionModalContext = null;
+// Tracks whether the person has hand-edited the (hidden-by-default) page
+// link name, so typing a title doesn't clobber a deliberate manual edit.
+let sectionIdTouched = false;
 
 function openSectionModal(section) {
     sectionModalContext = section
         ? {mode: 'edit', sectionId: section.sectionId}
         : {mode: 'add'};
+    sectionIdTouched = false;
 
     sectionModalForm.querySelector('[data-modal-title]').textContent = section ? 'Edit section' : 'Add section';
     sectionModalForm.sectionTitle.value = section ? section.sectionTitle : '';
@@ -527,11 +529,21 @@ function openSectionModal(section) {
 document.getElementById('add-section-btn').addEventListener('click', () => openSectionModal(null));
 sectionModal.querySelector('[data-close-modal]').addEventListener('click', () => sectionModal.close());
 
+sectionModalForm.sectionId.addEventListener('input', () => {
+    sectionIdTouched = true;
+});
+
+sectionModalForm.sectionTitle.addEventListener('input', () => {
+    if (sectionModalContext && sectionModalContext.mode === 'add' && !sectionIdTouched) {
+        sectionModalForm.sectionId.value = slugify(sectionModalForm.sectionTitle.value);
+    }
+});
+
 sectionModalForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     try {
         if (sectionModalContext.mode === 'add') {
-            let sectionId = sectionModalForm.sectionId.value.trim();
+            let sectionId = sectionModalForm.sectionId.value.trim() || slugify(sectionModalForm.sectionTitle.value);
             if (!sectionId) return;
             await api('POST', '/api/sections', {
                 sectionId,
@@ -551,7 +563,7 @@ sectionModalForm.addEventListener('submit', async (e) => {
         sectionModal.close();
         await loadAll();
     } catch (err) {
-        statusEl.textContent = 'error: ' + err.message;
+        showError(err);
     }
 });
 
@@ -565,7 +577,7 @@ function openSubcategoryModal(sectionId, group) {
     subcategoryModalContext = group
         ? {mode: 'edit', sectionId, name: group.name}
         : {mode: 'add', sectionId};
-    subcategoryModalForm.querySelector('[data-modal-title]').textContent = group ? 'Edit subcategory' : 'Add subcategory';
+    subcategoryModalForm.querySelector('[data-modal-title]').textContent = group ? 'Edit group' : 'Add group';
     subcategoryModalForm.name.value = group ? group.name : '';
     subcategoryModalForm.show.checked = group ? group.show !== false : true;
     subcategoryModal.showModal();
@@ -590,7 +602,7 @@ subcategoryModalForm.addEventListener('submit', async (e) => {
         subcategoryModal.close();
         await loadAll();
     } catch (err) {
-        statusEl.textContent = 'error: ' + err.message;
+        showError(err);
     }
 });
 
@@ -636,7 +648,7 @@ eventModalForm.addEventListener('submit', async (e) => {
         eventModal.close();
         await loadAll();
     } catch (err) {
-        statusEl.textContent = 'error: ' + err.message;
+        showError(err);
     }
 });
 
@@ -651,7 +663,7 @@ let itemModalContext = null;
 function populateModalSubcategories(sectionId, selected) {
     let section = findSectionInBoo(sectionId);
     let groups = (section && section.subcategories) || [];
-    modalSubcategorySelect.innerHTML = '<option value="">(none - top-level item)</option>' +
+    modalSubcategorySelect.innerHTML = '<option value="">(no group)</option>' +
         groups.map(g => `<option value="${esc(g.name)}">${esc(g.name)}</option>`).join('');
     modalSubcategorySelect.value = selected || '';
 }
@@ -661,8 +673,8 @@ function openItemModal(sectionId, subcategoryName, item) {
         ? {mode: 'edit', sectionId, subcategoryName, itemId: item.id}
         : {mode: 'add', sectionId, subcategoryName};
 
-    itemModalForm.querySelector('[data-modal-title]').textContent = item ? 'Edit item' : 'Add item';
-    itemModalForm.querySelector('[data-modal-submit]').textContent = item ? 'Save' : 'Add item';
+    itemModalForm.querySelector('[data-modal-title]').textContent = item ? 'Edit product' : 'Add product';
+    itemModalForm.querySelector('[data-modal-submit]').textContent = item ? 'Save' : 'Add product';
 
     modalSectionSelect.innerHTML = boo
         .map(s => `<option value="${esc(s.sectionId)}">${esc(s.sectionTitle)}</option>`).join('');
@@ -708,7 +720,7 @@ itemModalForm.addEventListener('submit', async (e) => {
         itemModal.close();
         await loadAll();
     } catch (err) {
-        statusEl.textContent = 'error: ' + err.message;
+        showError(err);
     }
 });
 

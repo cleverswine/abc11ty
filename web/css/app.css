@@ -2,23 +2,25 @@
    See DESIGN-SPEC.md at the repo root for the source spec. */
 
 :root {
-  --ink: #241C10;
-  --paper: #FAF3E6;
-  --surface: #FFFDF8;
-  --border: #E6DAC3;
-  --text-secondary: #6B5D48;
-  --text-muted: #96876C;
+  --ink: #1E170D;
+  --paper: #F1E9D8;
+  --surface: #FBF7EE;
+  --border: #D9C9A8;
+  --text-secondary: #5A4C38;
+  --text-muted: #7C6C52;
 
-  --sage: #79A855;
-  --sage-tint: #E3EED6;
-  --sage-dark: #3B5A2A;
+  --sage: #5F8C3E;
+  --sage-tint: #DCE8CB;
+  --sage-glow: #C4DBA5;
+  --sage-dark: #2E4620;
 
-  --periwinkle: #7EA0D9;
-  --periwinkle-tint: #E7EDF7;
+  --periwinkle: #6489C4;
+  --periwinkle-tint: #DCE4F1;
 
-  --slate: #4C6B98;
-  --slate-tint: #DEE7F3;
-  --slate-dark: #2A4265;
+  --slate: #3E5A82;
+  --slate-tint: #CFDBEA;
+  --slate-glow: #AEC5E0;
+  --slate-dark: #1E3350;
 
   --font-heading: "Fraunces", Georgia, "Iowan Old Style", "Palatino Linotype", serif;
   --font-body: -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -109,10 +111,11 @@ a {
 .hero {
   text-align: center;
   padding: 2.5rem 1.25rem 3rem;
+  background: var(--surface);
 }
 
 .hero__logo {
-  width: 200px;
+  width: 360px;
   height: auto;
   margin-bottom: 1rem;
 }
@@ -156,11 +159,11 @@ a {
 }
 
 .section--sage {
-  background: linear-gradient(var(--sage-tint), var(--paper) 220px);
+  background: linear-gradient(var(--sage-glow), var(--paper) 420px);
 }
 
 .section--slate {
-  background: linear-gradient(var(--slate-tint), var(--paper) 220px);
+  background: linear-gradient(var(--slate-glow), var(--paper) 420px);
 }
 
 .section__header {
@@ -337,6 +340,7 @@ a {
   height: auto;
   display: block;
   background: var(--paper);
+  border-bottom: 1px solid var(--border);
 }
 
 .product-card__name {
@@ -347,6 +351,13 @@ a {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.product-card__name--single-line {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Section footer CTA (Etsy shop) */
@@ -453,7 +464,7 @@ a {
   flex-wrap: wrap;
   justify-content: center;
   gap: 0.5rem;
-  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
 .abc-carousel-thumb {

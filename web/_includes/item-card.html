@@ -1,7 +1,7 @@
 {% if item.etsyPage and item.etsyPage != "" %}
 <a href="{{ item.etsyPage }}" target="_blank" class="product-card" id="{{ item.id }}">
     <img src="{{ item.images[0] }}" class="product-card__image abc-product-img" alt="{{ item.title }}"/>
-    <div class="product-card__name">{{ item.title }}</div>
+    <div class="product-card__name product-card__name--single-line">{{ item.title }}</div>
 </a>
 {% else %}
 <a href="#" data-bs-toggle="modal" data-bs-target="#img-modal-{{ item.id }}" class="product-card" id="{{ item.id }}">
@@ -30,6 +30,13 @@
             </div>
             <div class="modal-body">
                 {% if item.images.size > 1 %}
+                <div class="abc-carousel-thumbs">
+                    {% for img in item.images %}
+                    <button type="button" class="abc-carousel-thumb {% if forloop.first %}active{% endif %}" data-bs-target="#carousel-{{ item.id }}" data-bs-slide-to="{{ forloop.index0 }}" aria-label="View image {{ forloop.index }} of {{ item.images.size }}">
+                        <img src="{{ img }}" alt=""/>
+                    </button>
+                    {% endfor %}
+                </div>
                 <div id="carousel-{{ item.id }}" class="carousel slide">
                     <div class="carousel-inner">
                         {% for img in item.images %}
@@ -46,13 +53,6 @@
                         <span class="carousel-control-next-icon" aria-hidden="true"></span>
                         <span class="visually-hidden">Next</span>
                     </button>
-                </div>
-                <div class="abc-carousel-thumbs">
-                    {% for img in item.images %}
-                    <button type="button" class="abc-carousel-thumb {% if forloop.first %}active{% endif %}" data-bs-target="#carousel-{{ item.id }}" data-bs-slide-to="{{ forloop.index0 }}" aria-label="View image {{ forloop.index }} of {{ item.images.size }}">
-                        <img src="{{ img }}" alt=""/>
-                    </button>
-                    {% endfor %}
                 </div>
                 {% else %}
                 <img src="{{ item.images[0] }}" class="d-block w-100 abc-product-img" alt="{{ item.title }}"/>

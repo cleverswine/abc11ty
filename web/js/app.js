@@ -14,7 +14,7 @@ document.addEventListener('dragstart', (e) => {
     }
 });
 
-// Keep the thumbnail strip below an image-modal carousel in sync with
+// Keep the thumbnail strip above an image-modal carousel in sync with
 // whichever slide is currently showing.
 document.querySelectorAll('.carousel').forEach((carouselEl) => {
     carouselEl.addEventListener('slide.bs.carousel', (event) => {
