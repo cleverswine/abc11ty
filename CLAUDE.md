@@ -40,6 +40,12 @@ cd web && node gen.js
 # or, to reuse the Etsy-sourced sections already in boo.json without hitting
 # Etsy (re-sort pinned sections, normalize the file, dry run):
 cd web && node gen.js --skip-fetch
+# if Etsy is showing a DataDome captcha instead of the shop page (check the
+# console output — gen.js logs full status/headers/body on any non-2xx
+# response), run headed once to solve it by hand in the browser window that
+# pops up, then Enter in the terminal to retry; the resulting session
+# (web/.etsy-session.json, gitignored) is reused by later headless runs too:
+cd web && node gen.js --headed
 
 # run site + admin together, sharing the same web/ dir (admin edits show up
 # live in the site's dev server)
@@ -113,11 +119,16 @@ Run manually, not part of the eleventy build. Two phases:
    `boo.json`, per the manual-content rules above, then pinned sections are
    sorted to the front (stable otherwise).
 
-Etsy fetches use a browser-like header set (`trickyHeaders`) and a 3s delay
-between section requests to avoid being blocked; responses are cached for
-1 day via `@11ty/eleventy-fetch`. `--skip-fetch` skips both network calls
-entirely and treats the *existing* Etsy-sourced sections in `boo.json` as the
-scrape baseline.
+Etsy pages are fetched through a real Playwright-driven Chromium instance
+(plain `fetch()` gets a 403), with a 3s delay between section requests; no
+disk caching, since gen.js is run manually and rarely. If Etsy blocks even
+Chromium with a DataDome captcha, see `--headed` above. If the shop home page
+or an individual section page comes back blocked/unparseable, gen.js leaves
+that section's (or, if the home page itself is blocked, *all* Etsy
+sections') existing listings untouched rather than merging in an empty
+scrape — a blocked run is a no-op, not a wipe. `--skip-fetch` skips both
+network calls entirely and treats the *existing* Etsy-sourced sections in
+`boo.json` as the scrape baseline.
 
 ### `web/index.html` and rendering
 

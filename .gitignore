@@ -3,3 +3,4 @@ node_modules/
 package-lock.json
 _site/
 .git-sync.log
+.etsy-session.json
