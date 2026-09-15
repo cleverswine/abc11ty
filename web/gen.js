@@ -289,7 +289,4 @@ if (previousBoo) {
     result = [etsySection];
 }
 
-if (previousBoo) {
-    fs.copyFileSync(booPath, '_data/boo-old.json');
-}
 fs.writeFileSync(booPath, JSON.stringify(result, null, 2) + '\n');

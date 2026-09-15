@@ -53,8 +53,8 @@ docker compose up
 
 # scripts/ below all assume they're run from the repo root
 
-# sweep web/img-product/ for orphaned files (not referenced in boo.json or
-# boo-old.json) — requires jq
+# sweep web/img-product/ for orphaned files (not referenced in boo.json)
+# — requires jq
 ./scripts/cleanup-unused-images.sh [--dry-run]
 
 # strip EXIF/ICC/C2PA metadata from every image in web/img-product/ in place
@@ -102,9 +102,6 @@ human set them — `gen.js` and `admin/server.js` both carry these forward via
 a shared allowlist (`OVERLAY_FIELDS` in `admin/server.js`, mirrored inline in
 `preserveManualContent()` in `gen.js` — **keep these two in sync by hand**,
 there's no shared module).
-
-`gen.js` always writes a backup to `_data/boo-old.json` before overwriting
-`boo.json`; `admin/server.js`'s `writeBoo()` does the same on every save.
 
 ### `web/gen.js` (the scraper)
 

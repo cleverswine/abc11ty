@@ -9,7 +9,6 @@ import { randomUUID } from 'node:crypto';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..', 'web');
 const booPath = path.join(rootDir, '_data', 'boo.json');
-const booOldPath = path.join(rootDir, '_data', 'boo-old.json');
 const imgProductDir = path.join(rootDir, 'img-product');
 
 const app = express();
@@ -25,7 +24,6 @@ function readBoo() {
 }
 
 function writeBoo(boo) {
-    fs.copyFileSync(booPath, booOldPath);
     let tmpPath = booPath + '.tmp';
     fs.writeFileSync(tmpPath, JSON.stringify(boo, null, 2) + '\n');
     fs.renameSync(tmpPath, booPath);
