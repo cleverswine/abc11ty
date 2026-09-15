@@ -84,8 +84,8 @@ once before trusting the schedule:
   which has no `.git` directory mounted and no `git` binary.
 
 ```shell
-# sweep web/img-product/ for orphaned files (not referenced in boo.json or
-# boo-old.json) — requires jq
+# sweep web/img-product/ for orphaned files (not referenced in boo.json)
+# — requires jq
 ./scripts/cleanup-unused-images.sh [--dry-run]
 
 # strip EXIF/ICC/C2PA metadata from every image in web/img-product/ in place

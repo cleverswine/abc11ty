@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Deletes files in web/img-product/ that aren't referenced by any item's
-# "images" array in either web/_data/boo.json or its backup, boo-old.json.
+# "images" array in web/_data/boo.json.
 # Pass --dry-run to only list what would be deleted.
 set -euo pipefail
 shopt -s nullglob
@@ -19,7 +19,7 @@ fi
 cd web
 
 referenced=$(jq -r '.[] | (.items[]?, (.subcategories[]?.items[]?)) | .images[]?' \
-    _data/boo.json _data/boo-old.json | sed 's#^img-product/##' | sort -u)
+    _data/boo.json | sed 's#^img-product/##' | sort -u)
 
 unused=()
 for path in img-product/*; do
