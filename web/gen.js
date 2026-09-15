@@ -55,11 +55,26 @@ async function fetchHtml(url) {
         Object.defineProperty(navigator, "webdriver", {get: () => undefined});
     });
     let page = await context.newPage();
+    console.log(`fetching ${url}`);
     try {
-        await page.goto(url, {waitUntil: "domcontentloaded", timeout: 30000});
+        let response = await page.goto(url, {waitUntil: "domcontentloaded", timeout: 30000});
         // give any anti-bot JS challenge a moment to resolve before reading
         await page.waitForLoadState("networkidle", {timeout: 15000}).catch(() => {});
-        return await page.content();
+        let html = await page.content();
+
+        if (!response || !response.ok()) {
+            console.log(`  -> FAILED ${url}`);
+            console.log(`     status: ${response ? `${response.status()} ${response.statusText()}` : '(no response)'}`);
+            console.log(`     headers: ${JSON.stringify(response ? await response.allHeaders() : {})}`);
+            console.log(`     body (first 1000 chars): ${html.slice(0, 1000)}`);
+        } else {
+            console.log(`  -> ok ${response.status()}, ${html.length} bytes`);
+        }
+
+        return html;
+    } catch (e) {
+        console.log(`  -> FAILED ${url}: ${e.message}`);
+        throw e;
     } finally {
         await context.close();
     }
@@ -74,9 +89,7 @@ async function getSectionItems(sectionId) {
     let data = "";
     try {
         data = await fetchHtml(`https://www.etsy.com/shop/AuntieBooCrafts?section_id=${sectionId}`);
-        console.log(`fetched section page ${sectionId}`)
     } catch (e) {
-        console.log(e);
         return [];
     }
 
@@ -126,7 +139,7 @@ if (skipFetch) {
     try {
         data = await fetchHtml("https://www.etsy.com/shop/auntieboocrafts");
     } catch (e) {
-        console.log(e);
+        // already logged in detail by fetchHtml
     }
 
     let parsedData = parser.parse(data);
