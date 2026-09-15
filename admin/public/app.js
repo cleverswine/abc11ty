@@ -9,6 +9,12 @@ function esc(s) {
     }[c]));
 }
 
+// Mirrors isLocked() in server.js - an Etsy-sourced item is read-only here,
+// re-scraped and re-appended by gen.js on every run.
+function isLocked(item) {
+    return item.source === 'Etsy';
+}
+
 async function api(method, url, body) {
     statusEl.textContent = 'saving...';
     try {
@@ -49,6 +55,11 @@ function findItemInBoo(sectionId, subcategoryName, itemId) {
         ? (findSubcategoryInBoo(sectionId, subcategoryName) || {}).items || []
         : (findSectionInBoo(sectionId) || {}).items || [];
     return list.find(i => i.id === itemId) || null;
+}
+
+function findEventInBoo(sectionId, eventId) {
+    let section = findSectionInBoo(sectionId);
+    return (section && (section.events || []).find(e => e.id === eventId)) || null;
 }
 
 // ---- image thumbnail strip (rendered directly on the page, per manual item) ----
@@ -136,11 +147,11 @@ function manualItemCardHtml(item, canMoveUp, canMoveDown) {
 }
 
 function itemsListHtml(items, sectionId, subcategoryName) {
-    let manualItems = items.filter(i => i.manual);
+    let freeItems = items.filter(i => !isLocked(i));
     return items.map(item => {
-        if (!item.manual) return readonlyItemHtml(item);
-        let idx = manualItems.indexOf(item);
-        return manualItemCardHtml(item, idx > 0, idx < manualItems.length - 1);
+        if (isLocked(item)) return readonlyItemHtml(item);
+        let idx = freeItems.indexOf(item);
+        return manualItemCardHtml(item, idx > 0, idx < freeItems.length - 1);
     }).join('');
 }
 
@@ -150,55 +161,91 @@ function addItemButtonHtml() {
 
 function subcategoryHtml(section, group, groupIdx, totalGroups) {
     return `
-        <div class="subcategory-block" data-subcategory="${esc(group.name)}">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <div class="d-flex align-items-center gap-2">
-                    <div class="reorder-stack">
-                        <button type="button" class="btn-icon" data-action="move-subcategory-up" title="Move up" ${groupIdx > 0 ? '' : 'disabled'}><i class="bi bi-chevron-up"></i></button>
-                        <button type="button" class="btn-icon" data-action="move-subcategory-down" title="Move down" ${groupIdx < totalGroups - 1 ? '' : 'disabled'}><i class="bi bi-chevron-down"></i></button>
+        <details class="subcategory-block" data-subcategory="${esc(group.name)}">
+            <summary class="d-flex align-items-center gap-2">
+                <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap flex-grow-1">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="reorder-stack">
+                            <button type="button" class="btn-icon" data-action="move-subcategory-up" title="Move up" ${groupIdx > 0 ? '' : 'disabled'}><i class="bi bi-chevron-up"></i></button>
+                            <button type="button" class="btn-icon" data-action="move-subcategory-down" title="Move down" ${groupIdx < totalGroups - 1 ? '' : 'disabled'}><i class="bi bi-chevron-down"></i></button>
+                        </div>
+                        <strong>${esc(group.name)}</strong>
                     </div>
-                    <strong>${esc(group.name)}</strong>
+                    <div class="d-flex gap-2 align-items-center">
+                        ${showToggleBadgeHtml(group.show)}
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-action="edit-subcategory"><i class="bi bi-pencil"></i> Edit</button>
+                        <button type="button" class="btn btn-sm btn-outline-danger" data-action="delete-subcategory"><i class="bi bi-trash"></i> Delete</button>
+                    </div>
                 </div>
-                <div class="d-flex gap-2">
-                    ${showToggleBadgeHtml(group.show)}
-                    <button type="button" class="btn btn-sm btn-outline-primary" data-action="edit-subcategory"><i class="bi bi-pencil"></i> Edit</button>
-                    <button type="button" class="btn btn-sm btn-outline-danger" data-action="delete-subcategory"><i class="bi bi-trash"></i> Delete</button>
-                </div>
-            </div>
+            </summary>
             <div class="mt-2">${itemsListHtml(group.items || [], section.sectionId, group.name)}</div>
             ${addItemButtonHtml()}
+        </details>`;
+}
+
+// ---- events (e.g. live-events' in-person event list) ----
+
+function eventHtml(event, canMoveUp, canMoveDown) {
+    let meta = [event.date, event.location].filter(Boolean).join(' &middot; ');
+    return `
+        <div class="item-row" data-event-row="${esc(event.id)}">
+            <div class="d-flex gap-2 align-items-start">
+                <div class="reorder-stack">
+                    <button type="button" class="btn-icon" data-action="move-event-up" title="Move up" ${canMoveUp ? '' : 'disabled'}><i class="bi bi-chevron-up"></i></button>
+                    <button type="button" class="btn-icon" data-action="move-event-down" title="Move down" ${canMoveDown ? '' : 'disabled'}><i class="bi bi-chevron-down"></i></button>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="fw-bold">${esc(event.name)}</div>
+                    ${meta ? `<div class="small text-body-secondary">${meta}</div>` : ''}
+                    ${event.link ? `<a href="${esc(event.link)}" target="_blank" class="small">Link</a>` : ''}
+                </div>
+            </div>
+            <div class="d-flex justify-content-end gap-2 mt-2 item-actions">
+                ${showToggleButtonHtml(event.show)}
+                <button type="button" class="btn-icon" data-action="edit-event" title="Edit"><i class="bi bi-pencil"></i></button>
+                <button type="button" class="btn-icon btn-icon-danger" data-action="delete-event" title="Delete"><i class="bi bi-trash"></i></button>
+            </div>
         </div>`;
 }
 
+function eventsListHtml(events) {
+    return events.map((event, idx) => eventHtml(event, idx > 0, idx < events.length - 1)).join('');
+}
+
+function addEventButtonHtml() {
+    return `<button type="button" class="btn btn-sm btn-outline-primary mt-2 mb-3" data-action="open-add-event"><i class="bi bi-plus-lg"></i> Add event</button>`;
+}
+
 function sectionHtml(section) {
-    let manual = section.manual === true;
-    let hasSubcategories = manual && (section.subcategories || []).length > 0;
+    let hasSubcategories = (section.subcategories || []).length > 0;
     return `
-        <details class="card mb-3" data-section="${esc(section.sectionId)}" ${manual ? 'open' : ''}>
+        <details class="card mb-3" data-section="${esc(section.sectionId)}">
             <summary class="card-header d-flex align-items-center gap-2">
                 <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap flex-grow-1">
                     <span>
                         <strong>${esc(section.sectionTitle)}</strong>
-                        ${!manual ? '<span class="badge text-bg-secondary ms-2">Etsy</span>' : ''}
-                        ${section.pinned ? '<span class="badge text-bg-info ms-1">pinned</span>' : ''}
                     </span>
                     <div class="d-flex gap-2 flex-shrink-0">
                         ${showToggleBadgeHtml(section.show)}
                         <button type="button" class="btn btn-sm btn-outline-primary" data-action="edit-section"><i class="bi bi-pencil"></i> Edit</button>
-                        ${manual ? '<button type="button" class="btn btn-sm btn-outline-danger" data-action="delete-section"><i class="bi bi-trash"></i> Delete</button>' : ''}
+                        <button type="button" class="btn btn-sm btn-outline-danger" data-action="delete-section"><i class="bi bi-trash"></i> Delete</button>
                     </div>
                 </div>
             </summary>
             <div class="card-body">
                 <div class="mb-3">
-                    ${!manual ? '<div class="small text-body-secondary mb-1">Title and id come from Etsy - not editable here.</div>' : ''}
                     ${section.sectionDescription ? `<p class="text-body-secondary mb-0">${esc(section.sectionDescription)}</p>` : ''}
                 </div>
 
-                ${manual ? `
+                ${Array.isArray(section.events) ? `
+                <h3 class="h6">Events</h3>
+                <div class="events-block">${eventsListHtml(section.events)}</div>
+                ${addEventButtonHtml()}
+                ` : ''}
+
                 <h3 class="h6">Subcategories</h3>
                 ${(section.subcategories || []).map((g, i, arr) => subcategoryHtml(section, g, i, arr.length)).join('')}
-                <button type="button" class="btn btn-sm btn-outline-primary mt-2 mb-3" data-action="open-add-subcategory"><i class="bi bi-plus-lg"></i> Add subcategory</button>` : ''}
+                <button type="button" class="btn btn-sm btn-outline-primary mt-2 mb-3" data-action="open-add-subcategory"><i class="bi bi-plus-lg"></i> Add subcategory</button>
 
                 <h3 class="h6">${hasSubcategories ? 'Items in Category' : 'Items'}</h3>
                 ${itemsListHtml(section.items || [], section.sectionId, null)}
@@ -233,6 +280,7 @@ sectionsEl.addEventListener('click', async (e) => {
     let subcategoryEl0 = target.closest('[data-subcategory]');
     let subcategoryName0 = subcategoryEl0 ? subcategoryEl0.dataset.subcategory : null;
     let itemCard0 = target.closest('[data-item-card]');
+    let eventRow0 = target.closest('[data-event-row]');
 
     if (target.matches('[data-move-image]')) {
         if (target.disabled || !itemCard0) return;
@@ -268,7 +316,11 @@ sectionsEl.addEventListener('click', async (e) => {
     if (!action) return;
 
     if (action === 'toggle-show') {
-        if (itemCard0) {
+        if (eventRow0) {
+            let eventId = eventRow0.dataset.eventRow;
+            let event = findEventInBoo(sectionId, eventId);
+            await api('PATCH', `/api/sections/${encodeURIComponent(sectionId)}/events/${encodeURIComponent(eventId)}`, {show: event.show === false});
+        } else if (itemCard0) {
             let itemId = itemCard0.dataset.itemCard;
             let item = findItemInBoo(sectionId, subcategoryName0, itemId);
             await api('PATCH', itemUrl(sectionId, subcategoryName0, itemId), {show: item.show === false});
@@ -295,7 +347,7 @@ sectionsEl.addEventListener('click', async (e) => {
         let totalItems = (section.items || []).length + subItems.length;
         let message = `Delete the section "${section.sectionTitle}"?\n\n` +
             `This will permanently delete:\n` +
-            `- The section itself, including its title, description, and pinned/visibility settings\n` +
+            `- The section itself, including its title, description, and visibility settings\n` +
             `- ${totalItems} item${totalItems === 1 ? '' : 's'} in it` +
             (subcats.length ? `, including ${subItems.length} inside ${subcats.length} subcategor${subcats.length === 1 ? 'y' : 'ies'}\n` : '\n') +
             (subcats.length ? `- ${subcats.length} subcategor${subcats.length === 1 ? 'y' : 'ies'}\n` : '') +
@@ -346,6 +398,41 @@ sectionsEl.addEventListener('click', async (e) => {
         await api('PUT', `/api/sections/${encodeURIComponent(sectionId)}/subcategories/order`, {order: names});
         await loadAll();
         return;
+    }
+
+    if (action === 'open-add-event') {
+        openEventModal(sectionId, null);
+        return;
+    }
+
+    if (eventRow0) {
+        let eventId = eventRow0.dataset.eventRow;
+
+        if (action === 'edit-event') {
+            openEventModal(sectionId, findEventInBoo(sectionId, eventId));
+            return;
+        }
+
+        if (action === 'delete-event') {
+            let event = findEventInBoo(sectionId, eventId);
+            let message = `Delete the event "${event.name}"?\n\nThis cannot be undone.`;
+            if (!confirm(message)) return;
+            await api('DELETE', `/api/sections/${encodeURIComponent(sectionId)}/events/${encodeURIComponent(eventId)}`);
+            await loadAll();
+            return;
+        }
+
+        if (action === 'move-event-up' || action === 'move-event-down') {
+            let container = sectionEl.querySelector(':scope > .card-body > .events-block');
+            let ids = Array.from(container.querySelectorAll(':scope > [data-event-row]')).map(el => el.dataset.eventRow);
+            let i = ids.indexOf(eventId);
+            let j = action === 'move-event-up' ? i - 1 : i + 1;
+            if (j < 0 || j >= ids.length) return;
+            [ids[i], ids[j]] = [ids[j], ids[i]];
+            await api('PUT', `/api/sections/${encodeURIComponent(sectionId)}/events/order`, {order: ids});
+            await loadAll();
+            return;
+        }
     }
 
     let itemCard = target.closest('[data-item-card]');
@@ -425,19 +512,15 @@ const sectionModalForm = document.getElementById('section-modal-form');
 let sectionModalContext = null;
 
 function openSectionModal(section) {
-    let editableIdentity = !section || section.manual === true;
     sectionModalContext = section
-        ? {mode: 'edit', sectionId: section.sectionId, manual: section.manual === true}
+        ? {mode: 'edit', sectionId: section.sectionId}
         : {mode: 'add'};
 
     sectionModalForm.querySelector('[data-modal-title]').textContent = section ? 'Edit section' : 'Add section';
     sectionModalForm.sectionTitle.value = section ? section.sectionTitle : '';
     sectionModalForm.sectionId.value = section ? section.sectionId : '';
     sectionModalForm.sectionDescription.value = section ? (section.sectionDescription || '') : '';
-    sectionModalForm.pinned.checked = section ? !!section.pinned : false;
     sectionModalForm.show.checked = section ? section.show !== false : true;
-    sectionModalForm.sectionTitle.disabled = !editableIdentity;
-    sectionModalForm.sectionId.disabled = !editableIdentity;
     sectionModal.showModal();
 }
 
@@ -454,19 +537,15 @@ sectionModalForm.addEventListener('submit', async (e) => {
                 sectionId,
                 sectionTitle: sectionModalForm.sectionTitle.value,
                 sectionDescription: sectionModalForm.sectionDescription.value || undefined,
-                pinned: sectionModalForm.pinned.checked || undefined,
                 show: sectionModalForm.show.checked === false ? false : undefined,
             });
         } else {
             let body = {
+                sectionTitle: sectionModalForm.sectionTitle.value,
+                newSectionId: sectionModalForm.sectionId.value,
                 sectionDescription: sectionModalForm.sectionDescription.value || null,
-                pinned: sectionModalForm.pinned.checked,
                 show: sectionModalForm.show.checked,
             };
-            if (sectionModalContext.manual) {
-                body.sectionTitle = sectionModalForm.sectionTitle.value;
-                body.newSectionId = sectionModalForm.sectionId.value;
-            }
             await api('PATCH', `/api/sections/${encodeURIComponent(sectionModalContext.sectionId)}`, body);
         }
         sectionModal.close();
@@ -515,6 +594,52 @@ subcategoryModalForm.addEventListener('submit', async (e) => {
     }
 });
 
+// ---- event modal ----
+
+const eventModal = document.getElementById('event-modal');
+const eventModalForm = document.getElementById('event-modal-form');
+let eventModalContext = null;
+
+function openEventModal(sectionId, event) {
+    eventModalContext = event
+        ? {mode: 'edit', sectionId, eventId: event.id}
+        : {mode: 'add', sectionId};
+    eventModalForm.querySelector('[data-modal-title]').textContent = event ? 'Edit event' : 'Add event';
+    eventModalForm.name.value = event ? event.name : '';
+    eventModalForm.date.value = event ? (event.date || '') : '';
+    eventModalForm.location.value = event ? (event.location || '') : '';
+    eventModalForm.link.value = event ? (event.link || '') : '';
+    eventModalForm.show.checked = event ? event.show !== false : true;
+    eventModal.showModal();
+}
+
+eventModal.querySelector('[data-close-modal]').addEventListener('click', () => eventModal.close());
+
+eventModalForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    let name = eventModalForm.name.value.trim();
+    if (!name) return;
+    let body = {
+        name,
+        date: eventModalForm.date.value,
+        location: eventModalForm.location.value,
+        link: eventModalForm.link.value,
+        show: eventModalForm.show.checked,
+    };
+    try {
+        let base = `/api/sections/${encodeURIComponent(eventModalContext.sectionId)}/events`;
+        if (eventModalContext.mode === 'add') {
+            await api('POST', base, body);
+        } else {
+            await api('PATCH', `${base}/${encodeURIComponent(eventModalContext.eventId)}`, body);
+        }
+        eventModal.close();
+        await loadAll();
+    } catch (err) {
+        statusEl.textContent = 'error: ' + err.message;
+    }
+});
+
 // ---- item modal ----
 
 const itemModal = document.getElementById('item-modal');
@@ -539,7 +664,8 @@ function openItemModal(sectionId, subcategoryName, item) {
     itemModalForm.querySelector('[data-modal-title]').textContent = item ? 'Edit item' : 'Add item';
     itemModalForm.querySelector('[data-modal-submit]').textContent = item ? 'Save' : 'Add item';
 
-    modalSectionSelect.innerHTML = boo.map(s => `<option value="${esc(s.sectionId)}">${esc(s.sectionTitle)}</option>`).join('');
+    modalSectionSelect.innerHTML = boo
+        .map(s => `<option value="${esc(s.sectionId)}">${esc(s.sectionTitle)}</option>`).join('');
     modalSectionSelect.value = sectionId;
     populateModalSubcategories(sectionId, subcategoryName);
     // moving an item across sections/subcategories isn't supported server-side,

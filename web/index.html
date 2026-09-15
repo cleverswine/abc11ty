@@ -10,6 +10,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Auntie Boo Crafts</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600&display=swap">
+
     <link rel="stylesheet" href="css/bootstrap.min.css" type="text/css">
     <link rel="stylesheet" href="css/bootstrap-icons.min.css" type="text/css">
     <link rel="stylesheet" href="css/app.css" type="text/css">
@@ -23,99 +27,127 @@
 
 <body>
 
-<div class="container mb-4">
+<header class="site-header">
+    <div class="site-header__brand">
+        <img class="site-header__logo" src="img/logo.png" alt="Auntie Boo Crafts">
+        <span class="site-header__name">Auntie Boo Crafts</span>
+    </div>
+    <nav class="site-header__nav">
+        {% for section in boo %}
+        {% if section.sectionId != "0" and section.show != false %}
+        <a href="#{{ section.sectionId }}">
+            {% if section.sectionId == "live-events" %}
+            <i class="section__icon bi bi-geo-alt-fill"></i>
+            {% else %}
+            <i class="section__icon bi bi-gift-fill"></i>
+            {% endif %}
+            {{ section.sectionTitle }}
+        </a>
+        {% endif %}
+        {% endfor %}
+    </nav>
+</header>
 
-    <div class="text-center w-100 mb-4">
-        <img src="img/logo.png" class="img-fluid" alt="Auntie Boo Crafts" style="width:100%; max-width: 591px;"/>
-        <div style="color: #00567b; font-size: 1.3em; font-weight: bold;">
-            Welcome to Auntie Boo Crafts!
-        </div>
-        <div class="my-2">
-            I'm passionate about creating handcrafted and personalized items. I specialize in bookmarks, hair
-            clips, glitter pens, key chains, and badge reels. I have something for every price point. Almost all
-            items can be customized. I love working with customers to create something unique and personal.
-        </div>
-        <p>
-            <a class="btn btn-outline-primary rounded-pill" href="https://www.etsy.com/shop/AuntieBooCrafts"
-               target="_blank">
-                <i class="bi bi-bag-heart"></i> Visit my shop on Etsy
-            </a>
-        </p>
+<section class="hero">
+    <img class="hero__logo" src="img/logo.png" alt="Auntie Boo Crafts">
+    <h1 class="hero__title"> Welcome to Auntie Boo Crafts!</h1>
+    <p class="hero__subtitle">
+        
+I'm passionate about creating handcrafted and personalized items. I specialize in bookmarks, hair clips, glitter pens, key chains, and badge reels. I have something for every price point. Almost all items can be customized. I love working with customers to create something unique and personal. 
+    </p>
+</section>
+
+{% for section in boo %}
+{% if section.sectionId != "0" and section.show != false %}
+{% assign is_sage = false %}
+{% if section.sectionId == "etsy-shop" %}{% assign is_sage = true %}{% endif %}
+<section id="{{ section.sectionId }}" class="section {% if is_sage %}section--sage{% else %}section--slate{% endif %}">
+    <div class="section__header">
+        {% if section.sectionId == "live-events" %}
+        <i class="section__icon bi bi-geo-alt-fill"></i>
+        {% else %}
+        <i class="section__icon bi bi-gift-fill"></i>
+        {% endif %}
+        <h2 class="section__title">{{ section.sectionTitle }}</h2>
     </div>
 
-</div>
-
-<div class="abc-nav">
-    <button data-role="nav" data-id="0">
-        All
-    </button>
-    {% for section in boo %}
-    {% if section.show != false %}
-    <button data-role="nav" data-id="{{ section.sectionId }}">
-        {{ section.sectionTitle }}
-    </button>
+    {% if section.sectionDescription %}
+    <div class="section__intro">{{ section.sectionDescription | markdown }}</div>
     {% endif %}
-    {% endfor %}
-</div>
 
-<div class="container mt-3">
-
-    {% for section in boo %}
-    {% if section.sectionId != "0" and section.show != false %}
-    <div data-role="item" data-section-id="{{ section.sectionId }}" class="mb-2">
-        <h4>{{ section.sectionTitle }}</h4>
-        {% if section.sectionDescription %}
-        {% assign section_description_paragraphs = section.sectionDescription | split: "\n" %}
-        {% for paragraph in section_description_paragraphs %}
-        <p class="text-body-secondary text-center {% if forloop.last %}mb-0{% else %}mb-2{% endif %}">{{ paragraph }}</p>
-        {% endfor %}
-        {% endif %}
-        {% assign these_products = section.items | where: "show", true %}
-        {% if these_products.size > 0 %}
-        <div class="row" id="item-grid">
-            {% for item in these_products %}
-            {% render "item-card.html", item: item %}
-            {% endfor %}
+    {% assign these_events = section.events | where: "show", true %}
+    {% if these_events.size > 0 %}
+    <div class="event-list">
+        {% for event in these_events %}
+        <div class="event-card">
+            <div class="event-card__info">
+                {% if event.link and event.link != "" %}
+                <a href="{{ event.link }}" target="_blank" rel="noopener" class="event-card__name event-card__name--link">{{ event.name }}</a>
+                {% else %}
+                <span class="event-card__name">{{ event.name }}</span>
+                {% endif %}
+                <span class="event-card__location">{{ event.location }}</span>
+            </div>
+            <span class="event-card__meta">{{ event.date }}</span>
         </div>
-        {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
 
+    {% assign these_products = section.items | where: "show", true %}
+    {% if these_products.size > 0 %}
+    <div class="card-grid">
+        {% for item in these_products %}
+        {% render "item-card.html", item: item %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if section.subcategories.size > 0 %}
+    <div class="chip-row">
         {% for group in section.subcategories %}
         {% if group.show != false %}
         {% assign group_products = group.items | where: "show", true %}
         {% if group_products.size > 0 %}
-        <h5 class="abc-subcategory-title text-center mt-3">{{ group.name }}</h5>
-        <div class="row" id="item-grid">
-            {% for item in group_products %}
-            {% render "item-card.html", item: item %}
-            {% endfor %}
-        </div>
+        <a class="chip {% if is_sage %}chip--sage{% else %}chip--slate{% endif %}"
+           href="#{{ section.sectionId }}-{{ group.name | slugify }}">{{ group.name }}</a>
         {% endif %}
         {% endif %}
         {% endfor %}
     </div>
     {% endif %}
-    {%- endfor -%}
 
-    <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
-        <div class="col-md-4 d-flex align-items-center">
-            <span class="mb-3 mb-md-0 text-body-secondary">&copy; {{ 'now' | date: "%Y" }} Auntie Boo Crafts</span>
+    {% for group in section.subcategories %}
+    {% if group.show != false %}
+    {% assign group_products = group.items | where: "show", true %}
+    {% if group_products.size > 0 %}
+    <div id="{{ section.sectionId }}-{{ group.name | slugify }}"
+         class="category-group {% if is_sage %}category-group--sage{% else %}category-group--slate{% endif %}">
+        <h3 class="category-group__title">{{ group.name }}</h3>
+        <div class="card-grid">
+            {% for item in group_products %}
+            {% render "item-card.html", item: item %}
+            {% endfor %}
         </div>
+    </div>
+    {% endif %}
+    {% endif %}
+    {% endfor %}
 
-        <div class="nav col-md-4 justify-content-end d-flex">
-            <div class="ms-3">
-                <a class="text-body-secondary" href="https://www.etsy.com/shop/AuntieBooCrafts">
-                    <i class="bi bi-bag-heart-fill"></i>
-                </a>
-            </div>
-            <div class="ms-3">
-                <a class="text-body-secondary" href="https://www.etsy.com/shop/auntieboocrafts/rss">
-                    <i class="bi bi-rss-fill"></i>
-                </a>
-            </div>
-        </div>
-    </footer>
+    {% if section.sectionId == "etsy-shop" %}
+    <div class="section__cta">
+        <a class="btn btn--primary" href="https://www.etsy.com/shop/AuntieBooCrafts" target="_blank">Visit shop on Etsy</a>
+    </div>
+    {% endif %}
+</section>
+{% endif %}
+{%- endfor -%}
 
-</div>
+<footer class="site-footer">
+    &copy; {{ 'now' | date: "%Y" }} Auntie Boo Crafts ·
+    <a href="https://www.etsy.com/shop/AuntieBooCrafts">Etsy shop</a> ·
+    <a href="https://www.etsy.com/shop/auntieboocrafts/rss">RSS</a>
+</footer>
 
 <script src="js/bootstrap.min.js"></script>
 <script src="js/app.js"></script>

@@ -2,19 +2,19 @@
   {
     "sectionId": "live-events",
     "sectionTitle": "In Person Events",
-    "sectionDescription": "The items below are part of my in-person collection and are not currently available for online purchase.\n\nYou can shop these products at local vendor events, craft shows, and pop-up markets where Auntie Boo Crafts participates. \n\nFollow along for upcoming event dates and locations!\n\nJC Penney Days, Hamilton, MO, September 26, 2026\n\nKellybrook Craft Fair, Liberty, MO, December 12, 2026",
+    "sectionDescription": "The items below are part of my in-person collection and are not currently available for online purchase.\n\nYou can shop these products at local vendor events, craft shows, and pop-up markets where Auntie Boo Crafts participates. \n\nFollow along for upcoming event dates and locations!\n\n~ JC Penney Days / Hamilton, MO / September 26, 2026\n\n~ Holiday Market at the Firehouse / Kearney, MO / November 7, 2026\n\n~ Kellybrook Craft Fair / Liberty, MO / December 12, 2026",
     "pinned": true,
     "show": true,
     "manual": true,
     "subcategories": [
       {
-        "name": "Design A Life You Love",
+        "name": "Composition Notebooks",
         "show": true,
         "items": [
           {
             "id": "live-events-1",
             "show": true,
-            "title": "Composition Notebook",
+            "title": "Design a Life You Love",
             "description": "Composition Notebook",
             "etsyPage": "",
             "manual": true,
@@ -234,7 +234,8 @@
             "title": "Today I Think I Will Cause Problems",
             "description": "",
             "images": [
-              "img-product/upload-dd048f1d.jpeg"
+              "img-product/upload-dd048f1d.jpeg",
+              "img-product/upload-ae4c054d.jpeg"
             ],
             "etsyPage": "",
             "show": true,
@@ -247,6 +248,7 @@
   {
     "sectionId": "38581786",
     "sectionTitle": "Keychains",
+    "sectionDescription": "These items are available on the Auntie Boo Crafts Etsy store.",
     "items": [
       {
         "id": "4426069266",
@@ -423,6 +425,7 @@
   {
     "sectionId": "38688549",
     "sectionTitle": "Magnets",
+    "sectionDescription": "These items are available on the Auntie Boo Crafts Etsy store.",
     "items": [
       {
         "id": "1455970984",
@@ -499,6 +502,7 @@
   {
     "sectionId": "38744312",
     "sectionTitle": "Badge Reels",
+    "sectionDescription": "These items are available on the Auntie Boo Crafts Etsy store.",
     "items": [
       {
         "id": "1246784136",
@@ -675,6 +679,7 @@
   {
     "sectionId": "38892123",
     "sectionTitle": "Pens",
+    "sectionDescription": "These items are available on the Auntie Boo Crafts Etsy store.",
     "items": [
       {
         "id": "1256086566",
@@ -751,6 +756,7 @@
   {
     "sectionId": "39028304",
     "sectionTitle": "Lanyards",
+    "sectionDescription": "These items are available on the Auntie Boo Crafts Etsy store.",
     "items": [
       {
         "id": "1298168805",
@@ -917,6 +923,7 @@
   {
     "sectionId": "39712299",
     "sectionTitle": "Teacher",
+    "sectionDescription": "These items are available on the Auntie Boo Crafts Etsy store.",
     "items": [
       {
         "id": "1684881131",
@@ -933,6 +940,7 @@
   {
     "sectionId": "45394178",
     "sectionTitle": "Bookmarks",
+    "sectionDescription": "These items are available on the Auntie Boo Crafts Etsy store.",
     "items": [
       {
         "id": "1837178342",
@@ -1009,6 +1017,7 @@
   {
     "sectionId": "51285496",
     "sectionTitle": "Hair Clips",
+    "sectionDescription": "These items are available on the Auntie Boo Crafts Etsy store.",
     "items": [
       {
         "id": "1629635922",
@@ -1115,6 +1124,7 @@
   {
     "sectionId": "53050376",
     "sectionTitle": "Stickers",
+    "sectionDescription": "These items are available on the Auntie Boo Crafts Etsy store.",
     "items": [
       {
         "id": "1878198807",
@@ -1151,6 +1161,7 @@
   {
     "sectionId": "53305770",
     "sectionTitle": "Digital Patterns",
+    "sectionDescription": "These items are available on the Auntie Boo Crafts Etsy store.",
     "items": [
       {
         "id": "1887458996",

@@ -317,6 +317,35 @@ code {
     margin: 0.9rem 0;
 }
 
+.subcategory-block > summary {
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+}
+
+.subcategory-block > summary::-webkit-details-marker {
+    display: none;
+}
+
+.subcategory-block > summary::before {
+    content: "\25B8";
+    display: inline-block;
+    margin-right: 0.5rem;
+    color: var(--bs-secondary-color, #8b8fa0);
+    transition: transform 0.15s ease-in-out;
+    flex: 0 0 auto;
+}
+
+.subcategory-block[open] > summary::before {
+    transform: rotate(90deg);
+}
+
+/* ---- events ---- */
+
+.events-block {
+    margin-bottom: 0.5rem;
+}
+
 /* ---- add-item modal ---- */
 
 dialog {

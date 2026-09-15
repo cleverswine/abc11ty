@@ -1,26 +1,21 @@
-<div class="col-xs-12 col-sm-6 col-md-4 col-lg-3 p-2 p-sm-3" id="{{ item.id }}">
-    <div class="card border-secondary">
-        {% if item.manual %}
-        <a href="#" data-bs-toggle="modal" data-bs-target="#img-modal-{{ item.id }}" class="stretched-link">
-            <img src="{{ item.images[0] }}" class="card-img-top border border-bottom border-secondary abc-product-img" alt="{{ item.title }}"/>
-        </a>
-        {% else %}
-        <a href="{{ item.etsyPage }}" target="_blank" class="stretched-link">
-            <img src="{{ item.images[0] }}" class="card-img-top border border-bottom border-secondary abc-product-img" alt="{{ item.title }}"/>
-        </a>
-        {% endif %}
-        {% if item.images.size > 1 %}
-        <span class="abc-multi-img-badge" title="Multiple images" aria-label="Multiple images">
-            <i class="bi bi-images"></i>
-        </span>
-        {% endif %}
-        <div class="card-body text-center p-2">
-            <p class="card-text text-truncate">{{ item.title }}</p>
-        </div>
-    </div>
-</div>
+{% if item.etsyPage and item.etsyPage != "" %}
+<a href="{{ item.etsyPage }}" target="_blank" class="product-card" id="{{ item.id }}">
+    <img src="{{ item.images[0] }}" class="product-card__image abc-product-img" alt="{{ item.title }}"/>
+    <div class="product-card__name">{{ item.title }}</div>
+</a>
+{% else %}
+<a href="#" data-bs-toggle="modal" data-bs-target="#img-modal-{{ item.id }}" class="product-card" id="{{ item.id }}">
+    <img src="{{ item.images[0] }}" class="product-card__image abc-product-img" alt="{{ item.title }}"/>
+    {% if item.images.size > 1 %}
+    <span class="abc-multi-img-badge" title="Multiple images" aria-label="Multiple images">
+        <i class="bi bi-images"></i>
+    </span>
+    {% endif %}
+    <div class="product-card__name">{{ item.title }}</div>
+</a>
+{% endif %}
 
-{% if item.manual %}
+{% if item.etsyPage and item.etsyPage != "" %}{% else %}
 <div class="modal fade" id="img-modal-{{ item.id }}" tabindex="-1" aria-labelledby="img-modal-label-{{ item.id }}" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
@@ -28,10 +23,7 @@
                 <div>
                     <h5 class="modal-title mb-1" id="img-modal-label-{{ item.id }}">{{ item.title }}</h5>
                     {% if item.description %}
-                    {% assign description_paragraphs = item.description | split: "\n" %}
-                    {% for paragraph in description_paragraphs %}
-                    <p class="text-muted small {% if forloop.last %}mb-0{% else %}mb-2{% endif %}">{{ paragraph }}</p>
-                    {% endfor %}
+                    <div class="modal-description text-muted small">{{ item.description | markdown }}</div>
                     {% endif %}
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
