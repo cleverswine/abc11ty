@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as parser from 'node-html-parser';
-import Fetch from "@11ty/eleventy-fetch";
+import { chromium } from 'playwright';
 import Image from "@11ty/eleventy-img";
 
 const ignoreSections = ["Christmas", "On sale"]
@@ -17,29 +17,52 @@ const ETSY_SECTION_ID = 'etsy-shop';
 let previousBoo = fs.existsSync(booPath) ? JSON.parse(fs.readFileSync(booPath, 'utf8')) : null;
 let previousEtsySection = previousBoo ? previousBoo.find(s => s.sectionId === ETSY_SECTION_ID) : null;
 
+// A real Chromium instance (see fetchHtml below) sets most browser-identity
+// headers itself; these are the couple worth overriding explicitly.
 let trickyHeaders = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.5",
-    "Accept-Encoding": "gzip, deflate, br, zstd",
-    "Referer": "https://www.auntieboocrafts.com/",
-    "Cookie": "",
-    "DNT": "1",
-    "Connection": "keep-alive",
-    "Upgrade-Insecure-Requests": "1",
-    "Sec-Fetch-Dest": "document",
-    "Sec-Fetch-Mode": "navigate",
-    "Sec-Fetch-Site": "cross-site",
-    "Sec-Fetch-User": "?1",
-    "Sec-GPC": "1",
-    "Priority": "u=0, i",
-    "Pragma": "no-cache",
-    "Cache-Control": "no-cache",
-    "TE": "trailers"
 }
 
 function delay(time) {
     return new Promise(resolve => setTimeout(resolve, time));
+}
+
+// Etsy started rejecting plain HTTP fetches (even with browser-like headers)
+// with a 403, so pages are now fetched through a real headless Chromium
+// instance instead - its TLS/JS fingerprint passes where a bare fetch() no
+// longer does. Not worth the overhead of eleventy-fetch-style disk caching
+// here since gen.js is run manually and rarely.
+let browserPromise;
+function getBrowser() {
+    if (!browserPromise) {
+        browserPromise = chromium.launch({
+            headless: true,
+            args: ['--disable-blink-features=AutomationControlled'],
+        });
+    }
+    return browserPromise;
+}
+
+async function fetchHtml(url) {
+    let browser = await getBrowser();
+    let context = await browser.newContext({
+        userAgent: trickyHeaders["User-Agent"],
+        locale: "en-US",
+        extraHTTPHeaders: {"Accept-Language": trickyHeaders["Accept-Language"]},
+    });
+    await context.addInitScript(() => {
+        Object.defineProperty(navigator, "webdriver", {get: () => undefined});
+    });
+    let page = await context.newPage();
+    try {
+        await page.goto(url, {waitUntil: "domcontentloaded", timeout: 30000});
+        // give any anti-bot JS challenge a moment to resolve before reading
+        await page.waitForLoadState("networkidle", {timeout: 15000}).catch(() => {});
+        return await page.content();
+    } finally {
+        await context.close();
+    }
 }
 
 async function getSectionItems(sectionId) {
@@ -50,11 +73,7 @@ async function getSectionItems(sectionId) {
 
     let data = "";
     try {
-        data = await Fetch(`https://www.etsy.com/shop/AuntieBooCrafts?section_id=${sectionId}`, {
-            duration: "1d",
-            type: "html",
-            fetchOptions: {headers: trickyHeaders,},
-        });
+        data = await fetchHtml(`https://www.etsy.com/shop/AuntieBooCrafts?section_id=${sectionId}`);
         console.log(`fetched section page ${sectionId}`)
     } catch (e) {
         console.log(e);
@@ -105,11 +124,7 @@ if (skipFetch) {
 } else {
     let data = "";
     try {
-        data = await Fetch("https://www.etsy.com/shop/auntieboocrafts", {
-            duration: "1d",
-            type: "html",
-            fetchOptions: {headers: trickyHeaders,},
-        });
+        data = await fetchHtml("https://www.etsy.com/shop/auntieboocrafts");
     } catch (e) {
         console.log(e);
     }
@@ -134,6 +149,10 @@ if (skipFetch) {
             }
         }
     }
+}
+
+if (browserPromise) {
+    await (await browserPromise).close();
 }
 
 // Merges the freshly-scraped Etsy categories into etsy-shop's subcategories,
