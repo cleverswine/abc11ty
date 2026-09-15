@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
+<html lang="en" data-bs-theme="light">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -27,10 +27,8 @@
 
 <div class="container my-4">
     <p class="admin-hint">
-        <span class="badge-dot badge-dot-etsy"></span> Etsy-sourced sections and items are read-only - re-run
-        <code>node gen.js</code> to refresh them.
-        <span class="badge-dot badge-dot-manual"></span> Anything added here can be freely edited. Categories, subcategories, items, and images are all able to be reordered.
-        <span class="badge-dot badge-dot-manual"></span> All changes are save to <code>_data/boo.json</code> and can be immediately be viewed on the preview site by clicking the Preview link above. Getting the changes to the public site requires an additional step.
+        Changes you make here show up right away on the preview site, so you can check how things look before anyone else sees them.
+        To make a change go live on the actual public site, one more step is needed after you're done editing.
     </p>
 
     <div id="sections"></div>
@@ -42,21 +40,26 @@
         <form id="section-modal-form">
             <h2 class="h5 mb-3" data-modal-title>Add section</h2>
             <div class="row g-2">
-                <div class="col-md-6">
+                <div class="col-12">
                     <label class="form-label small mb-0">Section title</label>
                     <input class="form-control form-control-sm" name="sectionTitle">
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label small mb-0">Section id</label>
-                    <input class="form-control form-control-sm" name="sectionId">
                 </div>
                 <div class="col-12">
                     <label class="form-label small mb-0">Description</label>
                     <textarea class="form-control form-control-sm" name="sectionDescription" rows="4"></textarea>
                 </div>
                 <div class="col-12 d-flex gap-3">
-                    <label class="form-check-label small"><input type="checkbox" class="form-check-input" name="pinned"> pinned</label>
                     <label class="form-check-label small"><input type="checkbox" class="form-check-input" name="show" checked> show</label>
+                </div>
+                <div class="col-12">
+                    <details class="advanced-fields">
+                        <summary class="small text-body-secondary">Advanced</summary>
+                        <div class="mt-2">
+                            <label class="form-label small mb-0">Page link name</label>
+                            <input class="form-control form-control-sm" name="sectionId">
+                            <p class="small text-body-secondary mb-0 mt-1">Created automatically from the title. Only change this if you know it will affect a link people already use.</p>
+                        </div>
+                    </details>
                 </div>
             </div>
             <div class="d-flex justify-content-end gap-2 mt-3">
@@ -69,7 +72,7 @@
     <!-- ---- subcategory modal ---- -->
     <dialog id="subcategory-modal">
         <form id="subcategory-modal-form">
-            <h2 class="h5 mb-3" data-modal-title>Add subcategory</h2>
+            <h2 class="h5 mb-3" data-modal-title>Add group</h2>
             <div class="row g-2">
                 <div class="col-12">
                     <label class="form-label small mb-0">Name</label>
@@ -86,17 +89,49 @@
         </form>
     </dialog>
 
+    <!-- ---- event modal ---- -->
+    <dialog id="event-modal">
+        <form id="event-modal-form">
+            <h2 class="h5 mb-3" data-modal-title>Add event</h2>
+            <div class="row g-2">
+                <div class="col-12">
+                    <label class="form-label small mb-0">Name</label>
+                    <input class="form-control form-control-sm" name="name" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small mb-0">Date</label>
+                    <input class="form-control form-control-sm" name="date" placeholder="e.g. Sep 26, 2026">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small mb-0">Location</label>
+                    <input class="form-control form-control-sm" name="location" placeholder="e.g. Hamilton, MO">
+                </div>
+                <div class="col-12">
+                    <label class="form-label small mb-0">Link</label>
+                    <input class="form-control form-control-sm" name="link" placeholder="https://...">
+                </div>
+                <div class="col-12">
+                    <label class="form-check-label small"><input type="checkbox" class="form-check-input" name="show" checked> show</label>
+                </div>
+            </div>
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-close-modal>Cancel</button>
+                <button type="submit" class="btn btn-primary btn-sm">Save</button>
+            </div>
+        </form>
+    </dialog>
+
     <!-- ---- item modal ---- -->
     <dialog id="item-modal">
         <form id="item-modal-form">
-            <h2 class="h5 mb-3" data-modal-title>Add item</h2>
+            <h2 class="h5 mb-3" data-modal-title>Add product</h2>
             <div class="row g-2">
                 <div class="col-md-6">
                     <label class="form-label small mb-0">Section</label>
                     <select class="form-select form-select-sm" name="sectionId" required></select>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label small mb-0">Subcategory</label>
+                    <label class="form-label small mb-0">Group</label>
                     <select class="form-select form-select-sm" name="subcategory"></select>
                 </div>
                 <div class="col-12">
@@ -112,7 +147,7 @@
                     <input class="form-control form-control-sm" name="etsyPage" placeholder="https://...">
                 </div>
                 <div class="col-12">
-                    <p class="small text-body-secondary mb-0">Images are managed on the page, below the item's title and description.</p>
+                    <p class="small text-body-secondary mb-0">Photos are managed on the page, below the product's title and description.</p>
                 </div>
                 <div class="col-12">
                     <label class="form-check-label small">
@@ -122,7 +157,7 @@
             </div>
             <div class="d-flex justify-content-end gap-2 mt-3">
                 <button type="button" class="btn btn-outline-secondary btn-sm" data-close-modal>Cancel</button>
-                <button type="submit" class="btn btn-primary btn-sm" data-modal-submit>Add item</button>
+                <button type="submit" class="btn btn-primary btn-sm" data-modal-submit>Add product</button>
             </div>
         </form>
     </dialog>

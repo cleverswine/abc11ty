@@ -6,9 +6,16 @@ import Image from "@11ty/eleventy-img";
 const ignoreSections = ["Christmas", "On sale"]
 const skipFetch = process.argv.includes('--skip-fetch');
 const booPath = '_data/boo.json';
-let result = [];
+
+// The single section gen.js owns. Every other section (e.g. "live-events")
+// is entirely hand-authored and passed through untouched. Renaming this
+// section's id via the admin tool would break gen.js's ability to find it
+// again next run - sectionTitle/sectionDescription/show are all safe to
+// rename/edit though, since they're carried forward below.
+const ETSY_SECTION_ID = 'etsy-shop';
 
 let previousBoo = fs.existsSync(booPath) ? JSON.parse(fs.readFileSync(booPath, 'utf8')) : null;
+let previousEtsySection = previousBoo ? previousBoo.find(s => s.sectionId === ETSY_SECTION_ID) : null;
 
 let trickyHeaders = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
@@ -54,7 +61,7 @@ async function getSectionItems(sectionId) {
         return [];
     }
 
-    parsedData = parser.parse(data);
+    let parsedData = parser.parse(data);
     let listingsSection = parsedData.querySelectorAll('div.responsive-listing-grid')[0];
     let listings = listingsSection.querySelectorAll('a.listing-link');
     console.log(`found ${listings.length} listings`);
@@ -77,19 +84,24 @@ async function getSectionItems(sectionId) {
             title: title.split(",")[0],
             description: title,
             images: [imgStats.png[0].outputPath],
-            etsyPage: listing.attrs["href"].split("?")[0]
+            etsyPage: listing.attrs["href"].split("?")[0],
+            source: "Etsy",
         });
     }
     return items;
 }
 
+// [{name, items}] - one entry per real Etsy category, freshly scraped (or,
+// with --skip-fetch, reused from the current boo.json instead of fetched).
+let freshCategories = [];
+
 if (skipFetch) {
-    console.log('--skip-fetch passed, reusing Etsy-sourced sections already in _data/boo.json instead of hitting Etsy');
-    // drop manual sections/items here - preserveManualContent() below adds them back,
-    // so this is just the "no new scrape happened" baseline it merges onto.
-    result = (previousBoo || [])
-        .filter(section => !section.manual)
-        .map(section => ({...section, items: section.items.filter(item => !item.manual)}));
+    console.log('--skip-fetch passed, reusing Etsy-sourced items already in _data/boo.json instead of hitting Etsy');
+    freshCategories = ((previousEtsySection && previousEtsySection.subcategories) || [])
+        .map(group => ({
+            name: group.name,
+            items: (group.items || []).filter(item => item.source === 'Etsy'),
+        }));
 } else {
     let data = "";
     try {
@@ -113,12 +125,10 @@ if (skipFetch) {
             let sectionId = sectionButton.getAttribute('data-section-id');
             if (ignoreSections.indexOf(sectionTitle) === -1 && sectionId !== '0') {
                 console.log(`processing section ${sectionTitle}`)
-                let sectionObj = {
-                    sectionId: sectionId,
-                    sectionTitle: sectionTitle,
-                    items: await getSectionItems(sectionId)
-                };
-                result.push(sectionObj)
+                freshCategories.push({
+                    name: sectionTitle,
+                    items: await getSectionItems(sectionId),
+                });
             } else {
                 console.log(`ignoring section ${sectionTitle}`)
             }
@@ -126,46 +136,56 @@ if (skipFetch) {
     }
 }
 
-function preserveManualContent(freshResult, previousBoo) {
-    if (!previousBoo) {
-        return freshResult;
-    }
-    // sections tagged "manual" (no matching Etsy section) are carried forward
-    // untouched, subcategories and all - gen.js never has to understand their
-    // internal shape, it just never overwrites anything tagged manual.
-    let manualOnlySections = previousBoo.filter(section => section.manual);
+// Merges the freshly-scraped Etsy categories into etsy-shop's subcategories,
+// keeping the admin's current subcategory order and re-appending any
+// non-Etsy (hand-added) items that were mixed into a subcategory - the same
+// idea as the old per-item "manual" carry-forward, just scoped by source.
+function mergeEtsySubcategories(freshCategories, previousEtsySection) {
+    let previousGroups = (previousEtsySection && previousEtsySection.subcategories) || [];
+    let previousByName = new Map(previousGroups.map(g => [g.name, g]));
+    let freshByName = new Map(freshCategories.map(c => [c.name, c]));
 
-    for (let section of freshResult) {
-        let previousSection = previousBoo.find(s => s.sectionId === section.sectionId && !s.manual);
-        if (!previousSection) {
-            continue;
-        }
-        // manual items appended onto a real Etsy section carry their own
-        // "manual" tag per item, so they're easy to pick back out and re-append.
-        let manualItems = (previousSection.items || []).filter(item => item.manual);
-        section.items.push(...manualItems);
-        // raw Etsy scrapes never set these fields, so their presence here can
-        // only mean they were set by hand - safe to always carry forward.
-        if (typeof previousSection.pinned === 'boolean') {
-            section.pinned = previousSection.pinned;
-        }
-        if (previousSection.sectionDescription) {
-            section.sectionDescription = previousSection.sectionDescription;
-        }
-        if (typeof previousSection.show === 'boolean') {
-            section.show = previousSection.show;
-        }
+    let orderedNames = previousGroups.map(g => g.name);
+    for (let name of freshByName.keys()) {
+        if (!orderedNames.includes(name)) orderedNames.push(name);
     }
 
-    let combined = [...freshResult, ...manualOnlySections];
-    // pinned sections float to the top, preserving relative order otherwise
-    combined.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
-    return combined;
+    return orderedNames
+        .map(name => {
+            let fresh = freshByName.get(name);
+            let previous = previousByName.get(name);
+            let manualItems = previous ? (previous.items || []).filter(i => i.source !== 'Etsy') : [];
+            return {
+                name,
+                show: previous && typeof previous.show === 'boolean' ? previous.show : true,
+                items: [...(fresh ? fresh.items : []), ...manualItems],
+            };
+        })
+        // drop a subcategory once it has neither fresh Etsy items nor any
+        // manual leftovers, instead of leaving an empty shell around forever
+        .filter(group => group.items.length > 0);
 }
 
-result = preserveManualContent(result, previousBoo);
+let etsySection = {
+    sectionId: ETSY_SECTION_ID,
+    sectionTitle: (previousEtsySection && previousEtsySection.sectionTitle) || 'Etsy Shop',
+    show: previousEtsySection && typeof previousEtsySection.show === 'boolean' ? previousEtsySection.show : true,
+    subcategories: mergeEtsySubcategories(freshCategories, previousEtsySection),
+};
+if (previousEtsySection && previousEtsySection.sectionDescription) {
+    etsySection.sectionDescription = previousEtsySection.sectionDescription;
+}
+
+let result;
+if (previousBoo) {
+    result = previousEtsySection
+        ? previousBoo.map(section => section.sectionId === ETSY_SECTION_ID ? etsySection : section)
+        : [...previousBoo, etsySection];
+} else {
+    result = [etsySection];
+}
 
 if (previousBoo) {
     fs.copyFileSync(booPath, '_data/boo-old.json');
 }
-fs.writeFileSync(booPath, JSON.stringify(result, null, 2));
+fs.writeFileSync(booPath, JSON.stringify(result, null, 2) + '\n');

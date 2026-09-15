@@ -1,19 +1,42 @@
 :root {
-    --accent: #6d6df6;
-    --accent-soft: rgba(109, 109, 246, 0.16);
-    --etsy-muted: #9a9fae;
+    --ink: #1E170D;
+    --paper: #F1E9D8;
+    --surface: #FBF7EE;
+    --border-tint: #D9C9A8;
+    --text-secondary: #5A4C38;
+    --text-muted: #7C6C52;
+
+    --sage: #5F8C3E;
+    --sage-tint: #DCE8CB;
+    --sage-dark: #2E4620;
+
+    --slate: #3E5A82;
+    --slate-tint: #CFDBEA;
+    --slate-dark: #1E3350;
+
+    --terracotta: #96401F;
+    --terracotta-tint: #EFCFC0;
+    --terracotta-dark: #6E2E15;
+
+    --amber: #7C5605;
+    --amber-tint: #F3E3B8;
+    --amber-dark: #5E4004;
+
     --radius-lg: 0.9rem;
     --radius-md: 0.6rem;
 
-    --bs-body-bg: #101218;
-    --bs-body-color: #e7e8ee;
-    --bs-border-color: rgba(255, 255, 255, 0.09);
-    --bs-secondary-bg: #1b1e27;
-    --bs-tertiary-bg: #171a21;
-    --bs-primary: var(--accent);
-    --bs-primary-rgb: 109, 109, 246;
-    --bs-link-color: var(--accent);
-    --bs-link-hover-color: #8888ff;
+    --bs-body-bg: var(--paper);
+    --bs-body-color: var(--ink);
+    --bs-border-color: var(--border-tint);
+    --bs-secondary-bg: var(--surface);
+    --bs-tertiary-bg: #F8F1E3;
+    --bs-secondary-color: var(--text-secondary);
+    --bs-primary: var(--slate);
+    --bs-primary-rgb: 62, 90, 130;
+    --bs-danger: var(--terracotta);
+    --bs-danger-rgb: 150, 64, 31;
+    --bs-link-color: var(--slate);
+    --bs-link-hover-color: var(--slate-dark);
     --bs-border-radius: var(--radius-md);
     --bs-border-radius-sm: 0.4rem;
     --bs-border-radius-lg: var(--radius-lg);
@@ -29,14 +52,6 @@ body {
    landing exactly on the glyph would target the <i> instead of the button. */
 i.bi {
     pointer-events: none;
-}
-
-code {
-    color: #f2a4c7;
-    background: rgba(255, 255, 255, 0.06);
-    padding: 0.1rem 0.35rem;
-    border-radius: 0.3rem;
-    font-size: 0.85em;
 }
 
 /* ---- mobile ---- */
@@ -55,7 +70,7 @@ code {
     position: sticky;
     top: 0;
     z-index: 20;
-    background: rgba(16, 18, 24, 0.85);
+    background: rgba(255, 253, 248, 0.9);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--bs-border-color);
 }
@@ -64,6 +79,7 @@ code {
     font-weight: 700;
     font-size: 1.15rem;
     letter-spacing: -0.02em;
+    color: var(--sage-dark);
 }
 
 .admin-hint {
@@ -71,33 +87,15 @@ code {
     border: 1px solid var(--bs-border-color);
     border-radius: var(--radius-md);
     padding: 0.75rem 1rem;
-    color: var(--bs-secondary-color, #b6b9c4);
+    color: var(--text-secondary);
     font-size: 0.88rem;
     margin-bottom: 1.25rem;
 }
 
-.badge-dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    margin-right: 0.3rem;
-    vertical-align: middle;
-}
-
-.badge-dot-etsy {
-    background: var(--etsy-muted);
-}
-
-.badge-dot-manual {
-    background: var(--accent);
-    margin-left: 0.75rem;
-}
-
 .show-indicator {
-    color: var(--bs-secondary-color, #6b7080);
+    color: var(--text-muted);
     font-size: 1.4rem;
-    opacity: 0.7;
+    opacity: 0.85;
 }
 
 /* ---- section cards ---- */
@@ -106,12 +104,12 @@ code {
     border-radius: var(--radius-lg) !important;
     border: 1px solid var(--bs-border-color) !important;
     overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 1px 3px rgba(36, 28, 16, 0.08);
     margin-bottom: 1rem !important;
 }
 
 #sections > details[open] {
-    border-color: rgba(109, 109, 246, 0.35) !important;
+    border-color: rgba(62, 90, 130, 0.45) !important;
 }
 
 #sections > details > summary {
@@ -127,14 +125,14 @@ code {
 }
 
 #sections > details > summary:hover {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(36, 28, 16, 0.035);
 }
 
 #sections > details > summary::before {
     content: "\25B8";
     display: inline-block;
     margin-right: 0.6rem;
-    color: var(--bs-secondary-color, #8b8fa0);
+    color: var(--text-muted);
     transition: transform 0.15s ease-in-out;
 }
 
@@ -168,7 +166,7 @@ code {
 }
 
 .item-row:hover {
-    border-color: rgba(255, 255, 255, 0.18);
+    border-color: rgba(36, 28, 16, 0.2);
 }
 
 .etsy-readonly {
@@ -180,7 +178,7 @@ code {
     opacity: 1;
 }
 
-/* ---- icon-only buttons (item-level actions, reorder controls) ---- */
+/* ---- icon-only buttons (reorder controls, image chip actions) ---- */
 
 .btn-icon {
     display: inline-flex;
@@ -191,40 +189,34 @@ code {
     border: none;
     background: transparent;
     border-radius: 0.4rem;
-    color: var(--bs-secondary-color, #8b8fa0);
+    color: var(--text-muted);
     cursor: pointer;
     transition: background-color 0.12s ease-in-out, color 0.12s ease-in-out;
 }
 
 .btn-icon:hover {
-    background: rgba(255, 255, 255, 0.07);
+    background: rgba(36, 28, 16, 0.06);
     color: var(--bs-body-color);
 }
 
 .btn-icon.btn-icon-danger:hover {
-    background: rgba(255, 90, 90, 0.14);
-    color: #ff8787;
+    background: var(--terracotta-tint);
+    color: var(--terracotta-dark);
 }
 
 .btn-icon.btn-icon-warning {
-    color: #ffb84d;
+    color: var(--amber);
 }
 
 .btn-icon.btn-icon-warning:hover {
-    background: rgba(255, 184, 77, 0.14);
-    color: #ffc766;
+    background: var(--amber-tint);
+    color: var(--amber-dark);
 }
 
 .btn-icon:disabled {
-    color: rgba(255, 255, 255, 0.15);
+    color: rgba(36, 28, 16, 0.2);
     cursor: default;
     background: transparent;
-}
-
-.item-actions .btn-icon {
-    width: 2.4rem;
-    height: 2.4rem;
-    font-size: 1.15rem;
 }
 
 .reorder-stack {
@@ -276,14 +268,14 @@ code {
     height: 110px;
     border: 1px dashed var(--bs-border-color);
     border-radius: var(--radius-md);
-    color: var(--bs-secondary-color, #8b8fa0);
+    color: var(--text-muted);
     font-size: 2.2rem;
     cursor: pointer;
 }
 
 .thumb-upload-label:hover {
     color: var(--bs-body-color);
-    border-color: var(--bs-secondary-color, #8b8fa0);
+    border-color: var(--text-muted);
 }
 
 .btn-arrow {
@@ -293,7 +285,7 @@ code {
     line-height: 1;
     font-size: 1.6rem;
     font-weight: 700;
-    color: var(--bs-secondary-color, #8b8fa0);
+    color: var(--text-muted);
     cursor: pointer;
 }
 
@@ -304,17 +296,53 @@ code {
 .btn-arrow:disabled {
     color: var(--bs-border-color);
     cursor: default;
-    opacity: 0.4;
+    opacity: 0.6;
 }
 
-/* ---- subcategories ---- */
+/* ---- subcategories (shown to the user as "groups") ---- */
 
 .subcategory-block {
-    background: var(--accent-soft);
-    border: 1px solid rgba(109, 109, 246, 0.25);
+    background: var(--slate-tint);
+    border: 1px solid rgba(62, 90, 130, 0.35);
     border-radius: var(--radius-md);
     padding: 0.9rem 1rem;
     margin: 0.9rem 0;
+}
+
+.subcategory-block > summary {
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+}
+
+.subcategory-block > summary::-webkit-details-marker {
+    display: none;
+}
+
+.subcategory-block > summary::before {
+    content: "\25B8";
+    display: inline-block;
+    margin-right: 0.5rem;
+    color: var(--text-muted);
+    transition: transform 0.15s ease-in-out;
+    flex: 0 0 auto;
+}
+
+.subcategory-block[open] > summary::before {
+    transform: rotate(90deg);
+}
+
+/* ---- events ---- */
+
+.events-block {
+    margin-bottom: 0.5rem;
+}
+
+/* ---- advanced (collapsed-by-default) form fields ---- */
+
+.advanced-fields > summary {
+    cursor: pointer;
+    user-select: none;
 }
 
 /* ---- add-item modal ---- */
@@ -326,11 +354,11 @@ dialog {
     border-radius: var(--radius-lg);
     padding: 1.25rem;
     width: min(520px, 92vw);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 20px 60px rgba(36, 28, 16, 0.3);
 }
 
 dialog::backdrop {
-    background: rgba(6, 7, 10, 0.7);
+    background: rgba(36, 28, 16, 0.45);
     backdrop-filter: blur(2px);
 }
 

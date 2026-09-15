@@ -56,8 +56,7 @@ docker compose up
 ./scripts/strip-image-metadata.sh
 
 # commit + push web/_data/boo.json and web/img-product/ if either changed
-# (never boo-old.json, never anything else) — run on a schedule via cron,
-# see "Auto-sync" below
+# — run on a schedule via cron, see "Auto-sync" below
 ./scripts/git-sync.sh
 
 # update vendored bootstrap assets (run from web/)
@@ -184,8 +183,7 @@ below), not by `server.js` itself.
 
 `scripts/git-sync.sh` (assumes it's run from the repo root) commits and
 pushes `web/_data/boo.json` and `web/img-product/` whenever either has
-changed — never `boo-old.json`, never anything else — and no-ops cleanly
-otherwise. It's meant to run unattended, not to be wired into
+changed, and no-ops cleanly otherwise. It's meant to run unattended, not to be wired into
 `admin/server.js` or `gen.js` directly, so that admin edits and scrapes
 make it to git (and Netlify deploys) without anyone having to remember.
 Scheduled via a user crontab entry (the `cd` matters, since the script
