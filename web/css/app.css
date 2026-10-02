@@ -397,6 +397,56 @@ a {
   text-overflow: ellipsis;
 }
 
+/* "More X in the Etsy Shop" card, at the end of a hand-made category that
+   shares its name with an Etsy category. A quiet outline in the Etsy
+   section's sage, so it reads as a signpost to that section rather than
+   competing with the product photos. */
+.more-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  /* don't stretch to the full row height (which includes the products'
+     names under their photos) - js/app.js sets the height to match the
+     photo beside it; this is just the fallback until it does */
+  align-self: start;
+  min-height: 120px;
+  padding: 1rem;
+  text-align: center;
+  text-decoration: none;
+  background: rgba(220, 232, 203, 0.45);
+  color: var(--sage-dark);
+  border: 1px solid var(--sage-glow);
+  border-radius: var(--radius-soft);
+  transition: transform .2s ease, border-color .2s ease, background-color .2s ease;
+}
+
+.more-card:hover,
+.more-card:focus-visible {
+  color: var(--sage-dark);
+  transform: translateY(-4px);
+  border-color: var(--sage);
+  background: var(--sage-tint);
+}
+
+.more-card__icon {
+  font-size: 1.25rem;
+  color: var(--sage);
+}
+
+.more-card__text {
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.more-card__count {
+  font-size: 0.75rem;
+  color: var(--sage);
+}
+
 /* Section footer CTA (Etsy shop) */
 .section__cta {
   margin-top: 1.5rem;

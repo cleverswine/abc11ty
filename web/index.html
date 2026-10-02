@@ -57,6 +57,7 @@ I'm passionate about creating handcrafted and personalized items. I specialize i
     </p>
 </section>
 
+{% assign etsy_section = boo | where: "sectionId", "etsy-shop" | first %}
 {% for section in boo %}
 {% if section.sectionId != "0" and section.show != false %}
 {% assign is_sage = false %}
@@ -128,6 +129,23 @@ I'm passionate about creating handcrafted and personalized items. I specialize i
             {% for item in group_products %}
             {% render "item-card.html", item: item %}
             {% endfor %}
+            {% comment %}
+            A hand-made category with the same name as a (visible) Etsy shop
+            category gets a last card pointing down to that Etsy category.
+            {% endcomment %}
+            {% if section.sectionId != "etsy-shop" and etsy_section and etsy_section.show != false %}
+            {% assign etsy_group = etsy_section.subcategories | where: "name", group.name | first %}
+            {% if etsy_group and etsy_group.show != false %}
+            {% assign etsy_group_products = etsy_group.items | where: "show", true %}
+            {% if etsy_group_products.size > 0 %}
+            <a class="more-card" href="#{{ etsy_section.sectionId }}-{{ etsy_group.name | slugify }}">
+                <i class="more-card__icon bi bi-gift-fill"></i>
+                <span class="more-card__text">More {{ group.name }} in the {{ etsy_section.sectionTitle }}</span>
+                <span class="more-card__count">{{ etsy_group_products.size }} more <i class="bi bi-arrow-down"></i></span>
+            </a>
+            {% endif %}
+            {% endif %}
+            {% endif %}
         </div>
     </div>
     {% endif %}
