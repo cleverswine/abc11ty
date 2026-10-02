@@ -2,6 +2,25 @@
 
 Auntie Boo Crafts built by 11ty.
 
+## TL;DR
+
+```shell
+# pull the latest listings from Etsy into web/_data/boo.json
+# (first time only: cd web && npm install && npx playwright install chromium)
+cd web
+node gen.js                       # a browser window opens - solve any captcha, then press Enter
+node gen.js --item <listing-url>  # just re-download one listing's photos
+cd ..
+
+# run the site + admin tool together
+docker compose up
+# site:  http://localhost:9080
+# admin: http://localhost:9321
+```
+
+Admin edits and `gen.js` runs only change local files — they reach the live
+site once committed and pushed (see `scripts/git-sync.sh` below).
+
 ## Repo layout
 
 Two independent Node projects live side by side, each with its own
