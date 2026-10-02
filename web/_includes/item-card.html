@@ -1,47 +1,53 @@
-{% if item.etsyPage and item.etsyPage != "" %}
-<a href="{{ item.etsyPage }}" target="_blank" class="product-card" id="{{ item.id }}">
-    <img src="{{ item.images[0] }}" class="product-card__image abc-product-img" alt="{{ item.title }}"/>
-    <div class="product-card__name product-card__name--single-line">{{ item.title }}</div>
-</a>
-{% else %}
+{% assign is_etsy = false %}
+{% if item.source == "Etsy" %}{% assign is_etsy = true %}{% endif %}
+{% comment %}
+An Etsy item's images[0] is gen.js's small card thumbnail, and the full-size
+gallery that follows it starts with that same picture - so the slideshow
+skips it whenever there's a gallery to show instead.
+{% endcomment %}
+{% assign slide_offset = 0 %}
+{% if is_etsy and item.images.size > 1 %}{% assign slide_offset = 1 %}{% endif %}
+{% assign slide_count = item.images.size | minus: slide_offset %}
 <a href="#" data-bs-toggle="modal" data-bs-target="#img-modal-{{ item.id }}" class="product-card" id="{{ item.id }}">
     <img src="{{ item.images[0] }}" class="product-card__image abc-product-img" alt="{{ item.title }}"/>
-    {% if item.images.size > 1 %}
+    {% if slide_count > 1 %}
     <span class="abc-multi-img-badge" title="Multiple images" aria-label="Multiple images">
         <i class="bi bi-images"></i>
     </span>
     {% endif %}
-    <div class="product-card__name">{{ item.title }}</div>
+    <div class="product-card__name{% if is_etsy %} product-card__name--single-line{% endif %}">{{ item.title }}</div>
 </a>
-{% endif %}
 
-{% if item.etsyPage and item.etsyPage != "" %}{% else %}
 <div class="modal fade" id="img-modal-{{ item.id }}" tabindex="-1" aria-labelledby="img-modal-label-{{ item.id }}" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header align-items-start">
                 <div>
                     <h5 class="modal-title mb-1" id="img-modal-label-{{ item.id }}">{{ item.title }}</h5>
-                    {% if item.description %}
+                    {% if is_etsy %}
+                    <div class="modal-description">
+                        <a href="{{ item.etsyPage }}" target="_blank" rel="noopener" class="abc-etsy-link">Purchase this item on Etsy <i class="bi bi-box-arrow-up-right"></i></a>
+                    </div>
+                    {% elsif item.description %}
                     <div class="modal-description text-muted small">{{ item.description | markdown }}</div>
                     {% endif %}
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                {% if item.images.size > 1 %}
+                {% if slide_count > 1 %}
                 <div class="abc-carousel-thumbs">
-                    {% for img in item.images %}
-                    <button type="button" class="abc-carousel-thumb {% if forloop.first %}active{% endif %}" data-bs-target="#carousel-{{ item.id }}" data-bs-slide-to="{{ forloop.index0 }}" aria-label="View image {{ forloop.index }} of {{ item.images.size }}">
-                        <img src="{{ img }}" alt=""/>
+                    {% for img in item.images offset: slide_offset %}
+                    <button type="button" class="abc-carousel-thumb {% if forloop.first %}active{% endif %}" data-bs-target="#carousel-{{ item.id }}" data-bs-slide-to="{{ forloop.index0 }}" aria-label="View image {{ forloop.index }} of {{ slide_count }}">
+                        <img src="{{ img }}" alt="" loading="lazy"/>
                     </button>
                     {% endfor %}
                 </div>
                 <div id="carousel-{{ item.id }}" class="carousel slide">
                     <div class="carousel-inner">
-                        {% for img in item.images %}
+                        {% for img in item.images offset: slide_offset %}
                         <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                            <img src="{{ img }}" class="d-block w-100 abc-product-img" alt="{{ item.title }}"/>
+                            <img src="{{ img }}" class="abc-modal-img abc-product-img" alt="{{ item.title }}" loading="lazy"/>
                         </div>
                         {% endfor %}
                     </div>
@@ -55,10 +61,9 @@
                     </button>
                 </div>
                 {% else %}
-                <img src="{{ item.images[0] }}" class="d-block w-100 abc-product-img" alt="{{ item.title }}"/>
+                <img src="{{ item.images[0] }}" class="abc-modal-img abc-product-img" alt="{{ item.title }}" loading="lazy"/>
                 {% endif %}
             </div>
         </div>
     </div>
 </div>
-{% endif %}

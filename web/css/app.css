@@ -447,6 +447,31 @@ a {
   margin-bottom: 0;
 }
 
+.abc-etsy-link {
+  color: var(--slate);
+  font-size: 1.05rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.abc-etsy-link:hover {
+  color: var(--slate-dark);
+  text-decoration: underline;
+}
+
+/* Scale the modal image down to fit on screen along with the header and
+   thumbnail strip, instead of always filling the dialog's width (a square
+   full-size photo would otherwise run off the bottom of a laptop screen). */
+.abc-modal-img {
+  display: block;
+  max-width: 100%;
+  max-height: 60vh;
+  max-height: 60dvh;
+  width: auto;
+  height: auto;
+  margin: 0 auto;
+}
+
 .modal-body .carousel-control-prev,
 .modal-body .carousel-control-next {
   opacity: 0.9;
@@ -484,6 +509,20 @@ a {
   height: 56px;
   object-fit: cover;
   display: block;
+}
+
+/* smaller thumbs on phones, so a long strip doesn't push the capped image
+   (see .abc-modal-img) past the bottom of the screen */
+@media (max-width: 575.98px) {
+  .abc-carousel-thumb img {
+    width: 44px;
+    height: 44px;
+  }
+
+  .abc-modal-img {
+    max-height: 50vh;
+    max-height: 50dvh;
+  }
 }
 
 .abc-carousel-thumb:hover {

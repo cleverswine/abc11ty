@@ -4,13 +4,16 @@ import * as parser from 'node-html-parser';
 import { chromium } from 'playwright';
 import Image from "@11ty/eleventy-img";
 
-const ignoreSections = ["Christmas", "On sale"]
+const ignoreSections = ["On sale"]
 const skipFetch = process.argv.includes('--skip-fetch');
-// Runs a visible browser window and, on a blocked/challenged request, pauses
-// so a human can solve it there before gen.js retries. The resulting session
-// (cookies etc, see SESSION_PATH) is saved to disk either way, so a later
-// plain `node gen.js` run can reuse whatever trust was earned interactively.
-const headed = process.argv.includes('--headed');
+// Headed by default: runs a visible browser window and, on a
+// blocked/challenged request, pauses so a human can solve it there before
+// gen.js retries. Pass --headless for an unattended run (no display needed,
+// never waits on Enter - a blocked page just leaves that section's or
+// listing's existing data untouched). The session (cookies etc, see
+// SESSION_PATH) is saved to disk either way, so a headless run can reuse
+// whatever trust an earlier headed run earned interactively.
+const headed = !process.argv.includes('--headless');
 const booPath = '_data/boo.json';
 const SESSION_PATH = '.etsy-session.json';
 
@@ -53,7 +56,7 @@ function getBrowser() {
 
 // One context (and thus one cookie jar) for the whole run, seeded from
 // SESSION_PATH when present, so a DataDome pass earned on the first request
-// (or in an earlier --headed run) actually carries over to the rest.
+// (or in an earlier headed run) actually carries over to the rest.
 let contextPromise;
 function getContext() {
     if (!contextPromise) {
@@ -118,6 +121,58 @@ async function fetchHtml(url) {
     }
 }
 
+// Previous run's images per Etsy listing id, so a listing page that fails to
+// fetch keeps the gallery it already had instead of dropping to just the
+// card thumbnail.
+let previousImagesById = new Map(
+    ((previousEtsySection && previousEtsySection.subcategories) || [])
+        .flatMap(group => group.items || [])
+        .filter(item => item.source === 'Etsy')
+        .map(item => [item.id, item.images || []])
+);
+
+// Scrapes a listing page's image carousel and downloads every image at full
+// size as img-product/<listingId>-<n>.jpg, returning their paths in Etsy's
+// order (or null if the page didn't come back usable). The carousel only
+// exposes 75x75 thumbnails, but swapping the size token for 794xN in the
+// same URL gets the full-size version.
+async function getListingImages(productId, listingUrl) {
+    console.log(`fetching listing page ${productId} in 3 seconds...`);
+    await delay(3000);
+
+    let data = "";
+    try {
+        data = await fetchHtml(listingUrl);
+    } catch (e) {
+        return null;
+    }
+
+    let thumbs = parser.parse(data).querySelectorAll('img[data-carousel-thumbnail-image]');
+    let urls = [...new Set(thumbs
+        .map(img => img.getAttribute('src') || img.getAttribute('data-src-delay') || '')
+        .filter(src => src.includes('/il_75x75.'))
+        .map(src => src.replace('/il_75x75.', '/il_794xN.')))];
+    if (urls.length === 0) {
+        console.log(`  -> no image carousel found on listing page ${productId} (likely blocked)`);
+        return null;
+    }
+
+    let paths = [];
+    for (let i = 0; i < urls.length; i++) {
+        let imgStats = await Image(urls[i], {
+            widths: [794],
+            formats: ["jpeg"],
+            outputDir: "./img-product/",
+            filenameFormat: function (id, src, width, format, options) {
+                return `${productId}-${i + 1}.jpg`;
+            },
+        });
+        paths.push(imgStats.jpeg[0].outputPath);
+    }
+    console.log(`  -> ${paths.length} images`);
+    return paths;
+}
+
 // Returns {ok, items}: ok is false whenever the fetch/parse didn't actually
 // succeed (network failure, or a blocked/challenge page in place of the
 // expected listing grid) - the caller must not treat that the same as "this
@@ -157,13 +212,21 @@ async function getSectionItems(sectionId) {
                 return `${productId}.${format}`;
             },
         });
+        let thumbPath = imgStats.png[0].outputPath;
+        let etsyPage = listing.attrs["href"].split("?")[0];
+        // images[0] stays the small card thumbnail (it's all the site's Etsy
+        // cards render); the full-size gallery follows it
+        let gallery = await getListingImages(productId, etsyPage);
+        if (!gallery) {
+            gallery = (previousImagesById.get(productId) || []).filter(p => p !== thumbPath);
+        }
         items.push({
             id: productId,
             show: true,
             title: title.split(",")[0],
             description: title,
-            images: [imgStats.png[0].outputPath],
-            etsyPage: listing.attrs["href"].split("?")[0],
+            images: [thumbPath, ...gallery],
+            etsyPage,
             source: "Etsy",
         });
     }
@@ -220,8 +283,8 @@ if (skipFetch) {
     }
 }
 
-// Saved regardless of --headed: even a headless run's already-trusted
-// session is worth persisting, and a --headed run's manually-solved
+// Saved regardless of headed/headless: even a headless run's already-trusted
+// session is worth persisting, and a headed run's manually-solved
 // challenge is exactly what makes later headless runs work at all.
 if (contextPromise) {
     let context = await contextPromise;

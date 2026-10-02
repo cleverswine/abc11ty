@@ -40,12 +40,14 @@ cd web && node gen.js
 # or, to reuse the Etsy-sourced sections already in boo.json without hitting
 # Etsy (re-sort pinned sections, normalize the file, dry run):
 cd web && node gen.js --skip-fetch
-# if Etsy is showing a DataDome captcha instead of the shop page (check the
-# console output — gen.js logs full status/headers/body on any non-2xx
-# response), run headed once to solve it by hand in the browser window that
-# pops up, then Enter in the terminal to retry; the resulting session
-# (web/.etsy-session.json, gitignored) is reused by later headless runs too:
-cd web && node gen.js --headed
+# gen.js runs a visible (headed) browser by default: if Etsy shows a
+# DataDome captcha (gen.js logs full status/headers/body on any non-2xx
+# response), solve it by hand in the browser window, then press Enter in the
+# terminal to retry. The resulting session (web/.etsy-session.json,
+# gitignored) is reused by later runs. For an unattended run with no display
+# (cron, SSH), pass --headless: blocked pages are skipped instead of waited
+# on, leaving their existing data untouched:
+cd web && node gen.js --headless
 
 # run site + admin together, sharing the same web/ dir (admin edits show up
 # live in the site's dev server)
@@ -112,6 +114,12 @@ Run manually, not part of the eleventy build. Two phases:
    the catch-all section `"0"`. For each section, fetch its listing page and
    scrape every product card (title, Etsy URL, image), downloading/resizing
    each image to `img-product/<listingId>.png` via `@11ty/eleventy-img`.
+   Then each listing's own page is fetched (another 3s delay apiece) and
+   every image in its carousel is downloaded full-size (the `il_75x75`
+   thumbnail URL with `il_794xN` swapped in) to
+   `img-product/<listingId>-<n>.jpg`. An item's `images` is the card
+   thumbnail first, then that gallery; if a listing page is blocked, the
+   item keeps its previous gallery.
 2. `preserveManualContent()` merges the fresh scrape with the previous
    `boo.json`, per the manual-content rules above, then pinned sections are
    sorted to the front (stable otherwise).
@@ -119,7 +127,7 @@ Run manually, not part of the eleventy build. Two phases:
 Etsy pages are fetched through a real Playwright-driven Chromium instance
 (plain `fetch()` gets a 403), with a 3s delay between section requests; no
 disk caching, since gen.js is run manually and rarely. If Etsy blocks even
-Chromium with a DataDome captcha, see `--headed` above. If the shop home page
+Chromium with a DataDome captcha, see the headed/`--headless` notes above. If the shop home page
 or an individual section page comes back blocked/unparseable, gen.js leaves
 that section's (or, if the home page itself is blocked, *all* Etsy
 sections') existing listings untouched rather than merging in an empty
