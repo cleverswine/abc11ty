@@ -39,7 +39,7 @@
             {% if section.sectionId == "live-events" %}
             <i class="section__icon bi bi-geo-alt-fill"></i>
             {% else %}
-            <i class="section__icon bi bi-gift-fill"></i>
+            <i class="section__icon bi bi-bag-heart-fill"></i>
             {% endif %}
             {{ section.sectionTitle }}
         </a>
@@ -55,6 +55,7 @@
         
 I'm passionate about creating handcrafted and personalized items. I specialize in bookmarks, hair clips, glitter pens, key chains, and badge reels. I have something for every price point. Almost all items can be customized. I love working with customers to create something unique and personal. 
     </p>
+    <a class="abc-buy-btn" href="https://www.etsy.com/shop/AuntieBooCrafts" target="_blank" rel="noopener">Visit shop on <span class="abc-etsy-word">Etsy</span> <i class="bi bi-box-arrow-up-right"></i></a>
 </section>
 
 {% assign etsy_section = boo | where: "sectionId", "etsy-shop" | first %}
@@ -67,7 +68,7 @@ I'm passionate about creating handcrafted and personalized items. I specialize i
         {% if section.sectionId == "live-events" %}
         <i class="section__icon bi bi-geo-alt-fill"></i>
         {% else %}
-        <i class="section__icon bi bi-gift-fill"></i>
+        <i class="section__icon bi bi-bag-heart-fill"></i>
         {% endif %}
         <h2 class="section__title">{{ section.sectionTitle }}</h2>
     </div>
@@ -139,8 +140,8 @@ I'm passionate about creating handcrafted and personalized items. I specialize i
             {% assign etsy_group_products = etsy_group.items | where: "show", true %}
             {% if etsy_group_products.size > 0 %}
             <a class="more-card" href="#{{ etsy_section.sectionId }}-{{ etsy_group.name | slugify }}">
-                <i class="more-card__icon bi bi-gift-fill"></i>
-                <span class="more-card__text">More {{ group.name }} in the {{ etsy_section.sectionTitle }}</span>
+                <i class="more-card__icon bi bi-bag-heart-fill"></i>
+                <span class="more-card__text">More {{ group.name }} in {{ etsy_section.sectionTitle }}</span>
                 <span class="more-card__count">{{ etsy_group_products.size }} more <i class="bi bi-arrow-down"></i></span>
             </a>
             {% endif %}
@@ -154,7 +155,7 @@ I'm passionate about creating handcrafted and personalized items. I specialize i
 
     {% if section.sectionId == "etsy-shop" %}
     <div class="section__cta">
-        <a class="btn btn--primary" href="https://www.etsy.com/shop/AuntieBooCrafts" target="_blank">Visit shop on Etsy</a>
+        <a class="abc-buy-btn" href="https://www.etsy.com/shop/AuntieBooCrafts" target="_blank" rel="noopener">Visit shop on <span class="abc-etsy-word">Etsy</span> <i class="bi bi-box-arrow-up-right"></i></a>
     </div>
     {% endif %}
 </section>

@@ -22,6 +22,8 @@
   --slate-glow: #AEC5E0;
   --slate-dark: #1E3350;
 
+  --etsy-orange: #F1641E;
+
   --font-heading: "Fraunces", Georgia, "Iowan Old Style", "Palatino Linotype", serif;
   --font-body: -apple-system, "Segoe UI", Roboto, sans-serif;
 
@@ -123,7 +125,10 @@ a {
 }
 
 .hero__logo {
-  width: 360px;
+  /* the header already shows the logo, so this one stays modest enough to
+     keep the Etsy button above the fold on a phone */
+  width: 220px;
+  max-width: 100%;
   height: auto;
   margin-bottom: 1rem;
 }
@@ -140,24 +145,6 @@ a {
   font-size: 0.95rem;
 }
 
-/* Buttons */
-.btn--primary {
-  display: inline-block;
-  border: none;
-  border-radius: var(--radius-pill);
-  padding: 0.65rem 1.5rem;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  text-decoration: none;
-  background: var(--slate);
-  color: #FFFFFF;
-}
-
-.btn--primary:hover {
-  background: var(--slate-dark);
-  color: #FFFFFF;
-}
 
 /* Section shells */
 .section {
@@ -553,16 +540,54 @@ a {
   margin-bottom: 0;
 }
 
-.abc-etsy-link {
-  color: var(--slate);
-  font-size: 1.05rem;
-  font-weight: 600;
-  text-decoration: none;
+/* The Etsy purchase button, centered above the photos */
+.abc-modal-buy {
+  text-align: center;
+  margin-bottom: 1rem;
 }
 
-.abc-etsy-link:hover {
-  color: var(--slate-dark);
-  text-decoration: underline;
+/* Etsy buttons: the popup's purchase button and the Etsy section's "Visit
+   shop" button */
+.abc-buy-btn {
+  display: inline-block;
+  border-radius: var(--radius-pill);
+  padding: 0.65rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  /* ink, not slate: the only button color the orange "Etsy" stays readable
+     on (5.6:1). Hover lifts it instead of changing the color, which would
+     cost that contrast. */
+  background: var(--ink);
+  color: var(--surface);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.abc-buy-btn:hover,
+.abc-buy-btn:focus-visible {
+  color: var(--surface);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lift);
+}
+
+.abc-buy-btn:focus-visible {
+  outline: 3px solid var(--etsy-orange);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .abc-buy-btn {
+    transition: none;
+  }
+  .abc-buy-btn:hover,
+  .abc-buy-btn:focus-visible {
+    transform: none;
+  }
+}
+
+.abc-etsy-word {
+  color: var(--etsy-orange);
+  font-weight: 700;
 }
 
 /* Scale the modal image down to fit on screen along with the header and

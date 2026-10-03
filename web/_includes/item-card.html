@@ -24,17 +24,18 @@ skips it whenever there's a gallery to show instead.
             <div class="modal-header align-items-start">
                 <div>
                     <h5 class="modal-title mb-1" id="img-modal-label-{{ item.id }}">{{ item.title }}</h5>
-                    {% if is_etsy %}
-                    <div class="modal-description">
-                        <a href="{{ item.etsyPage }}" target="_blank" rel="noopener" class="abc-etsy-link">Purchase this item on Etsy <i class="bi bi-box-arrow-up-right"></i></a>
-                    </div>
-                    {% elsif item.description %}
+                    {% if item.description and is_etsy == false %}
                     <div class="modal-description text-muted small">{{ item.description | markdown }}</div>
                     {% endif %}
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                {% if is_etsy %}
+                <div class="abc-modal-buy">
+                    <a href="{{ item.etsyPage }}" target="_blank" rel="noopener" class="abc-buy-btn">Purchase this item on <span class="abc-etsy-word">Etsy</span> <i class="bi bi-box-arrow-up-right"></i></a>
+                </div>
+                {% endif %}
                 {% if slide_count > 1 %}
                 <div class="abc-carousel-thumbs">
                     {% for img in item.images offset: slide_offset %}

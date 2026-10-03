@@ -9,7 +9,7 @@ Auntie Boo Crafts built by 11ty.
 # (first time only: cd web && npm install && npx playwright install chromium)
 cd web
 node gen.js                       # a browser window opens - solve any captcha, then press Enter
-node gen.js --item <listing-url>  # just re-download one listing's photos
+node gen.js --item <listing-url>  # re-download one listing's photos (adds it if new)
 cd ..
 
 # run the site + admin tool together

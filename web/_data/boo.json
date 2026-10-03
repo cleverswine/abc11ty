@@ -271,7 +271,7 @@
   },
   {
     "sectionId": "etsy-shop",
-    "sectionTitle": "Etsy Shop",
+    "sectionTitle": "Etsy Items",
     "show": true,
     "subcategories": [
       {
@@ -1804,6 +1804,24 @@
         "name": "Stickers",
         "show": true,
         "items": [
+          {
+            "id": "4587473958",
+            "show": true,
+            "title": "Book Nerd Sticker",
+            "description": "Book Nerd Sticker, Book Lover Vinyl Decal, Hand Drawn, Waterproof, Bookish, Cottage Core, Floral Book Sticker, Gift for Bookworm",
+            "images": [
+              "img-product/4587473958.png",
+              "img-product/4587473958-1.jpg",
+              "img-product/4587473958-2.jpg",
+              "img-product/4587473958-3.jpg",
+              "img-product/4587473958-4.jpg",
+              "img-product/4587473958-5.jpg",
+              "img-product/4587473958-6.jpg",
+              "img-product/4587473958-7.jpg"
+            ],
+            "etsyPage": "https://www.etsy.com/listing/4587473958/book-nerd-sticker-book-lover-sticker",
+            "source": "Etsy"
+          },
           {
             "id": "1878198807",
             "show": true,

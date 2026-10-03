@@ -40,9 +40,12 @@ cd web && node gen.js
 # or, to reuse the Etsy-sourced sections already in boo.json without hitting
 # Etsy (re-sort pinned sections, normalize the file, dry run):
 cd web && node gen.js --skip-fetch
-# or, to re-download just one existing listing's images (thumbnail + photo
+# or, to re-download just one listing's images (thumbnail + photo
 # gallery) without scraping the whole shop - e.g. after changing its photos
-# on Etsy. New listings still need a full run:
+# on Etsy. A listing not in boo.json yet is added to the top of the
+# etsy-shop subcategory named by the last entry of its page's breadcrumb
+# (created if missing; if no breadcrumb is found, the top of the section
+# itself, until a full run scrapes it into its real subcategory):
 cd web && node gen.js --item https://www.etsy.com/listing/<id>/...
 # gen.js runs a visible (headed) browser by default: if Etsy shows a
 # DataDome captcha (gen.js logs full status/headers/body on any non-2xx
