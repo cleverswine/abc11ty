@@ -19,6 +19,7 @@ services:
     # everything written to the bind-mounted ./web ends up owned by a
     # regular user, not root.
     command: sh -c "chown -R node:node node_modules && su node -c 'npm install && npm run serve'"
+    restart: unless-stopped
 
   admin:
     image: node:20-alpine
@@ -39,6 +40,7 @@ services:
       # the web service's host port mapping above.
       - SITE_URL=http://192.168.50.210:9080
     command: sh -c "chown -R node:node node_modules && su node -c 'npm install && npm start'"
+    restart: unless-stopped
 
 volumes:
   web_node_modules:
