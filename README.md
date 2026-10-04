@@ -34,10 +34,14 @@ To edit code with nothing installed locally, open the repo in VS Code
 ("Reopen in Container") or a GitHub Codespace — `.devcontainer/` sets up
 Node and both projects.
 
-## Updating listings from Etsy (gen.js)
+## Updating listings from Etsy
 
-`web/gen.js` copies the Etsy shop's categories, listings and photos into
-`web/_data/boo.json` and `web/img-product/`, using Etsy's API.
+The admin page's Etsy section has a **Check Etsy for changes** button. It
+adds new listings (at the top of their group), removes ones no longer on
+Etsy, and picks up changed titles and photos, then shows what changed. The
+changes appear on the preview site right away; press **Publish site** to
+put them on the public site. Only new or changed photos are downloaded, so
+a routine check takes a few seconds. Hand-added content is never touched.
 
 It needs the shop's Etsy API key: the **keystring** and **shared secret**
 from [Your Apps](https://www.etsy.com/developers/your-apps). Put them in
@@ -48,19 +52,17 @@ ETSY_KEYSTRING=your-keystring
 ETSY_SHARED_SECRET=your-shared-secret
 ```
 
-Then, from `web/`:
+The same check can be run from the command line (e.g. on a schedule), from
+`web/`:
 
 ```shell
 cd web
-node gen.js                       # refresh everything from the Etsy shop
-node gen.js --item <listing-url>  # just one listing, e.g. after changing its photos (adds it if new)
+node gen.js                       # check Etsy for changes and apply them
+node gen.js --item <listing-url>  # just one listing, re-downloading its photos (adds it if new)
 node gen.js --skip-fetch          # don't contact Etsy, just re-tidy boo.json
 ```
 
-A full run takes a few seconds plus the photo downloads. New listings go
-at the top of their category; existing ones keep their place. If Etsy can't
-be reached or rejects the key, nothing is changed. Hand-added content from
-the admin page is never touched by `gen.js`.
+If Etsy can't be reached or rejects the key, nothing is changed.
 
 ## Auto-sync and publishing
 

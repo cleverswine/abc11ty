@@ -34,15 +34,17 @@ npm run serve      # eleventy --serve, with live reload
 npm run admin      # or: cd admin && npm start
 # open http://localhost:4321
 
-# refresh web/_data/boo.json from the Etsy shop via Etsy's Open API (run
-# from web/ — not wrapped at the root). Needs ETSY_KEYSTRING and
-# ETSY_SHARED_SECRET, in the environment or in web/.env (gitignored):
+# refresh web/_data/boo.json from the Etsy shop via Etsy's Open API - the
+# same as the admin page's "Check Etsy for changes" button (run from web/ —
+# not wrapped at the root). Needs ETSY_KEYSTRING and ETSY_SHARED_SECRET, in
+# the environment or in web/.env (gitignored). Only new/changed photos are
+# downloaded:
 cd web && node gen.js
 # or, to rebuild the etsy-shop section from the Etsy items already in
 # boo.json without contacting Etsy (normalizes the file; a dry run of the merge):
 cd web && node gen.js --skip-fetch
-# or, to refresh just one listing (its photos) - e.g. after changing its
-# photos on Etsy. A listing not in boo.json yet is added to the top of the
+# or, to refresh just one listing, re-downloading its photos even if they
+# look unchanged. A listing not in boo.json yet is added to the top of the
 # etsy-shop subcategory named after its Etsy section (created if missing; if
 # it's in no section, the top of the etsy-shop section itself, until a full
 # run files it):
@@ -91,7 +93,8 @@ loaded as the `boo` data object that `index.html` consumes. It's an array of
   subcategories?: [{ name, show, items: [item] }] }      // "groups" in the admin UI
 
 item = { id, title, description, images: [path], etsyPage, show,
-         source: "Etsy" | "Manual" }
+         source: "Etsy" | "Manual",
+         etsyImageIds?: [number] }   // Etsy items: the Etsy photo ids `images` came from
 ```
 
 Today there are two sections: `live-events` (hand-made: events plus groups
@@ -127,48 +130,73 @@ by both `gen.js` and `admin/server.js` (as `../web/lib/boo.js`): `readBoo`,
 `git-sync.sh`, the eleventy dev server - never sees half a file) and
 `isEtsyItem`.
 
-### `web/gen.js` (the Etsy import)
+### The Etsy import (`web/lib/etsy.js`, `web/gen.js`)
 
-Run by hand, not part of the eleventy build. It uses Etsy's Open API v3
+`web/lib/etsy.js` does the work; it's used by the admin page's "Check Etsy
+for changes" button (`admin/server.js`) and by `web/gen.js`, a thin
+command-line wrapper (handy for a scheduled run). It uses Etsy's Open API v3
 (`https://openapi.etsy.com/v3/application`) with only an API key - every
 request sends `x-api-key: <keystring>:<shared_secret>`, from
-`ETSY_KEYSTRING`/`ETSY_SHARED_SECRET` (environment, or `web/.env` via
-`process.loadEnvFile`). No browser, no OAuth, no captcha. The comment block
-at the top of the file describes the steps and safety rules; in short:
+`ETSY_KEYSTRING`/`ETSY_SHARED_SECRET` (the environment, or else `web/.env`,
+re-read on each use by `etsyApiKey()`). No browser, no OAuth, no captcha.
+All paths are resolved from the module's own location, so it works from
+any working directory. The comment block at the top of the file describes
+the steps and safety rules; in short, `refreshShop()`:
 
-1. `fetchShop()` looks up the shop id by name (`/shops?shop_name=`, the name
-   taken from `_data/shop.json`'s URL), its sections (`/shops/{id}/sections`,
-   in `rank` order, minus `IGNORE_SECTIONS`) and every active listing
+1. Looks up the shop id by name (`/shops?shop_name=`, the name taken from
+   `_data/shop.json`'s URL), its sections (`/shops/{id}/sections`, in `rank`
+   order, minus `IGNORE_SECTIONS`) and every active listing
    (`/shops/{id}/listings/active`, paginated), then fetches those listings
    again in batches of 100 from `/listings/batch?includes=Images` to get
    their photos. Listings in no section are left off the site.
-2. For each listing (`LISTING_CONCURRENCY` at a time), `downloadListingImages()`
-   saves the first photo at Etsy's 340x270 crop as `img-product/<listingId>.webp`
-   (the card thumbnail) and every photo at 794px as
-   `img-product/<listingId>-<n>.jpg`, via `@11ty/eleventy-img` - the sizes
-   are picked by rewriting the `il_fullxfull` part of the photo URL
-   (`sized()`). Items are built by `etsyItem()`: the title is the first
-   comma-separated phrase of Etsy's keyword-list title (HTML entities
+2. For each listing (`LISTING_CONCURRENCY` at a time) whose photos' Etsy ids
+   differ from the item's stored `etsyImageIds` (or whose files are
+   missing), `downloadListingImages()` saves the first photo at Etsy's
+   340x270 crop as `img-product/<listingId>.webp` (the card thumbnail) and
+   every photo at 794px as `img-product/<listingId>-<n>.jpg`, via
+   `@11ty/eleventy-img` (which also caches remote downloads in `.cache/`) -
+   the sizes are picked by rewriting the `il_fullxfull` part of the photo
+   URL (`sized()`). Unchanged listings keep their files, so a routine check
+   downloads nothing. Items are built by `etsyItem()`: the title is the
+   first comma-separated phrase of Etsy's keyword-list title (HTML entities
    decoded), which becomes its `description`; `etsyPage` is the listing URL
    without the API's `?utm_...`.
-3. `buildBoo()` / `mergeSubcategories()` rebuild `etsy-shop`: each Etsy
+3. Re-reads `boo.json` and, with no `await` in between, merges into it and
+   writes it - so admin edits made while photos downloaded survive.
+   `buildBoo()` / `mergeSubcategories()` rebuild `etsy-shop`: each Etsy
    section becomes a subcategory (new ones appended, ones gone from Etsy
    dropped if nothing hand-added is left in them). The API has no "shop
    order" for listings, so `orderLikePrevious()` keeps existing items where
    they were and puts new ones at the top (newest first); hand-added items
-   follow.
+   follow. Then `deleteUnusedEtsyPhotos()` deletes Etsy-named files
+   (`<digits>[-n].webp/jpg/png`) nothing references any more; `upload-*`
+   files are never touched.
+4. Returns a summary (`added`, `removed`, `renamed`, `photosUpdated`,
+   `photosFailed`, `deletedFiles`) - shown in the admin's popup, or printed
+   by `summaryLines()` on the command line.
 
-`--item <url>` (`refreshItem()`) fetches one listing (`/listings/{id}`,
-checked to belong to the shop) and re-downloads its photos in place; a
-listing not in `boo.json` yet goes to the top of the subcategory named after
-its Etsy section (created if missing), or the top of `etsy-shop`'s own
-`items` if it's in no section, until a full run files it properly.
+`refreshListing()` (`gen.js --item <url>`) fetches one listing
+(`/listings/{id}`, checked to belong to the shop) and re-downloads its
+photos even if they look unchanged; a listing not in `boo.json` yet goes to
+the top of the subcategory named after its Etsy section (created if
+missing), or the top of `etsy-shop`'s own `items` if it's in no section,
+until a full refresh files it properly. `rebuildEtsySection()`
+(`--skip-fetch`) re-runs the merge with the Etsy items already in
+`boo.json`, without contacting Etsy.
 
-A failed run never wipes data: any API error (rate limits and server errors
-are retried a few times) ends the run without writing `boo.json`, and a
-listing whose photos can't be downloaded keeps its previous ones.
-`--skip-fetch` skips Etsy entirely and re-runs the merge with the Etsy items
-already in `boo.json`.
+A failed refresh never wipes data: any API error (rate limits and server
+errors are retried a few times) ends it without writing `boo.json`, and a
+listing whose photos can't be downloaded keeps its previous ones (and
+previous `etsyImageIds`, so the next refresh tries again).
+
+In the admin, `POST /api/etsy/refresh` starts `refreshShop()` in the
+background (one at a time) and `GET /api/etsy` reports `{configured,
+running, progress: {done, total}, last: {ok, time, summary | error}}`
+(kept in memory, so it resets when the server restarts). The page polls it
+every second while a check runs, then reloads and shows the summary; the
+changes apply straight away, and Publish site is still the step that puts
+them on the public site. Under `docker compose up`, the admin container
+sees `web/.env` through the shared `./web` mount.
 
 The site's footer carries the attribution Etsy's API terms ask for ("The
 term 'Etsy' is a trademark of Etsy, Inc. ...").

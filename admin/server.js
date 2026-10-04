@@ -6,6 +6,7 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { isEtsyItem, readBoo as readBooFile, writeBoo as writeBooFile } from '../web/lib/boo.js';
+import { etsyApiKey, refreshShop } from '../web/lib/etsy.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..', 'web');
@@ -139,6 +140,37 @@ app.delete('/api/publish', (req, res) => {
         cancelled = false;
     }
     res.json({cancelled, ...readPublishStatus()});
+});
+
+// ---- checking Etsy for changes (web/lib/etsy.js does the work) ----
+// A refresh runs in the background (it can take a while when photos need
+// downloading); the page starts one with POST and polls GET for progress and
+// the result. One at a time.
+
+let etsyCheck = {running: false, progress: null, last: null};
+
+function etsyCheckStatus() {
+    return {configured: etsyApiKey() !== null, ...etsyCheck};
+}
+
+app.get('/api/etsy', (req, res) => {
+    res.json(etsyCheckStatus());
+});
+
+app.post('/api/etsy/refresh', (req, res) => {
+    let apiKey = etsyApiKey();
+    if (!apiKey) return res.status(400).json({error: 'no Etsy API key - add ETSY_KEYSTRING and ETSY_SHARED_SECRET to web/.env'});
+    if (!etsyCheck.running) {
+        etsyCheck = {running: true, progress: {done: 0, total: 0}, last: etsyCheck.last};
+        refreshShop({apiKey, onProgress: progress => { etsyCheck.progress = progress; }})
+            .then(summary => { etsyCheck.last = {ok: true, time: new Date().toISOString(), summary}; })
+            .catch(err => {
+                console.error('Etsy check failed', err);
+                etsyCheck.last = {ok: false, time: new Date().toISOString(), error: err.message};
+            })
+            .finally(() => { etsyCheck.running = false; etsyCheck.progress = null; });
+    }
+    res.status(202).json(etsyCheckStatus());
 });
 
 // ---- route parameters ----

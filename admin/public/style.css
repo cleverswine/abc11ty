@@ -382,6 +382,41 @@ body {
 .etsy-note {
     color: var(--text-secondary);
     font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+
+.etsy-note p {
+    margin-bottom: 0.5rem;
+}
+
+.etsy-check {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.75rem;
+}
+
+.etsy-check-status.is-error {
+    color: var(--terracotta);
+}
+
+/* Etsy check results popup */
+.summary-heading {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin: 0.9rem 0 0.3rem;
+}
+
+.summary-heading:first-child {
+    margin-top: 0;
+}
+
+.summary-list {
+    max-height: 9rem;
+    overflow-y: auto;
+    margin-bottom: 0;
+    padding-left: 1.2rem;
+    font-size: 0.875rem;
 }
 
 .part-heading {
@@ -722,6 +757,6 @@ dialog .form-control:disabled {
     cursor: not-allowed;
 }
 
-#publish-info-modal pre {
+#info-modal pre {
     white-space: pre-wrap;
 }

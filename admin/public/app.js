@@ -297,7 +297,14 @@ function sectionHtml(section) {
             </summary>
             <div class="card-body">
                 ${section.sectionDescription ? `<p class="section-desc">${esc(section.sectionDescription)}</p>` : ''}
-                ${hasEtsyItems ? `<p class="etsy-note"><i class="bi bi-info-circle"></i> Products from the Etsy shop are copied from Etsy, so they can't be edited here. To change one, edit it on Etsy.</p>` : ''}
+                ${hasEtsyItems ? `
+                <div class="etsy-note">
+                    <p><i class="bi bi-info-circle"></i> Products from the Etsy shop are copied from Etsy, so they can't be edited here. To change one, edit it on Etsy, then check Etsy for changes.</p>
+                    <div class="etsy-check">
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-action="check-etsy"><i class="bi bi-arrow-repeat"></i> Check Etsy for changes</button>
+                        <span class="etsy-check-status" data-etsy-status aria-live="polite"></span>
+                    </div>
+                </div>` : ''}
 
                 ${Array.isArray(section.events) ? `
                 <h3 class="part-heading">Events</h3>
@@ -319,6 +326,7 @@ function sectionHtml(section) {
 
 function render() {
     sectionsEl.innerHTML = boo.map(sectionHtml).join('');
+    renderEtsyStatus();
 }
 
 async function loadAll() {
@@ -419,6 +427,7 @@ const actions = {
     'add-item': ({section, group}) => openItemModal(section.sectionId, group?.name ?? null, null),
     'add-group': ({section}) => openSubcategoryModal(section.sectionId, null),
     'add-event': ({section}) => openEventModal(section.sectionId, null),
+    'check-etsy': () => startEtsyCheck(),
     'move-image-left': (ctx, btn) => moveImage(ctx, btn, -1),
     'move-image-right': (ctx, btn) => moveImage(ctx, btn, 1),
     'remove-image': ({target}, btn) => {
@@ -456,6 +465,100 @@ sectionsEl.addEventListener('change', async (e) => {
         setSaveStatus('error', "Couldn't upload the photo. Try again.");
     }
 });
+
+// ---- checking Etsy for changes ----
+// The server does the work in the background (web/lib/etsy.js); this starts
+// it, polls for progress, and when it's done reloads the page and shows what
+// changed. Changes apply straight away, like any other edit here - Publish
+// site is still the step that puts them on the public site.
+
+let etsyStatus = null;
+let etsyPollTimer = null;
+
+function renderEtsyStatus() {
+    if (!etsyStatus) return;
+    let {configured, running, progress, last} = etsyStatus;
+    let text = '', failed = false;
+    if (!configured) {
+        text = 'To turn this on, add the Etsy API key to web/.env (see the README).';
+    } else if (running) {
+        text = progress?.total ? `Checking Etsy... ${progress.done} of ${progress.total} listings` : 'Checking Etsy...';
+    } else if (last?.ok) {
+        text = `Last checked ${formatTime(last.time)}`;
+    } else if (last) {
+        text = "The last check didn't work - nothing was changed.";
+        failed = true;
+    }
+    for (let el of document.querySelectorAll('[data-etsy-status]')) {
+        el.textContent = text;
+        el.classList.toggle('is-error', failed);
+    }
+    for (let btn of document.querySelectorAll('[data-action="check-etsy"]')) {
+        btn.disabled = !configured || running;
+    }
+}
+
+// Fetches the check's status; while one is running, keeps polling, and once
+// it finishes reloads the page and shows the result.
+async function loadEtsyStatus() {
+    let wasRunning = etsyStatus?.running;
+    try {
+        let res = await fetch('/api/etsy');
+        if (!res.ok) return;
+        etsyStatus = await res.json();
+    } catch (err) {
+        console.error(err);
+        return;
+    }
+    renderEtsyStatus();
+    clearTimeout(etsyPollTimer);
+    if (etsyStatus.running) {
+        etsyPollTimer = setTimeout(loadEtsyStatus, 1000);
+    } else if (wasRunning) {
+        await loadAll();
+        showEtsyResult(etsyStatus.last);
+    }
+}
+
+async function startEtsyCheck() {
+    let res = await fetch('/api/etsy/refresh', {method: 'POST'});
+    let body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+        showEtsyResult({ok: false, error: body.error || res.statusText});
+        return;
+    }
+    etsyStatus = body;
+    renderEtsyStatus();
+    clearTimeout(etsyPollTimer);
+    etsyPollTimer = setTimeout(loadEtsyStatus, 1000);
+}
+
+function showEtsyResult(last) {
+    if (!last) return;
+    if (!last.ok) {
+        showInfo('<i class="bi bi-exclamation-triangle"></i> Couldn\'t check Etsy',
+            '<p class="mb-2">Nothing on the page was changed. Try again in a few minutes; if it keeps failing, send these details to whoever looks after the site.</p>'
+            + `<details><summary class="small">Details</summary><pre class="small mb-0 mt-1">${esc(last.error)}</pre></details>`);
+        return;
+    }
+    let s = last.summary;
+    let block = (heading, lines) => lines.length
+        ? `<h3 class="summary-heading">${heading} (${lines.length})</h3><ul class="summary-list">${lines.map(line => `<li>${esc(line)}</li>`).join('')}</ul>`
+        : '';
+    let body = block('New listings, added to the top of their group', s.added)
+        + block('Removed, since they\'re no longer on Etsy', s.removed)
+        + block('Renamed on Etsy', s.renamed.map(r => `"${r.from}" is now "${r.to}"`))
+        + block('New photos', s.photosUpdated)
+        + block("Couldn't get new photos - kept the old ones, the next check tries again", s.photosFailed);
+    if (!body) {
+        showInfo('<i class="bi bi-check-circle"></i> Everything is up to date',
+            '<p class="mb-0">Nothing on Etsy has changed since the last check.</p>');
+        return;
+    }
+    let changed = s.added.length + s.removed.length + s.renamed.length + s.photosUpdated.length > 0;
+    showInfo(changed ? '<i class="bi bi-arrow-repeat"></i> Updated from Etsy' : '<i class="bi bi-info-circle"></i> Nothing has changed on Etsy',
+        body + (changed ? '<p class="small text-body-secondary mt-3 mb-0">The changes are on the preview site now. Press Publish site to put them on the public site.</p>' : ''));
+}
 
 // ---- add/edit modals ----
 
@@ -683,7 +786,7 @@ const publishStatusEl = document.getElementById('publish-status');
 const publishBtn = document.getElementById('publish-btn');
 const cancelPublishBtn = document.getElementById('cancel-publish-btn');
 const publishModal = document.getElementById('publish-modal');
-const publishInfoModal = document.getElementById('publish-info-modal');
+const infoModal = document.getElementById('info-modal');
 let publishPollTimer = null;
 let lastPublishStatus = null;
 
@@ -736,10 +839,11 @@ async function loadPublishStatus() {
     }
 }
 
-function showPublishInfo(title, body) {
-    publishInfoModal.querySelector('[data-modal-title]').innerHTML = title;
-    publishInfoModal.querySelector('[data-modal-body]').innerHTML = body;
-    publishInfoModal.showModal();
+// A popup with a message and an OK button (publish results, Etsy check results)
+function showInfo(title, body) {
+    infoModal.querySelector('[data-modal-title]').innerHTML = title;
+    infoModal.querySelector('[data-modal-body]').innerHTML = body;
+    infoModal.showModal();
 }
 
 // the "To follow along, check the deploys page on Netlify" line, written once
@@ -768,7 +872,7 @@ cancelPublishBtn.addEventListener('click', async () => {
     }
     renderPublishStatus(status);
     if (status.cancelled) {
-        showPublishInfo('<i class="bi bi-x-circle"></i> Publish cancelled',
+        showInfo('<i class="bi bi-x-circle"></i> Publish cancelled',
             '<p class="mb-0">Nothing was sent to the public site. Your changes are still saved here, '
             + 'and you can press Publish site again whenever you\'re ready.</p>');
         return;
@@ -782,14 +886,14 @@ cancelPublishBtn.addEventListener('click', async () => {
     } else {
         what = 'Your changes had already been published. The public site will update within 10-15 minutes.';
     }
-    showPublishInfo('<i class="bi bi-exclamation-circle"></i> Too late to cancel',
+    showInfo('<i class="bi bi-exclamation-circle"></i> Too late to cancel',
         `<p class="mb-2">${what}</p>` + deploysLinkHtml);
 });
 
 publishStatusEl.addEventListener('click', e => {
     if (!e.target.closest('[data-show-failure]')) return;
     let last = lastPublishStatus.last;
-    showPublishInfo('<i class="bi bi-exclamation-triangle"></i> Publish failed',
+    showInfo('<i class="bi bi-exclamation-triangle"></i> Publish failed',
         `<p class="mb-2">The publish on ${esc(formatTime(last.time))} didn't go through, so the public site wasn't changed. `
         + 'Press Publish site to try again. If it fails again, send the details below to whoever looks after the site.</p>'
         + `<details><summary class="small">Details</summary><pre class="small mb-0 mt-1">${esc(last.detail)}</pre></details>`);
@@ -798,3 +902,4 @@ publishStatusEl.addEventListener('click', e => {
 loadAll();
 loadConfig();
 loadPublishStatus();
+loadEtsyStatus();
