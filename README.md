@@ -1,127 +1,123 @@
 # abc11ty
 
-Auntie Boo Crafts built by 11ty.
+The Auntie Boo Crafts website, built with 11ty, plus a local admin page for
+editing it. Edits made in the admin page show up on a preview of the site
+right away, are committed to the `dev` branch automatically (see
+[Auto-sync](#auto-sync-and-publishing)), and go live when someone presses
+**Publish site** in the admin page.
 
-## TL;DR
+## Quick start
+
+### With Docker
 
 ```shell
-# pull the latest listings from Etsy into web/_data/boo.json
-# (first time only: npm install && cd web && npx playwright install chromium)
-cd web
-node gen.js                       # a browser window opens - solve any captcha, then press Enter
-node gen.js --item <listing-url>  # re-download one listing's photos (adds it if new)
-cd ..
-
-# run the site + admin tool together
 docker compose up
 # site:  http://localhost:9080
 # admin: http://localhost:9321
 ```
 
-Admin edits and `gen.js` runs only change local files — they're committed and
-pushed to the `dev` branch automatically, and go live on the public site when
-someone presses **Publish site** in the admin page (see `scripts/git-sync.sh`
-below).
+The admin page's **Preview site** link uses `SITE_URL` in
+`docker-compose.yml` — change it to the address the site is reachable at
+from your browser.
 
-## Repo layout
+### Without Docker
 
-Two independent Node projects live side by side, each with its own
-`package.json`/`node_modules`:
+Needs Node 24 (see `.nvmrc`).
 
-- **`web/`** — the 11ty site itself: `index.html`, `gen.js`, `_data/boo.json`,
-  `img-product/`, `css/`, `js/`, etc. This is what Netlify builds and deploys
-  (see `netlify.toml`, which sets `base = "web"`).
-- **`admin/`** — a local-only admin tool for editing `web/_data/boo.json`
-  without hand-editing JSON.
-
-The root `package.json` is just a thin wrapper: `npm run build`/`serve`/`clean`
-delegate to `web/`, and `npm run admin` delegates to `admin/`.
+```shell
+npm install                                      # also installs web/ and admin/
+npm run serve                                    # site:  http://localhost:8080
+SITE_URL=http://localhost:8080 npm run admin     # admin: http://localhost:4321 (in a second terminal)
+```
 
 To edit code with nothing installed locally, open the repo in VS Code
 ("Reopen in Container") or a GitHub Codespace — `.devcontainer/` sets up
 Node, both projects and Chromium.
 
-See `CLAUDE.md` for how the pieces actually work (data model, `gen.js`,
-`admin/server.js`, etc).
+## Updating listings from Etsy (gen.js)
 
-## Running it
+`web/gen.js` copies the Etsy shop's categories, listings and photos into
+`web/_data/boo.json` and `web/img-product/`. It runs on the host, not in
+Docker, because Etsy sometimes shows a captcha that has to be solved by
+hand in a real browser window.
 
 ```shell
-# install deps - the root install also installs web/ and admin/ (each has
-# its own node_modules), via the root package.json's postinstall
-npm install
+# first time only: install the browser gen.js drives
+cd web && npx playwright install chromium
 
-# build / serve the site
+cd web
+node gen.js                       # scrape the whole shop
+node gen.js --item <listing-url>  # just one listing, e.g. after changing its photos (adds it if new)
+node gen.js --skip-fetch          # don't contact Etsy, just re-tidy boo.json
+node gen.js --headless            # no browser window, for unattended runs
+```
+
+A browser window opens while it runs. If Etsy shows a captcha, solve it in
+that window, then press Enter in the terminal. With `--headless`, blocked
+pages are skipped instead. Either way, anything Etsy blocks keeps its
+existing data — a blocked run never wipes anything out.
+
+Hand-added content from the admin page is never touched by `gen.js`.
+
+## Auto-sync and publishing
+
+`scripts/git-sync.sh` commits and pushes `web/_data/boo.json` and
+`web/img-product/` to `dev` whenever they've changed. If **Publish site**
+was pressed in the admin page, it also pushes `dev` to `main`, which
+Netlify deploys to the live site. It's meant to run every 15 minutes from
+cron, on the machine where the admin page runs.
+
+To set it up, run this once from the repo root (it adds a line to your
+crontab):
+
+```shell
+(crontab -l 2>/dev/null; echo "*/15 * * * * cd $(pwd) && ./scripts/git-sync.sh >> .git-sync.log 2>&1") | crontab -
+crontab -l   # check the line is there
+```
+
+Cron has no SSH agent, so check once that pushing to GitHub works without
+a passphrase prompt:
+
+```shell
+env -i HOME="$HOME" PATH="/usr/bin:/bin" ssh -T git@github.com
+```
+
+Cron runs on the host, so this also covers the admin page under
+`docker compose up` — the container has no git of its own, but the Publish
+button only leaves a note (`web/.publish-requested`) for `git-sync.sh` to
+act on. The push to `main` is never forced: if `main` ever gets commits
+that `dev` doesn't have, the publish is refused and the admin page shows
+the error.
+
+## Repo layout
+
+- **`web/`** — the 11ty site: `index.html`, `gen.js`, `_data/boo.json`,
+  `img-product/`, `css/`, `js/`. This is what Netlify builds and deploys
+  (`netlify.toml` sets `base = "web"`).
+- **`admin/`** — the local-only admin page for editing `web/_data/boo.json`.
+- **`scripts/`** — maintenance scripts, run from the repo root.
+
+Each of `web/` and `admin/` has its own `package.json` and `node_modules`;
+the root `package.json` just delegates (`npm run build`/`serve`/`clean` to
+`web/`, `npm run admin` to `admin/`). See `CLAUDE.md` for how the pieces
+work in detail.
+
+## Other tasks
+
+```shell
+# build the site once, into web/_site/
 npm run build
-npm run serve
 
-# run the admin tool — open http://localhost:4321
-npm run admin
+# delete files in web/img-product/ that boo.json no longer uses (needs jq)
+./scripts/cleanup-unused-images.sh [--dry-run]
 
-# or run site + admin together, sharing the same web/ dir
-docker compose up
+# strip EXIF/ICC/C2PA metadata from every image in web/img-product/
+# (needs exiftool; admin uploads are stripped automatically)
+./scripts/strip-image-metadata.sh
 
-# re-scrape Etsy and regenerate web/_data/boo.json (run from web/)
-cd web && node gen.js
-cd web && node gen.js --skip-fetch   # reuse existing data, skip hitting Etsy
-
-# update vendored bootstrap assets (run from web/)
+# update the vendored Bootstrap files (after updating the bootstrap package)
 cd web
 cp ./node_modules/bootstrap/dist/css/bootstrap.min.css ./css/
 cp ./node_modules/bootstrap/dist/js/bootstrap.min.js ./js/
 cp ./node_modules/bootstrap-icons/font/fonts/* ./css/fonts/
-```
-
-## Scripts
-
-All scripts below live in `scripts/` and assume they're run from the repo
-root.
-
-```shell
-# commit + push web/_data/boo.json and web/img-product/ if either changed,
-# and push dev to main (the live site) if Publish was pressed in the admin
-./scripts/git-sync.sh
-```
-
-The admin page's **Publish site** button only leaves a note
-(`web/.publish-requested`); the next `git-sync.sh` run pushes `dev` to
-`main`, which Netlify deploys to production, and writes the outcome to
-`web/.publish-status` for the admin page's "Last published" line. The push
-is never forced, so if `main` ever gets commits that `dev` doesn't have, the
-publish is refused and the admin page shows the error.
-
-Meant to run unattended on a schedule rather than be triggered by hand, so
-admin edits and scrapes always make it to git without anyone remembering to
-commit/push. Set up on the server where the admin tool runs by adding this
-line to the crontab (adjust the repo path first — the `cd` matters, since
-the script assumes it's already running from the repo root):
-
-```
-*/15 * * * * cd /path/to/abc11ty && ./scripts/git-sync.sh >> .git-sync.log 2>&1
-```
-
-To add it without opening an editor, run this from the repo root (appends
-the line to the current user's crontab, creating one if none exists yet):
-
-```shell
-(crontab -l 2>/dev/null; echo "*/15 * * * * cd $(pwd) && ./scripts/git-sync.sh >> .git-sync.log 2>&1") | crontab -
-```
-
-`crontab -l` afterward should show the new line. Two things worth checking
-once before trusting the schedule:
-
-- The remote is SSH (`git@github.com:...`) and cron has no SSH agent —
-  confirm `env -i HOME="$HOME" PATH="/usr/bin:/bin" ssh -T git@github.com`
-  authenticates without prompting.
-- It doesn't apply to the `admin` container under `docker compose up`,
-  which has no `.git` directory mounted and no `git` binary.
-
-```shell
-# sweep web/img-product/ for orphaned files (not referenced in boo.json)
-# — requires jq
-./scripts/cleanup-unused-images.sh [--dry-run]
-
-# strip EXIF/ICC/C2PA metadata from every image in web/img-product/ in place
-# — requires exiftool; admin uploads are stripped automatically via sharp
-./scripts/strip-image-metadata.sh
 ```
