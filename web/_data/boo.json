@@ -18,7 +18,7 @@
         "name": "Holiday Market at the Firehouse",
         "date": "Nov 7, 2026",
         "location": "Kearney, MO",
-        "link": "",
+        "link": "https://www.facebook.com/events/1061584296768002/",
         "show": true
       },
       {
@@ -31,6 +31,28 @@
       }
     ],
     "subcategories": [
+      {
+        "name": "Past Events",
+        "show": true,
+        "items": [
+          {
+            "id": "manual-94171933",
+            "title": "JC Penney Days",
+            "description": "The annual JC Penney Day in Hamilton, Missouri",
+            "images": [
+              "img-product/upload-514df5f0.webp",
+              "img-product/upload-d5133276.webp",
+              "img-product/upload-b696e8c7.webp",
+              "img-product/upload-afe9d2e0.webp",
+              "img-product/upload-1793d980.webp",
+              "img-product/upload-d42b0194.webp"
+            ],
+            "etsyPage": "",
+            "show": true,
+            "source": "Manual"
+          }
+        ]
+      },
       {
         "name": "Composition Notebooks",
         "show": true,
