@@ -96,7 +96,7 @@ function findEventInBoo(sectionId, eventId) {
 function imageStripHtml(images) {
     let thumbs = images.map((src, i) => `
         <span class="thumb-chip" data-path="${esc(src)}">
-            <img src="/${esc(src)}" alt="">
+            <img src="/${esc(src)}" alt="" loading="lazy">
             ${i === 0 ? '<span class="thumb-main" title="Shown on the product\'s card on the site">Main photo</span>' : ''}
             <span class="thumb-controls">
                 <button type="button" class="btn-arrow" data-move-image="left" title="Move left" ${i === 0 ? 'disabled' : ''}><i class="bi bi-chevron-left"></i></button>
@@ -158,7 +158,7 @@ function readonlyItemHtml(item) {
     let hidden = item.show === false;
     return `
         <div class="item-row etsy-readonly ${hidden ? 'is-hidden' : ''}">
-            ${img ? `<img src="/${esc(img)}" alt="">` : '<span class="readonly-noimg"></span>'}
+            ${img ? `<img src="/${esc(img)}" alt="" loading="lazy">` : '<span class="readonly-noimg"></span>'}
             <div class="item-main">
                 <div class="item-title">${esc(item.title)}</div>
                 <div class="item-desc">${esc(truncate(item.description, 110))}</div>

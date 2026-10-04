@@ -16,7 +16,7 @@
 //   1. Opens the shop home page and reads its list of sections (Etsy's
 //      product categories, e.g. "Keychains", "Pens").
 //   2. For each section, opens that section's page and reads every listing
-//      on it, saving a small card thumbnail as img-product/<listingId>.png.
+//      on it, saving a small card thumbnail as img-product/<listingId>.webp.
 //   3. For each listing, opens the listing's own page and saves every photo
 //      in its image carousel full-size as img-product/<listingId>-<n>.jpg.
 //   4. Merges all of that into the "etsy-shop" section of boo.json (each
@@ -188,7 +188,7 @@ async function fetchHtml(url) {
 
 // Downloads an image into img-product/ under `filename`, resized to `width`
 // (never upscaled) and re-encoded as `format`, which also strips metadata.
-// Returns the path to store in boo.json, e.g. "img-product/123.png".
+// Returns the path to store in boo.json, e.g. "img-product/123.webp".
 async function downloadImage(url, width, format, filename) {
     let stats = await Image(url, {
         widths: [width],
@@ -256,7 +256,7 @@ async function scrapeSection(sectionId) {
         let fullTitle = listing.getAttribute("title");
         let etsyPage = listing.getAttribute("href").split("?")[0];
 
-        let thumbnail = await downloadImage(listing.querySelector("img").getAttribute("src"), 340, "png", `${id}.png`);
+        let thumbnail = await downloadImage(listing.querySelector("img").getAttribute("src"), 340, "webp", `${id}.webp`);
         // if the listing page is blocked, keep last run's gallery - everything
         // after its first image, which was the thumbnail (re-added below)
         let gallery = await scrapeListingGallery(id, etsyPage)
@@ -437,7 +437,7 @@ async function refreshItem(url) {
     if (!listing) return false;
     // the first photo, at the size the shop's listing grid uses, is the same
     // card thumbnail a full run would have downloaded from the section page
-    let thumbnail = await downloadImage(listing.urls[0].replace('/il_794xN.', '/il_340x270.'), 340, "png", `${id}.png`);
+    let thumbnail = await downloadImage(listing.urls[0].replace('/il_794xN.', '/il_340x270.'), 340, "webp", `${id}.webp`);
     let images = [thumbnail, ...await downloadGallery(id, listing.urls)];
 
     if (item) {

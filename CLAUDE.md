@@ -121,7 +121,7 @@ Run manually, not part of the eleventy build. Two phases:
    for `sectionId`/`sectionTitle`, skipping sections in `ignoreSections` and
    the catch-all section `"0"`. For each section, fetch its listing page and
    scrape every product card (title, Etsy URL, image), downloading/resizing
-   each image to `img-product/<listingId>.png` via `@11ty/eleventy-img`.
+   each image to `img-product/<listingId>.webp` via `@11ty/eleventy-img`.
    Then each listing's own page is fetched (another 3s delay apiece) and
    every image in its carousel is downloaded full-size (the `il_75x75`
    thumbnail URL with `il_794xN` swapped in) to
@@ -189,8 +189,10 @@ each route rather than a shared middleware:
 
 Image uploads (`POST /api/images`, multer memory storage, 10MB cap, allowed
 extensions `.png/.jpg/.jpeg/.webp/.gif`) are re-encoded through `sharp`
-before being written to `img-product/` as `upload-<8-hex-id>.<ext>` — this
-strips EXIF/GPS/camera metadata as a side effect of not calling
+before being written to `img-product/` as `upload-<8-hex-id>.webp` (GIFs
+stay `.gif`, since they may be animated): EXIF-rotated upright, capped at
+1200px on the longest side (the first photo is also the item's card image),
+and stripped of EXIF/GPS/camera metadata as a side effect of not calling
 `.withMetadata()`. The returned path is added to an item's `images[]` only
 once the client hits Save.
 

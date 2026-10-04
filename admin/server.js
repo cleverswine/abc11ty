@@ -448,6 +448,8 @@ app.put('/api/sections/:sectionId/subcategories/:name/items/order', (req, res) =
 // ---- uploading a new product image ----
 
 const ALLOWED_IMAGE_EXT = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif']);
+// longest side, in pixels, an uploaded photo is stored at
+const UPLOAD_MAX_SIZE = 1200;
 const upload = multer({
     storage: multer.memoryStorage(),
     fileFilter: (req, file, cb) => {
@@ -458,12 +460,19 @@ const upload = multer({
 
 app.post('/api/images', upload.single('image'), async (req, res) => {
     if (!req.file) return res.status(400).json({error: 'no image file received (or file type not allowed)'});
-    let ext = path.extname(req.file.originalname).toLowerCase();
-    let filename = `upload-${randomUUID().split('-')[0]}${ext}`;
+    // GIFs stay GIFs (they may be animated); everything else becomes WebP.
+    let animated = path.extname(req.file.originalname).toLowerCase() === '.gif';
+    let filename = `upload-${randomUUID().split('-')[0]}${animated ? '.gif' : '.webp'}`;
     try {
         // Re-encoding through sharp drops EXIF/GPS/camera metadata unless
-        // .withMetadata() is called, which is exactly the point here.
-        let image = sharp(req.file.buffer, {animated: ext === '.gif'});
+        // .withMetadata() is called, which is exactly the point here - so
+        // first apply the EXIF rotation, or phone photos could end up
+        // sideways. The first photo is also the product's card image on the
+        // site, so cap the size rather than serve the camera original.
+        let image = sharp(req.file.buffer, {animated});
+        if (!animated) image = image.rotate();
+        image = image.resize({width: UPLOAD_MAX_SIZE, height: UPLOAD_MAX_SIZE, fit: 'inside', withoutEnlargement: true});
+        image = animated ? image.gif() : image.webp({quality: 80});
         await image.toFile(path.join(imgProductDir, filename));
     } catch (err) {
         console.error('failed to process uploaded image', err);
