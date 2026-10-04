@@ -1,7 +1,7 @@
 # Roadmap: making the site easier to maintain
 
-Written October 2026. Steps 1 and 2 of the suggested order are done, and
-so is the dev container part of step 4. The goal: the home server is
+Written October 2026. Steps 1-3 of the suggested order are done, and so
+is most of step 4: `gen.js` uses the Etsy API, and there's a dev container. The goal: the home server is
 the only place work happens, and day to day, nobody needs anything but the
 admin page in a browser.
 
@@ -24,9 +24,10 @@ The problems this addresses:
 1. ~~Commit lockfiles and move to Node 24.~~ Done.
 2. ~~Add the Publish button.~~ Done. Still optional: Netlify branch deploys
    for `dev` (see below).
-3. Apply for an Etsy API key. Start early, since approval takes time.
-4. Once the key arrives: rewrite `gen.js` on the API and run it in Docker.
-   (~~Add a dev container.~~ Done ahead of the API switch.)
+3. ~~Apply for an Etsy API key.~~ Done.
+4. ~~Once the key arrives: rewrite `gen.js` on the API~~ (done) and run it
+   in Docker - now possible, since it no longer needs a browser.
+   (~~Add a dev container.~~ Done.)
 5. Set up Renovate and write the runbook.
 
 ## A "Publish" button that keeps the server on `dev` (problems 1 and 4)
@@ -59,6 +60,9 @@ before pressing Publish.
 
 ## Replace scraping with Etsy's API (problem 3)
 
+Done (October 2026): `gen.js` now uses the API (see CLAUDE.md), and the
+site footer has Etsy's attribution notice.
+
 Etsy has an official API (Open API v3). Reading public shop data needs only
 an API key: register a personal app at <https://www.etsy.com/developers>,
 and Etsy has to approve it. It provides:
@@ -88,10 +92,11 @@ items and has no sections; Etsy's CSV download is manual and has no photos.
 ## No more workstation setup (problem 2)
 
 Done: `.devcontainer/` and a root `npm install` that installs both
-projects. Not yet: running `gen.js` in Docker. A container can only run
-Chromium headless, and Etsy's captcha blocked that when tried (October
-2026), so it waits for the API switch, after which the `gen` service
-needs no browser at all.
+projects. Not yet: running `gen.js` in Docker. That waited for the API
+switch (a container can only run Chromium headless, which Etsy's captcha
+blocked); now that `gen.js` needs no browser, a `gen` service on a plain
+`node:24-alpine` image with the key passed as environment variables is
+all it takes.
 
 - **Run everything in Docker,** including `gen.js` (for example a `gen`
   service in `docker-compose.yml`, run with `docker compose run gen`). The

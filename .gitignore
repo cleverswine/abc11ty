@@ -3,6 +3,8 @@ node_modules/
 _site/
 .git-sync.log
 .etsy-session.json
+# Etsy API key for web/gen.js
+.env
 # Publish button handshake between admin/server.js and scripts/git-sync.sh
 .publish-requested
 .publish-status

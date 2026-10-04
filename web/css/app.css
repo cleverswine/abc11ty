@@ -417,6 +417,13 @@ a {
   color: var(--text-muted);
 }
 
+/* the attribution Etsy's API terms ask for - present, but quiet */
+.site-footer__notice {
+  max-width: 38rem;
+  margin: 0.5rem auto 0;
+  font-size: 0.7rem;
+}
+
 /* Responsive tweaks */
 @media (max-width: 480px) {
   .site-header {

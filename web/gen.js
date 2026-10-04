@@ -1,54 +1,51 @@
-// gen.js - scrapes the Auntie Boo Crafts Etsy shop into _data/boo.json.
+// gen.js - copies the Auntie Boo Crafts Etsy shop into _data/boo.json, using
+// Etsy's Open API v3.
 //
 // Run by hand from web/ (it's not part of the eleventy build):
 //
-//   node gen.js               scrape Etsy in a visible browser window
-//   node gen.js --headless    same, but with no window - for unattended runs
-//   node gen.js --skip-fetch  don't touch Etsy; just re-merge/normalize boo.json
-//   node gen.js --item <url>  re-download the images of one listing (e.g.
-//                             after changing its photos on Etsy), without
-//                             scraping the whole shop, adding it to the top
-//                             of its category (from the listing page's
-//                             breadcrumb) if it's new; can be
-//                             combined with --headless
+//   node gen.js               refresh everything from Etsy
+//   node gen.js --skip-fetch  don't contact Etsy; just re-merge/normalize boo.json
+//   node gen.js --item <url>  refresh just one listing (e.g. after changing its
+//                             photos on Etsy), adding it to the top of its
+//                             category if it's new
+//
+// It needs the app's API key from https://www.etsy.com/developers/your-apps,
+// as ETSY_KEYSTRING and ETSY_SHARED_SECRET - set in the environment, or in a
+// web/.env file (gitignored) like:
+//
+//   ETSY_KEYSTRING=1aa2bb33c44d55eeeeee6fff
+//   ETSY_SHARED_SECRET=a1b2c3d4e5
 //
 // What it does:
-//   1. Opens the shop home page and reads its list of sections (Etsy's
-//      product categories, e.g. "Keychains", "Pens").
-//   2. For each section, opens that section's page and reads every listing
-//      on it, saving a small card thumbnail as img-product/<listingId>.webp.
-//   3. For each listing, opens the listing's own page and saves every photo
-//      in its image carousel full-size as img-product/<listingId>-<n>.jpg.
-//   4. Merges all of that into the "etsy-shop" section of boo.json (each
+//   1. Asks the API for the shop, its sections (Etsy's product categories,
+//      e.g. "Keychains", "Pens") and every active listing, with its photos.
+//   2. For each listing in a section, saves a small card thumbnail as
+//      img-product/<listingId>.webp and every photo, full-size, as
+//      img-product/<listingId>-<n>.jpg.
+//   3. Merges all of that into the "etsy-shop" section of boo.json (each
 //      Etsy section becomes one of its subcategories) and writes the file.
 //
-// Safety rules - a bad or blocked run must never wipe out good data:
+// Safety rules - a failed run must never wipe out good data:
 //   - Every section other than "etsy-shop" is hand-made in the admin tool
 //     and is passed through completely untouched.
 //   - Inside "etsy-shop", hand-added items (source != "Etsy") are kept, as
-//     are the subcategory order, each subcategory's `show` flag, and the
-//     section's own title/description/show.
-//   - If Etsy blocks a page (it uses a DataDome captcha), whatever that page
-//     would have replaced is kept as-is: a blocked home page keeps every
-//     subcategory, a blocked section page keeps that subcategory, and a
-//     blocked listing page keeps that item's previous photo gallery.
+//     are the subcategory order, each subcategory's `show` flag, the order of
+//     the items already there, and the section's own title/description/show.
+//   - If the API can't be reached or answers with an error, boo.json isn't
+//     written at all. If a listing's photos can't be downloaded, it keeps its
+//     previous ones.
 
 import * as fs from 'node:fs';
-import * as readline from 'node:readline/promises';
-import * as parser from 'node-html-parser';
-import { chromium } from 'playwright';
 import Image from "@11ty/eleventy-img";
 import { isEtsyItem, readBoo, writeBoo } from './lib/boo.js';
 
 // the shop's address, shared with the site's templates
 const SHOP_URL = JSON.parse(fs.readFileSync('_data/shop.json', 'utf8')).url;
+// ...and its name as the API knows it, e.g. "AuntieBooCrafts"
+const SHOP_NAME = new URL(SHOP_URL).pathname.split('/').filter(Boolean).at(-1);
 const BOO_PATH = '_data/boo.json';
 const IMAGE_DIR = './img-product/';
-
-// Browser cookies (including any captcha pass) are saved here at the end of
-// every run and loaded at the start of the next, so a captcha solved once by
-// hand keeps working for later runs. Gitignored.
-const SESSION_PATH = '.etsy-session.json';
+const API_BASE = 'https://openapi.etsy.com/v3/application';
 
 // The one section of boo.json that gen.js owns. Its title, description and
 // show flag are safe to edit in the admin tool, but renaming this id would
@@ -60,12 +57,18 @@ const DEFAULT_ETSY_TITLE = 'Etsy Items';
 // Etsy section titles to leave off the site.
 const IGNORE_SECTIONS = ["On sale"];
 
-// Pause before every Etsy request, to look less like a bot.
-const REQUEST_DELAY_MS = 3000;
+// Etsy serves each photo at several sizes, named in its URL
+// (.../il_fullxfull.4532219153_1abc.jpg): the card thumbnail uses the 340x270
+// crop the shop's own listing grid shows, the gallery full-width 794px photos.
+const THUMBNAIL_SIZE = 'il_340x270';
+const GALLERY_SIZE = 'il_794xN';
+
+// listings whose photos are downloaded at the same time
+const LISTING_CONCURRENCY = 4;
 
 const skipFetch = process.argv.includes('--skip-fetch');
 
-// --item <listing URL>: refresh just that one item's images (see refreshItem)
+// --item <listing URL>: refresh just that one item (see refreshItem)
 const itemFlag = process.argv.indexOf('--item');
 const itemUrl = itemFlag === -1 ? null : process.argv[itemFlag + 1];
 if (itemFlag !== -1 && (!itemUrl || itemUrl.startsWith('--'))) {
@@ -77,11 +80,12 @@ if (itemUrl && skipFetch) {
     process.exit(1);
 }
 
-// A visible browser lets a human solve a captcha: when a page is blocked,
-// gen.js pauses until Enter is pressed in the terminal, then retries.
-// --headless needs no display and never pauses - blocked pages are skipped
-// (see the safety rules above).
-const headed = !process.argv.includes('--headless');
+if (fs.existsSync('.env')) process.loadEnvFile('.env');
+const API_KEY = `${process.env.ETSY_KEYSTRING ?? ''}:${process.env.ETSY_SHARED_SECRET ?? ''}`;
+if (!skipFetch && !(process.env.ETSY_KEYSTRING && process.env.ETSY_SHARED_SECRET)) {
+    console.log('Set ETSY_KEYSTRING and ETSY_SHARED_SECRET (see the top of gen.js) - or use --skip-fetch.');
+    process.exit(1);
+}
 
 // The current boo.json - the starting point everything is merged into.
 const previousBoo = fs.existsSync(BOO_PATH) ? readBoo(BOO_PATH) : [];
@@ -96,99 +100,89 @@ const previousEtsyItems = [
 ].filter(isEtsyItem);
 
 // Each Etsy item's images from the last run, by listing id - the fallback
-// when a listing page is blocked this time.
+// when a listing's photos can't be downloaded this time.
 const previousImagesById = new Map(
     previousEtsyItems
         .map(item => [item.id, item.images ?? []])
 );
 
 // ---------------------------------------------------------------------------
-// Fetching pages
+// The Etsy API
 // ---------------------------------------------------------------------------
 
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function waitForEnter(message) {
-    let rl = readline.createInterface({input: process.stdin, output: process.stdout});
-    await rl.question(message);
-    rl.close();
-}
-
-// Etsy answers a plain fetch() with a 403, so pages are loaded in a real
-// Chromium browser (driven by Playwright) instead. The browser is only
-// started on the first request, so --skip-fetch never launches it. One
-// browser context (one cookie jar) is shared by the whole run, so a captcha
-// passed on one page carries over to the rest.
-let browser, context;
-
-async function getContext() {
-    if (!context) {
-        browser = await chromium.launch({
-            headless: !headed,
-            // hides one of the more obvious "this browser is automated" signals
-            args: ['--disable-blink-features=AutomationControlled'],
-        });
-        context = await browser.newContext({
-            userAgent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
-            locale: "en-US",
-            extraHTTPHeaders: {"Accept-Language": "en-US,en;q=0.5"},
-            storageState: fs.existsSync(SESSION_PATH) ? SESSION_PATH : undefined,
-        });
-        // another automation signal some bot checks look at
-        await context.addInitScript(() => {
-            Object.defineProperty(navigator, "webdriver", {get: () => undefined});
-        });
+// GETs an Open API path (e.g. '/shops', {shop_name: 'X'}) and returns its
+// JSON. Being rate-limited (429) or a server error is retried a few times;
+// any other failure throws, which ends the run without writing anything.
+async function etsyApi(path, params = {}) {
+    let url = new URL(API_BASE + path);
+    for (let [name, value] of Object.entries(params)) {
+        url.searchParams.set(name, Array.isArray(value) ? value.join(',') : value);
     }
-    return context;
-}
-
-// Saves the session for next time and shuts the browser down. A no-op if
-// no page was ever fetched.
-async function closeBrowser() {
-    if (!context) return;
-    await context.storageState({path: SESSION_PATH});
-    await browser.close();
-}
-
-// Loads `url` and returns its HTML, or null if it failed. On failure the
-// full response is logged, since that's how you tell a captcha (403 from
-// "server: DataDome") from a real outage; then a headed run waits for the
-// captcha to be solved and retries, while a headless run gives up.
-//
-// A null return is not the only way a page can fail - Etsy can also return
-// a 200 with a challenge page in it - so callers still check that the
-// content they need is actually there.
-async function fetchHtml(url) {
-    await delay(REQUEST_DELAY_MS);
-    let page = await (await getContext()).newPage();
-    try {
-        while (true) {
-            console.log(`fetching ${url}`);
-            try {
-                let response = await page.goto(url, {waitUntil: "domcontentloaded", timeout: 30000});
-                // give any anti-bot JS challenge a moment to resolve before reading
-                await page.waitForLoadState("networkidle", {timeout: 15000}).catch(() => {});
-                let html = await page.content();
-                if (response?.ok()) {
-                    console.log(`  -> ok ${response.status()}, ${html.length} bytes`);
-                    return html;
-                }
-                console.log(`  -> FAILED ${url}`);
-                console.log(`     status: ${response ? `${response.status()} ${response.statusText()}` : '(no response)'}`);
-                console.log(`     headers: ${JSON.stringify(response ? await response.allHeaders() : {})}`);
-                console.log(`     body (first 1000 chars): ${html.slice(0, 1000)}`);
-            } catch (e) {
-                console.log(`  -> FAILED ${url}: ${e.message}`);
-            }
-            if (!headed) return null;
-            await waitForEnter('     Solve it in the browser window, then press Enter to retry (Ctrl+C to abort)... ');
+    for (let attempt = 1; ; attempt++) {
+        let res = await fetch(url, {headers: {'x-api-key': API_KEY}});
+        if (res.ok) return res.json();
+        let body = await res.text();
+        if ((res.status === 429 || res.status >= 500) && attempt < 4) {
+            await delay(2000 * attempt);
+            continue;
         }
-    } finally {
-        await page.close();
+        throw new Error(`Etsy API error ${res.status} for ${url.pathname}: ${body.slice(0, 500)}`);
     }
 }
+
+// Every result of a paginated endpoint.
+async function etsyApiAll(path, params = {}) {
+    let results = [];
+    for (let offset = 0; ; offset += 100) {
+        let page = await etsyApi(path, {...params, limit: 100, offset});
+        results.push(...page.results);
+        if (page.results.length === 0 || results.length >= page.count) return results;
+    }
+}
+
+async function getShopId() {
+    let {results} = await etsyApi('/shops', {shop_name: SHOP_NAME});
+    let shop = results.find(s => s.shop_name.toLowerCase() === SHOP_NAME.toLowerCase());
+    if (!shop) throw new Error(`no Etsy shop named ${SHOP_NAME}`);
+    return shop.shop_id;
+}
+
+// The shop's sections as [{id, name}], in the order the shop shows them.
+async function getSections(shopId) {
+    let {results} = await etsyApi(`/shops/${shopId}/sections`);
+    return results
+        .sort((a, b) => a.rank - b.rank)
+        .map(section => ({id: section.shop_section_id, name: decodeEntities(section.title)}));
+}
+
+// Every active listing, with its photos, newest first.
+async function getActiveListings(shopId) {
+    let ids = (await etsyApiAll(`/shops/${shopId}/listings/active`)).map(listing => listing.listing_id);
+    // only the batch endpoint can include the photos
+    let listings = [];
+    for (let i = 0; i < ids.length; i += 100) {
+        let batch = await etsyApi('/listings/batch', {listing_ids: ids.slice(i, i + 100), includes: 'Images'});
+        listings.push(...batch.results);
+    }
+    return listings.sort((a, b) => b.original_creation_timestamp - a.original_creation_timestamp);
+}
+
+// The API returns titles HTML-escaped ("Mother&#39;s Day Gift").
+function decodeEntities(text) {
+    let named = {amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' '};
+    return String(text ?? '').replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (entity, code) => {
+        if (code[0] !== '#') return named[code.toLowerCase()] ?? entity;
+        return String.fromCodePoint(code[1].toLowerCase() === 'x' ? parseInt(code.slice(2), 16) : parseInt(code.slice(1), 10));
+    });
+}
+
+// ---------------------------------------------------------------------------
+// Photos and items
+// ---------------------------------------------------------------------------
 
 // Downloads an image into img-product/ under `filename`, resized to `width`
 // (never upscaled) and re-encoded as `format`, which also strips metadata.
@@ -206,75 +200,33 @@ async function downloadImage(url, width, format, filename) {
     return stats[format][0].outputPath;
 }
 
-// ---------------------------------------------------------------------------
-// Scraping
-// ---------------------------------------------------------------------------
-
-// Returns [{name, items}], one per Etsy section, in the shop's order. A
-// section whose page was blocked has `items: null` (as opposed to `[]`, a
-// section that really is empty), so the merge knows to keep its old items.
-// Returns null if the home page itself was blocked.
-async function scrapeShop() {
-    let html = await fetchHtml(SHOP_URL);
-    // the section nav is a menu of buttons, each with a data-section-id and
-    // a label like "Keychains (12)"
-    let buttons = html ? parser.parse(html).querySelectorAll('button.wt-menu__item[data-section-id]') : [];
-    if (buttons.length === 0) {
-        console.log('no section nav found on the shop home page (likely blocked) - leaving all Etsy listings untouched');
-        return null;
-    }
-
-    let sections = [];
-    for (let button of buttons) {
-        let name = button.innerHTML.trim().split("(")[0].trim();
-        let sectionId = button.getAttribute('data-section-id');
-        console.log("===========================================");
-        // section "0" is Etsy's catch-all "All" section
-        if (sectionId === '0' || IGNORE_SECTIONS.includes(name)) {
-            console.log(`ignoring section ${name}`);
-            continue;
-        }
-        console.log(`processing section ${name}`);
-        sections.push({name, items: await scrapeSection(sectionId)});
-    }
-    return sections;
+// A photo's URL at another of Etsy's sizes (THUMBNAIL_SIZE, GALLERY_SIZE).
+function sized(url, size) {
+    return url.replace(/\/il_[^./]+\./, `/${size}.`);
 }
 
-// Returns the boo.json items for one Etsy section, or null if its page was
-// blocked.
-async function scrapeSection(sectionId) {
-    let html = await fetchHtml(`${SHOP_URL}?section_id=${sectionId}`);
-    let grid = html && parser.parse(html).querySelector('div.responsive-listing-grid');
-    if (!grid) {
-        console.log(`  -> no listing grid found on section page ${sectionId} (likely blocked) - leaving this section's listings untouched`);
-        return null;
-    }
-
-    let listings = grid.querySelectorAll('a.listing-link');
-    console.log(`found ${listings.length} listings`);
-    let items = [];
-    for (let listing of listings) {
-        let id = listing.getAttribute("data-listing-id");
-        let fullTitle = listing.getAttribute("title");
-        let etsyPage = listing.getAttribute("href").split("?")[0];
-
-        let thumbnail = await downloadImage(listing.querySelector("img").getAttribute("src"), 340, "webp", `${id}.webp`);
-        // if the listing page is blocked, keep last run's gallery - everything
-        // after its first image, which was the thumbnail (re-added below)
-        let gallery = await scrapeListingGallery(id, etsyPage)
-            ?? (previousImagesById.get(id) ?? []).slice(1);
-
-        items.push(etsyItem(id, fullTitle, [thumbnail, ...gallery], etsyPage));
-    }
-    return items;
+// Downloads a listing's photos and returns its `images`: the small card
+// thumbnail first, since it's what the site's product cards show, then every
+// photo full-size, in the listing's order (the first being the same picture
+// as the thumbnail - the popup slideshow skips the thumbnail). A listing's
+// photos all download at once (from Etsy's image CDN, and eleventy-img caps
+// how many it processes at a time).
+async function downloadListingImages(listing) {
+    let urls = (listing.images ?? [])
+        .sort((a, b) => a.rank - b.rank)
+        .map(image => image.url_fullxfull);
+    if (urls.length === 0) throw new Error('the listing has no photos');
+    let id = listing.listing_id;
+    let [thumbnail, ...gallery] = await Promise.all([
+        downloadImage(sized(urls[0], THUMBNAIL_SIZE), 340, "webp", `${id}.webp`),
+        ...urls.map((url, i) => downloadImage(sized(url, GALLERY_SIZE), 794, "jpeg", `${id}-${i + 1}.jpg`)),
+    ]);
+    return [thumbnail, ...gallery];
 }
 
 // A boo.json item for an Etsy listing. Etsy titles are keyword lists
 // ("Floral Chicken Magnet, Farmhouse Decor, ..."): the first phrase makes a
-// readable title, and the whole list is the description. `images` is the
-// small card thumbnail first, since it's what the site's product cards show,
-// then the full-size gallery (whose first photo is the same picture - the
-// popup slideshow skips the thumbnail).
+// readable title, and the whole list is the description.
 function etsyItem(id, fullTitle, images, etsyPage) {
     return {
         id,
@@ -287,107 +239,94 @@ function etsyItem(id, fullTitle, images, etsyPage) {
     };
 }
 
-// Downloads every photo in a listing's image carousel, full-size, as
-// img-product/<id>-1.jpg, -2.jpg, ... in Etsy's order. Returns their paths,
-// or null if the page was blocked.
-async function scrapeListingGallery(id, listingUrl) {
-    let listing = await scrapeListing(id, listingUrl);
-    return listing && await downloadGallery(id, listing.urls);
-}
-
-// Returns {title, category, urls} for a listing page: its full keyword-list
-// title (as the shop grid's link title has it), its category (the last
-// entry of the breadcrumb above the photos, or null if none was found), and
-// the full-size URLs of every photo in its image carousel, in Etsy's order.
-// Returns null if the page was blocked.
-//
-// The carousel only links 75x75 thumbnails, e.g.
-//   https://i.etsystatic.com/.../il_75x75.8652877783_q0sf.jpg
-// but swapping the size part of the name for 794xN gets the full-size photo
-// from the same URL:
-//   https://i.etsystatic.com/.../il_794xN.8652877783_q0sf.jpg
-// (340x270 works too - it's the size the shop's listing grid uses, which is
-// how --item rebuilds an item's card thumbnail; see refreshItem.)
-async function scrapeListing(id, listingUrl) {
-    let html = await fetchHtml(listingUrl);
-    let root = html && parser.parse(html);
-    let thumbs = root ? root.querySelectorAll('img[data-carousel-thumbnail-image]') : [];
-    // Set removes duplicates while keeping the order
-    let urls = [...new Set(thumbs
-        .map(img => img.getAttribute('src') || img.getAttribute('data-src-delay') || '')
-        .filter(src => src.includes('/il_75x75.'))
-        .map(src => src.replace('/il_75x75.', '/il_794xN.')))];
-    if (urls.length === 0) {
-        console.log(`  -> no image carousel found on listing page ${id} (likely blocked) - keeping its previous images`);
-        return null;
+// The boo.json item for a listing from the API, downloading its photos - or
+// keeping last run's if that fails. Null if it has no photos at all.
+async function listingToItem(listing) {
+    let id = String(listing.listing_id);
+    let title = decodeEntities(listing.title);
+    let images;
+    try {
+        images = await downloadListingImages(listing);
+        console.log(`  ${title.split(",")[0]}: ${images.length - 1} photos`);
+    } catch (e) {
+        images = previousImagesById.get(id);
+        console.log(`  ${title.split(",")[0]}: couldn't download its photos (${e.message}) - ${images ? 'keeping the previous ones' : 'skipping it'}`);
+        if (!images) return null;
     }
-    // .text decodes HTML entities; og:title is the fallback if the heading's
-    // markup ever changes
-    let title = root.querySelector('h1')?.text.trim()
-        || parser.parse(root.querySelector('meta[property="og:title"]')?.getAttribute('content') ?? '').text.trim();
-    let category = getBreadcrumbCategory(root);
-    console.log(`  -> category: ${category ?? '(no breadcrumb found)'}`);
-    return {title, category, urls};
+    return etsyItem(id, title, images, listing.url.split("?")[0]);
 }
 
-// The last entry of a listing page's breadcrumb. Tries the page's structured
-// data (a schema.org BreadcrumbList) first, then the visible breadcrumb nav.
-function getBreadcrumbCategory(root) {
-    for (let script of root.querySelectorAll('script[type="application/ld+json"]')) {
-        let data;
-        try {
-            data = JSON.parse(script.textContent);
-        } catch {
+// Runs `fn` on every element of `list`, `limit` at a time, keeping the
+// results in order.
+async function mapLimit(list, limit, fn) {
+    let results = new Array(list.length);
+    let next = 0;
+    let worker = async () => {
+        while (next < list.length) {
+            let i = next++;
+            results[i] = await fn(list[i]);
+        }
+    };
+    await Promise.all(Array.from({length: Math.min(limit, list.length)}, worker));
+    return results;
+}
+
+// Returns [{name, items}], one per Etsy section, in the shop's order.
+async function fetchShop() {
+    let shopId = await getShopId();
+    let sections = await getSections(shopId);
+    let listings = await getActiveListings(shopId);
+    console.log(`${SHOP_NAME}: ${sections.length} sections, ${listings.length} active listings`);
+
+    let unsectioned = listings.filter(listing => !listing.shop_section_id).length;
+    if (unsectioned) console.log(`(${unsectioned} listings aren't in any section - they're left off the site)`);
+
+    let result = [];
+    for (let section of sections) {
+        if (IGNORE_SECTIONS.includes(section.name)) {
+            console.log(`ignoring section ${section.name}`);
             continue;
         }
-        let list = [data, ...(data['@graph'] ?? [])].flat()
-            .find(entry => entry?.['@type'] === 'BreadcrumbList');
-        let name = list?.itemListElement?.at(-1)?.name ?? list?.itemListElement?.at(-1)?.item?.name;
-        if (name) return parser.parse(name).text.trim();
+        let inSection = listings.filter(listing => listing.shop_section_id === section.id);
+        console.log(`${section.name} (${inSection.length})`);
+        let items = await mapLimit(inSection, LISTING_CONCURRENCY, listingToItem);
+        result.push({name: section.name, items: items.filter(Boolean)});
     }
-    let nav = root.querySelector('nav[aria-label*="readcrumb"], [data-breadcrumbs], [class*="breadcrumb"]');
-    let entries = (nav?.querySelectorAll('li') ?? [])
-        .map(li => li.text.trim())
-        .filter(Boolean);
-    return entries.at(-1) ?? null;
-}
-
-// Downloads a listing's photos all at once (they come from Etsy's image
-// CDN, not the rate-limited pages, and eleventy-img caps how many it
-// processes at a time), keeping Etsy's order in the returned paths.
-async function downloadGallery(id, urls) {
-    let paths = await Promise.all(urls.map((url, i) =>
-        downloadImage(url, 794, "jpeg", `${id}-${i + 1}.jpg`)));
-    console.log(`  -> ${paths.length} images`);
-    return paths;
+    return result;
 }
 
 // ---------------------------------------------------------------------------
 // Merging into boo.json
 // ---------------------------------------------------------------------------
 
-// Builds etsy-shop's new subcategory list from the scrape results (see
-// scrapeShop for the shape), following the safety rules at the top.
-function mergeSubcategories(scraped) {
-    // home page blocked: keep everything
-    if (!scraped) return previousGroups;
+// The API has no "shop order" for listings, so items already in a
+// subcategory keep their places, and new ones go at the top (newest first).
+function orderLikePrevious(fresh, previousItems) {
+    let position = new Map(previousItems.map((item, i) => [item.id, i]));
+    let added = fresh.filter(item => !position.has(item.id));
+    let known = fresh.filter(item => position.has(item.id))
+        .sort((a, b) => position.get(a.id) - position.get(b.id));
+    return [...added, ...known];
+}
 
-    let scrapedItems = new Map(scraped.map(section => [section.name, section.items]));
+// Builds etsy-shop's new subcategory list from fetchShop's results,
+// following the safety rules at the top.
+function mergeSubcategories(fetched) {
+    let fetchedItems = new Map(fetched.map(section => [section.name, section.items]));
     // existing subcategories keep their (admin-chosen) order; sections new
     // on Etsy go at the end
-    let names = [...new Set([...previousGroups.map(g => g.name), ...scrapedItems.keys()])];
+    let names = [...new Set([...previousGroups.map(g => g.name), ...fetchedItems.keys()])];
 
     return names
         .map(name => {
             let previous = previousGroups.find(g => g.name === name);
-            // undefined = section no longer on Etsy, null = its page was blocked
-            let fresh = scrapedItems.get(name);
-            if (fresh === null) return previous ?? {name, show: true, items: []};
+            // undefined = a section no longer on Etsy
+            let fresh = fetchedItems.get(name) ?? [];
             let handAdded = (previous?.items ?? []).filter(item => !isEtsyItem(item));
             return {
                 name,
                 show: previous?.show ?? true,
-                items: [...(fresh ?? []), ...handAdded],
+                items: [...orderLikePrevious(fresh, previous?.items ?? []), ...handAdded],
             };
         })
         // drop subcategories left with no items at all (e.g. a section that
@@ -398,11 +337,11 @@ function mergeSubcategories(scraped) {
 // Returns the full new boo.json contents for a full run: the rebuilt
 // etsy-shop section swapped in place of the old one, every other section
 // left as it was (or etsy-shop added at the end on the very first run).
-// Items that --item added to the top of the section are dropped once the
-// scrape has put them in their proper subcategories (kept until then, e.g.
-// if their section page was blocked).
-function buildBoo(scraped) {
-    let subcategories = mergeSubcategories(scraped);
+// Items that --item added to the top of the section are dropped once a full
+// run has put them in their proper subcategories (kept until then, e.g. if
+// the listing isn't in a section on Etsy).
+function buildBoo(fetched) {
+    let subcategories = mergeSubcategories(fetched);
     let subcategoryIds = new Set(subcategories.flatMap(group => group.items.map(item => item.id)));
     let topItems = (previousEtsySection?.items ?? []).filter(item => !subcategoryIds.has(item.id));
     let etsySection = {
@@ -420,63 +359,63 @@ function buildBoo(scraped) {
         : [...previousBoo, etsySection];
 }
 
-// --item: re-downloads one Etsy item's card thumbnail and photo gallery,
-// updating its `images` in place (in the previousBoo object that gets
-// written back out). Everything else about an existing item - title, show
-// flag, which subcategory it's in - is left alone. Returns false, changing
-// nothing, if the URL isn't a listing URL or its page is blocked.
+// --item: refreshes one Etsy item's photos (and adds the listing if it's not
+// in boo.json yet), updating the previousBoo object that gets written back
+// out. Everything else about an existing item - title, show flag, which
+// subcategory it's in - is left alone. Returns false, changing nothing, if
+// the URL isn't a listing URL or the listing isn't in this shop.
 //
-// A listing that isn't in boo.json yet is added to the top of the
-// subcategory named by the last entry of its page's breadcrumb (created if
-// need be). If no breadcrumb is found, it goes to the top of the etsy-shop
-// section's own `items`, above its subcategories, and the next full run
-// drops it from there once it has scraped it into its proper subcategory.
+// A listing that isn't in boo.json yet goes to the top of the subcategory
+// named after its Etsy section (created if need be). If it isn't in a
+// section, it goes to the top of the etsy-shop section's own `items`, above
+// its subcategories, and the next full run drops it from there once it has
+// filed it under its proper subcategory.
 async function refreshItem(url) {
     let id = url.match(/\/listing\/(\d+)/)?.[1];
     if (!id) {
         console.log(`not an Etsy listing URL (expected .../listing/<number>/...): ${url}`);
         return false;
     }
-    let etsyPage = url.split("?")[0];
     let item = previousEtsyItems.find(item => item.id === id);
     console.log(item
         ? `refreshing images for "${item.title}" (${id})`
         : `listing ${id} isn't in ${BOO_PATH} yet - adding it`);
 
-    let listing = await scrapeListing(id, etsyPage);
-    if (!listing) return false;
-    // the first photo, at the size the shop's listing grid uses, is the same
-    // card thumbnail a full run would have downloaded from the section page
-    let thumbnail = await downloadImage(listing.urls[0].replace('/il_794xN.', '/il_340x270.'), 340, "webp", `${id}.webp`);
-    let images = [thumbnail, ...await downloadGallery(id, listing.urls)];
+    let shopId = await getShopId();
+    let listing = await etsyApi(`/listings/${id}`, {includes: 'Images'});
+    if (listing.shop_id !== shopId) {
+        console.log(`  -> listing ${id} isn't in the ${SHOP_NAME} shop`);
+        return false;
+    }
+    let section = listing.shop_section_id
+        && (await getSections(shopId)).find(s => s.id === listing.shop_section_id);
+    let category = section && !IGNORE_SECTIONS.includes(section.name) ? section.name : null;
+    console.log(`  -> category: ${category ?? '(none)'}`);
+    let images = await downloadListingImages(listing);
 
     if (item) {
         item.images = images;
         // an item an earlier run left at the top of the section (no
-        // breadcrumb found then) moves into its category if there is one now
+        // category then) moves into its category if there is one now
         let topItems = previousEtsySection?.items ?? [];
-        if (!listing.category || !topItems.includes(item)) return true;
+        if (!category || !topItems.includes(item)) return true;
         previousEtsySection.items = topItems.filter(other => other !== item);
         if (previousEtsySection.items.length === 0) delete previousEtsySection.items;
-        addToCategory(previousEtsySection, item, listing.category);
+        addToCategory(previousEtsySection, item, category);
         return true;
-    }
-    if (!listing.title) {
-        console.log(`  -> no title found on listing page ${id}`);
-        return false;
     }
     let etsySection = previousEtsySection;
     if (!etsySection) {
         etsySection = {sectionId: ETSY_SECTION_ID, sectionTitle: DEFAULT_ETSY_TITLE, show: true, subcategories: []};
         previousBoo.push(etsySection);
     }
-    let newItem = etsyItem(id, listing.title, images, etsyPage);
-    if (!listing.category) {
+    let newItem = etsyItem(id, decodeEntities(listing.title), images, listing.url.split("?")[0]);
+    if (!category) {
         console.log(`  -> adding it to the top of the ${etsySection.sectionTitle} section`);
         etsySection.items = [newItem, ...(etsySection.items ?? [])];
         return true;
     }
-    addToCategory(etsySection, newItem, listing.category);
+    addToCategory(etsySection, newItem, category);
     return true;
 }
 
@@ -501,34 +440,28 @@ function addToCategory(etsySection, item, category) {
 // Main
 // ---------------------------------------------------------------------------
 
-if (itemUrl) {
-    let ok;
-    try {
-        ok = await refreshItem(itemUrl);
-    } finally {
-        // save the session even if this crashed partway through
-        await closeBrowser();
-    }
-    if (ok) {
-        writeBoo(BOO_PATH, previousBoo);
-    } else {
-        console.log(`${BOO_PATH} not changed`);
-        process.exitCode = 1;
-    }
-} else {
-    let scraped;
-    if (skipFetch) {
-        console.log('--skip-fetch passed, reusing Etsy-sourced items already in _data/boo.json instead of hitting Etsy');
-        scraped = previousGroups.map(group => ({
-            name: group.name,
-            items: (group.items ?? []).filter(isEtsyItem),
-        }));
-    } else {
-        try {
-            scraped = await scrapeShop();
-        } finally {
-            await closeBrowser();
+try {
+    if (itemUrl) {
+        if (await refreshItem(itemUrl)) {
+            writeBoo(BOO_PATH, previousBoo);
+        } else {
+            console.log(`${BOO_PATH} not changed`);
+            process.exitCode = 1;
         }
+    } else {
+        let fetched;
+        if (skipFetch) {
+            console.log('--skip-fetch passed, reusing Etsy-sourced items already in _data/boo.json instead of contacting Etsy');
+            fetched = previousGroups.map(group => ({
+                name: group.name,
+                items: (group.items ?? []).filter(isEtsyItem),
+            }));
+        } else {
+            fetched = await fetchShop();
+        }
+        writeBoo(BOO_PATH, buildBoo(fetched));
     }
-    writeBoo(BOO_PATH, buildBoo(scraped));
+} catch (e) {
+    console.log(`\n${e.message}\n${BOO_PATH} not changed`);
+    process.exitCode = 1;
 }

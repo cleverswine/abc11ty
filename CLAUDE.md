@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Auntie Boo Crafts (abc11ty) — a static 11ty site that mirrors an Etsy shop's
 listings, plus a local-only admin tool for layering hand-added content on top
-of the scraped data. Two independent Node projects live side by side, each
+of the data imported from Etsy. Two independent Node projects live side by side, each
 with its own `package.json`/`node_modules`:
 
 - **`web/`** — the 11ty site (`index.html`, `gen.js`, `_data/boo.json`,
@@ -34,27 +34,19 @@ npm run serve      # eleventy --serve, with live reload
 npm run admin      # or: cd admin && npm start
 # open http://localhost:4321
 
-# re-scrape Etsy and regenerate web/_data/boo.json (run from web/ — not
-# wrapped at the root)
+# refresh web/_data/boo.json from the Etsy shop via Etsy's Open API (run
+# from web/ — not wrapped at the root). Needs ETSY_KEYSTRING and
+# ETSY_SHARED_SECRET, in the environment or in web/.env (gitignored):
 cd web && node gen.js
 # or, to rebuild the etsy-shop section from the Etsy items already in
-# boo.json without hitting Etsy (normalizes the file; a dry run of the merge):
+# boo.json without contacting Etsy (normalizes the file; a dry run of the merge):
 cd web && node gen.js --skip-fetch
-# or, to re-download just one listing's images (thumbnail + photo
-# gallery) without scraping the whole shop - e.g. after changing its photos
-# on Etsy. A listing not in boo.json yet is added to the top of the
-# etsy-shop subcategory named by the last entry of its page's breadcrumb
-# (created if missing; if no breadcrumb is found, the top of the section
-# itself, until a full run scrapes it into its real subcategory):
+# or, to refresh just one listing (its photos) - e.g. after changing its
+# photos on Etsy. A listing not in boo.json yet is added to the top of the
+# etsy-shop subcategory named after its Etsy section (created if missing; if
+# it's in no section, the top of the etsy-shop section itself, until a full
+# run files it):
 cd web && node gen.js --item https://www.etsy.com/listing/<id>/...
-# gen.js runs a visible (headed) browser by default: if Etsy shows a
-# DataDome captcha (gen.js logs full status/headers/body on any non-2xx
-# response), solve it by hand in the browser window, then press Enter in the
-# terminal to retry. The resulting session (web/.etsy-session.json,
-# gitignored) is reused by later runs. For an unattended run with no display
-# (cron, SSH), pass --headless: blocked pages are skipped instead of waited
-# on, leaving their existing data untouched:
-cd web && node gen.js --headless
 
 # run site + admin together, sharing the same web/ dir (admin edits show up
 # live in the site's dev server)
@@ -135,40 +127,51 @@ by both `gen.js` and `admin/server.js` (as `../web/lib/boo.js`): `readBoo`,
 `git-sync.sh`, the eleventy dev server - never sees half a file) and
 `isEtsyItem`.
 
-### `web/gen.js` (the scraper)
+### `web/gen.js` (the Etsy import)
 
-Run by hand, not part of the eleventy build. The comment block at the top
-of the file describes the phases and safety rules; in short:
+Run by hand, not part of the eleventy build. It uses Etsy's Open API v3
+(`https://openapi.etsy.com/v3/application`) with only an API key - every
+request sends `x-api-key: <keystring>:<shared_secret>`, from
+`ETSY_KEYSTRING`/`ETSY_SHARED_SECRET` (environment, or `web/.env` via
+`process.loadEnvFile`). No browser, no OAuth, no captcha. The comment block
+at the top of the file describes the steps and safety rules; in short:
 
-1. `scrapeShop()` fetches the shop home page and reads its section nav
-   (`button.wt-menu__item[data-section-id]`), skipping Etsy's catch-all
-   section `"0"` and anything in `IGNORE_SECTIONS`. For each section,
-   `scrapeSection()` reads every listing card (title, URL, thumbnail), saving
-   the thumbnail as `img-product/<listingId>.webp` (340px wide) via
-   `@11ty/eleventy-img`, then fetches each listing's own page and downloads
-   every carousel photo full-size as `img-product/<listingId>-<n>.jpg`
-   (a listing's photos download in parallel; they come from Etsy's image
-   CDN, not the rate-limited pages). Items are built by `etsyItem()`.
-   An item's title is the first comma-separated phrase of Etsy's
-   keyword-list title, which becomes its `description`.
-2. `buildBoo()` / `mergeSubcategories()` rebuild `etsy-shop`: each Etsy
+1. `fetchShop()` looks up the shop id by name (`/shops?shop_name=`, the name
+   taken from `_data/shop.json`'s URL), its sections (`/shops/{id}/sections`,
+   in `rank` order, minus `IGNORE_SECTIONS`) and every active listing
+   (`/shops/{id}/listings/active`, paginated), then fetches those listings
+   again in batches of 100 from `/listings/batch?includes=Images` to get
+   their photos. Listings in no section are left off the site.
+2. For each listing (`LISTING_CONCURRENCY` at a time), `downloadListingImages()`
+   saves the first photo at Etsy's 340x270 crop as `img-product/<listingId>.webp`
+   (the card thumbnail) and every photo at 794px as
+   `img-product/<listingId>-<n>.jpg`, via `@11ty/eleventy-img` - the sizes
+   are picked by rewriting the `il_fullxfull` part of the photo URL
+   (`sized()`). Items are built by `etsyItem()`: the title is the first
+   comma-separated phrase of Etsy's keyword-list title (HTML entities
+   decoded), which becomes its `description`; `etsyPage` is the listing URL
+   without the API's `?utm_...`.
+3. `buildBoo()` / `mergeSubcategories()` rebuild `etsy-shop`: each Etsy
    section becomes a subcategory (new ones appended, ones gone from Etsy
-   dropped if nothing hand-added is left in them), fresh Etsy items first,
-   then that subcategory's hand-added items.
+   dropped if nothing hand-added is left in them). The API has no "shop
+   order" for listings, so `orderLikePrevious()` keeps existing items where
+   they were and puts new ones at the top (newest first); hand-added items
+   follow.
 
-`--item <url>` (`refreshItem()`) re-downloads one listing's images in place;
-a listing not in `boo.json` yet goes to the top of the subcategory named by
-the last entry of its page's breadcrumb (created if missing), or the top of
-`etsy-shop`'s own `items` if there's no breadcrumb, until a full run files
-it properly.
+`--item <url>` (`refreshItem()`) fetches one listing (`/listings/{id}`,
+checked to belong to the shop) and re-downloads its photos in place; a
+listing not in `boo.json` yet goes to the top of the subcategory named after
+its Etsy section (created if missing), or the top of `etsy-shop`'s own
+`items` if it's in no section, until a full run files it properly.
 
-Pages are fetched through Playwright-driven Chromium (plain `fetch()` gets a
-403), with a 3s delay (`REQUEST_DELAY_MS`) before every request, and the
-browser session is saved to `.etsy-session.json` between runs. A blocked
-page never wipes data: a blocked home page keeps all of `etsy-shop`, a
-blocked section page keeps that subcategory, and a blocked listing page
-keeps that item's previous gallery. `--skip-fetch` skips Etsy entirely and
-re-runs the merge with the Etsy items already in `boo.json`.
+A failed run never wipes data: any API error (rate limits and server errors
+are retried a few times) ends the run without writing `boo.json`, and a
+listing whose photos can't be downloaded keeps its previous ones.
+`--skip-fetch` skips Etsy entirely and re-runs the merge with the Etsy items
+already in `boo.json`.
+
+The site's footer carries the attribution Etsy's API terms ask for ("The
+term 'Etsy' is a trademark of Etsy, Inc. ...").
 
 ### `web/index.html` and rendering
 
@@ -231,7 +234,7 @@ endpoints share `reorder()`.
   by the next `gen.js` run. New items are created with `source: "Manual"`.
 - Reordering endpoints (`PUT .../order`) take the full list of ids/names;
   for items, only the non-Etsy ones are reordered and Etsy items keep the
-  scrape order `gen.js` re-establishes every run.
+  order `gen.js` re-establishes every run.
 
 The frontend (`admin/public/app.js`) re-fetches `GET /api/boo` and
 re-renders the whole page after every change (`change()`). Rendered
@@ -276,7 +279,7 @@ gitignored.
 `scripts/git-sync.sh` (assumes it's run from the repo root) commits and
 pushes `web/_data/boo.json` and `web/img-product/` whenever either has
 changed, and no-ops cleanly otherwise. It's meant to run unattended, not to be wired into
-`admin/server.js` or `gen.js` directly, so that admin edits and scrapes
+`admin/server.js` or `gen.js` directly, so that admin edits and Etsy imports
 make it to git (and Netlify deploys) without anyone having to remember.
 
 Scheduled via a user crontab entry (the `cd` matters, since the script
@@ -319,8 +322,7 @@ don't propagate reliably on macOS/Windows Docker.
 `.devcontainer/devcontainer.json` (VS Code "Reopen in Container", or a
 GitHub Codespace) uses `mcr.microsoft.com/devcontainers/javascript-node:24-bookworm`
 and on creation runs the root `npm install` (installing `web/` and
-`admin/`) plus `npx playwright install --with-deps chromium` (system
-libraries via the image's passwordless sudo). Ports 8080 (site) and 4321
+`admin/`). Ports 8080 (site) and 4321
 (admin) are forwarded, and `SITE_URL` points the admin's Preview site link
 at `localhost:8080`.
 

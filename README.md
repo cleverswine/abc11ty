@@ -32,32 +32,35 @@ SITE_URL=http://localhost:8080 npm run admin     # admin: http://localhost:4321 
 
 To edit code with nothing installed locally, open the repo in VS Code
 ("Reopen in Container") or a GitHub Codespace — `.devcontainer/` sets up
-Node, both projects and Chromium.
+Node and both projects.
 
 ## Updating listings from Etsy (gen.js)
 
 `web/gen.js` copies the Etsy shop's categories, listings and photos into
-`web/_data/boo.json` and `web/img-product/`. It runs on the host, not in
-Docker, because Etsy sometimes shows a captcha that has to be solved by
-hand in a real browser window.
+`web/_data/boo.json` and `web/img-product/`, using Etsy's API.
+
+It needs the shop's Etsy API key: the **keystring** and **shared secret**
+from [Your Apps](https://www.etsy.com/developers/your-apps). Put them in
+`web/.env` (gitignored, so they're never committed):
 
 ```shell
-# first time only: install the browser gen.js drives
-cd web && npx playwright install chromium
-
-cd web
-node gen.js                       # scrape the whole shop
-node gen.js --item <listing-url>  # just one listing, e.g. after changing its photos (adds it if new)
-node gen.js --skip-fetch          # don't contact Etsy, just re-tidy boo.json
-node gen.js --headless            # no browser window, for unattended runs
+ETSY_KEYSTRING=your-keystring
+ETSY_SHARED_SECRET=your-shared-secret
 ```
 
-A browser window opens while it runs. If Etsy shows a captcha, solve it in
-that window, then press Enter in the terminal. With `--headless`, blocked
-pages are skipped instead. Either way, anything Etsy blocks keeps its
-existing data — a blocked run never wipes anything out.
+Then, from `web/`:
 
-Hand-added content from the admin page is never touched by `gen.js`.
+```shell
+cd web
+node gen.js                       # refresh everything from the Etsy shop
+node gen.js --item <listing-url>  # just one listing, e.g. after changing its photos (adds it if new)
+node gen.js --skip-fetch          # don't contact Etsy, just re-tidy boo.json
+```
+
+A full run takes a few seconds plus the photo downloads. New listings go
+at the top of their category; existing ones keep their place. If Etsy can't
+be reached or rejects the key, nothing is changed. Hand-added content from
+the admin page is never touched by `gen.js`.
 
 ## Auto-sync and publishing
 
