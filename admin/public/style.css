@@ -7,7 +7,6 @@
     --text-muted: #7C6C52;
 
     --sage: #5F8C3E;
-    --sage-tint: #DCE8CB;
     --sage-dark: #2E4620;
 
     --slate: #3E5A82;
@@ -618,15 +617,6 @@ i.bi {
 .btn-icon.btn-icon-danger:hover {
     background: var(--terracotta-tint);
     color: var(--terracotta-dark);
-}
-
-.btn-icon.btn-icon-warning {
-    color: var(--amber);
-}
-
-.btn-icon.btn-icon-warning:hover {
-    background: var(--amber-tint);
-    color: var(--amber-dark);
 }
 
 .btn-icon:disabled {
