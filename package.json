@@ -7,7 +7,8 @@
     "build": "npm --prefix web run build",
     "serve": "npm --prefix web run serve",
     "clean": "npm --prefix web run clean",
-    "admin": "npm --prefix admin start"
+    "admin": "npm --prefix admin start",
+    "postinstall": "npm --prefix web install && npm --prefix admin install"
   },
   "license": "MIT"
 }

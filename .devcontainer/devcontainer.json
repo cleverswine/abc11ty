@@ -1,0 +1,28 @@
+// Ready-to-edit environment for this repo: open it in VS Code ("Reopen in
+// Container") or in a GitHub Codespace, with nothing installed locally.
+// Both projects are installed on creation, plus Chromium for gen.js.
+{
+    "name": "abc11ty",
+    // keep the node version in sync with .nvmrc, netlify.toml and
+    // docker-compose.yml
+    "image": "mcr.microsoft.com/devcontainers/javascript-node:24-bookworm",
+
+    // root npm install installs web/ and admin/ too (see its postinstall).
+    // install-deps needs root for apt-get; the image's node user has
+    // passwordless sudo, which Playwright uses automatically.
+    "postCreateCommand": "npm install && cd web && npx playwright install --with-deps chromium",
+
+    "containerEnv": {
+        // the admin page's "Preview site" link - right for VS Code on a
+        // desktop; in a browser Codespace use the forwarded 8080 address from
+        // the Ports tab instead
+        "SITE_URL": "http://localhost:8080"
+    },
+
+    // npm run serve (site) and npm run admin (admin page)
+    "forwardPorts": [8080, 4321],
+    "portsAttributes": {
+        "8080": {"label": "Site (npm run serve)"},
+        "4321": {"label": "Admin (npm run admin)"}
+    }
+}

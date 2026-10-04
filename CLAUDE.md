@@ -22,9 +22,9 @@ into `web/`, and `admin` delegates into `admin/`.
 ## Commands
 
 ```shell
-# install deps (each project has its own node_modules)
-cd web && npm install && cd ..
-cd admin && npm install && cd ..
+# install deps - the root install also installs web/ and admin/ (each has
+# its own node_modules), via the root package.json's postinstall
+npm install
 
 # build / serve the site (from repo root, delegates into web/)
 npm run build
@@ -253,11 +253,22 @@ user before installing/running, since Docker creates it root-owned on first
 mount. `web` uses `CHOKIDAR_USEPOLLING=true` since bind-mount file events
 don't propagate reliably on macOS/Windows Docker.
 
+
+### Dev container
+
+`.devcontainer/devcontainer.json` (VS Code "Reopen in Container", or a
+GitHub Codespace) uses `mcr.microsoft.com/devcontainers/javascript-node:24-bookworm`
+and on creation runs the root `npm install` (installing `web/` and
+`admin/`) plus `npx playwright install --with-deps chromium` (system
+libraries via the image's passwordless sudo). Ports 8080 (site) and 4321
+(admin) are forwarded, and `SITE_URL` points the admin's Preview site link
+at `localhost:8080`.
+
 ### Node version and lockfiles
 
 Node 24 everywhere: `.nvmrc`, the `node:24-alpine` images in
-`docker-compose.yml`, and `NODE_VERSION` in `netlify.toml` — keep these in
-sync by hand. `package-lock.json` is committed for the root, `web/` and
+`docker-compose.yml`, `.devcontainer/devcontainer.json`
+and `NODE_VERSION` in `netlify.toml` — keep these in sync by hand. `package-lock.json` is committed for the root, `web/` and
 `admin/`, and the containers install with `npm ci`, so no install quietly
 picks up newer versions. After changing a `package.json`, run `npm install`
 in that directory and commit the updated lockfile.

@@ -6,7 +6,7 @@ Auntie Boo Crafts built by 11ty.
 
 ```shell
 # pull the latest listings from Etsy into web/_data/boo.json
-# (first time only: cd web && npm install && npx playwright install chromium)
+# (first time only: npm install && cd web && npx playwright install chromium)
 cd web
 node gen.js                       # a browser window opens - solve any captcha, then press Enter
 node gen.js --item <listing-url>  # re-download one listing's photos (adds it if new)
@@ -37,15 +37,19 @@ Two independent Node projects live side by side, each with its own
 The root `package.json` is just a thin wrapper: `npm run build`/`serve`/`clean`
 delegate to `web/`, and `npm run admin` delegates to `admin/`.
 
+To edit code with nothing installed locally, open the repo in VS Code
+("Reopen in Container") or a GitHub Codespace — `.devcontainer/` sets up
+Node, both projects and Chromium.
+
 See `CLAUDE.md` for how the pieces actually work (data model, `gen.js`,
 `admin/server.js`, etc).
 
 ## Running it
 
 ```shell
-# install deps (each project has its own node_modules)
-cd web && npm install && cd ..
-cd admin && npm install && cd ..
+# install deps - the root install also installs web/ and admin/ (each has
+# its own node_modules), via the root package.json's postinstall
+npm install
 
 # build / serve the site
 npm run build
