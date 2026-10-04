@@ -194,7 +194,7 @@ function itemsListHtml(items) {
 }
 
 function addItemButtonHtml() {
-    return `<button type="button" class="btn btn-sm btn-add" data-action="add-item"><i class="bi bi-plus-lg"></i> Add product</button>`;
+    return `<button type="button" class="btn btn-sm btn-outline-primary btn-add" data-action="add-item"><i class="bi bi-plus-lg"></i> Add product</button>`;
 }
 
 function itemsSummary(items) {
@@ -264,7 +264,7 @@ function eventsListHtml(events) {
 }
 
 function addEventButtonHtml() {
-    return `<button type="button" class="btn btn-sm btn-add" data-action="add-event"><i class="bi bi-plus-lg"></i> Add event</button>`;
+    return `<button type="button" class="btn btn-sm btn-outline-primary btn-add" data-action="add-event"><i class="bi bi-plus-lg"></i> Add event</button>`;
 }
 
 function allItems(section) {
@@ -307,7 +307,7 @@ function sectionHtml(section) {
 
                 <h3 class="part-heading">Groups</h3>
                 ${(section.subcategories || []).map((g, i, arr) => subcategoryHtml(section, g, i, arr.length)).join('')}
-                <button type="button" class="btn btn-sm btn-add" data-action="add-group"><i class="bi bi-plus-lg"></i> Add group</button>
+                <button type="button" class="btn btn-sm btn-outline-primary btn-add" data-action="add-group"><i class="bi bi-plus-lg"></i> Add group</button>
 
                 <h3 class="part-heading">${hasSubcategories ? 'Products not in a group' : 'Products'}</h3>
                 ${looseItems.length ? '' : '<p class="empty-note">None yet.</p>'}

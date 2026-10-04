@@ -201,6 +201,11 @@ manual ones. Every modal is rendered into the page at build time.
 strip in sync with the active slide, and sizes the "More …" cards to the
 photo beside them with a `ResizeObserver`.
 
+The colour palette (`--ink`, `--paper`, `--sage*`, `--slate*`, ...) lives in
+`web/css/tokens.css`, loaded before `css/app.css` by the site and before
+`style.css` by the admin page (which serves `web/css` at `/assets/css`), so
+the two can't drift apart; each stylesheet's own `:root` only adds extras.
+
 The Cloudflare Web Analytics beacon script in `<head>` is gated behind
 `env.isProduction` (`web/_data/env.js`, true only when Netlify's `CONTEXT`
 build env var is `production`), so it never fires on local `npm run

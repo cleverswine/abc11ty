@@ -1,17 +1,7 @@
+/* the shared colour palette (ink, paper, surface, text, sage, slate...) is
+   web/css/tokens.css, loaded first; these are the admin's own extras */
 :root {
-    --ink: #1E170D;
-    --paper: #F1E9D8;
-    --surface: #FBF7EE;
     --border-tint: #D9C9A8;
-    --text-secondary: #5A4C38;
-    --text-muted: #7C6C52;
-
-    --sage: #5F8C3E;
-    --sage-dark: #2E4620;
-
-    --slate: #3E5A82;
-    --slate-tint: #CFDBEA;
-    --slate-dark: #1E3350;
 
     --terracotta: #96401F;
     --terracotta-tint: #EFCFC0;
@@ -156,24 +146,6 @@ body {
     color: var(--terracotta-dark);
 }
 
-/* the page's one strong action - in the palette's slate rather than
-   Bootstrap's stock blue */
-.btn-publish {
-    --bs-btn-color: #fff;
-    --bs-btn-bg: var(--slate);
-    --bs-btn-border-color: var(--slate);
-    --bs-btn-hover-color: #fff;
-    --bs-btn-hover-bg: var(--slate-dark);
-    --bs-btn-hover-border-color: var(--slate-dark);
-    --bs-btn-active-color: #fff;
-    --bs-btn-active-bg: var(--slate-dark);
-    --bs-btn-active-border-color: var(--slate-dark);
-    --bs-btn-disabled-color: #fff;
-    --bs-btn-disabled-bg: var(--slate);
-    --bs-btn-disabled-border-color: var(--slate);
-    --bs-btn-focus-shadow-rgb: 62, 90, 130;
-}
-
 /* phones: one step per row (status left, its action right), and the header
    scrolls away instead of eating a third of the screen */
 @media (max-width: 767.98px) {
@@ -217,6 +189,7 @@ body {
 
 /* ---- buttons, in the page's palette rather than Bootstrap's stock colors ---- */
 
+/* also the header's Publish site button, the page's one strong action */
 .btn-primary {
     --bs-btn-bg: var(--slate);
     --bs-btn-border-color: var(--slate);
@@ -224,6 +197,8 @@ body {
     --bs-btn-hover-border-color: var(--slate-dark);
     --bs-btn-active-bg: var(--slate-dark);
     --bs-btn-active-border-color: var(--slate-dark);
+    --bs-btn-disabled-bg: var(--slate);
+    --bs-btn-disabled-border-color: var(--slate);
     --bs-btn-focus-shadow-rgb: 62, 90, 130;
 }
 
@@ -251,16 +226,14 @@ body {
     --bs-btn-focus-shadow-rgb: 150, 64, 31;
 }
 
-/* "Add ..." buttons: dashed, like the add-photo tile - a slot for something new */
+/* "Add ..." buttons (btn-outline-primary btn-add): dashed, like the
+   add-photo tile - a slot for something new - with a soft tint on hover
+   instead of the solid fill */
 .btn-add {
-    --bs-btn-color: var(--slate);
-    --bs-btn-border-color: rgba(62, 90, 130, 0.45);
     --bs-btn-hover-color: var(--slate-dark);
     --bs-btn-hover-bg: var(--slate-tint);
-    --bs-btn-hover-border-color: var(--slate);
     --bs-btn-active-color: var(--slate-dark);
     --bs-btn-active-bg: var(--slate-tint);
-    --bs-btn-focus-shadow-rgb: 62, 90, 130;
     border-style: dashed;
 }
 

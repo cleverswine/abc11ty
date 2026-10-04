@@ -1,24 +1,7 @@
 /* Auntie Boo Crafts — design tokens & component styles. */
 
+/* the colour palette is in tokens.css, loaded first */
 :root {
-  --ink: #1E170D;
-  --paper: #F1E9D8;
-  --surface: #FBF7EE;
-  --text-secondary: #5A4C38;
-  --text-muted: #7C6C52;
-
-  --sage: #5F8C3E;
-  --sage-tint: #DCE8CB;
-  --sage-glow: #C4DBA5;
-  --sage-dark: #2E4620;
-
-  --periwinkle: #6489C4;
-
-  --slate: #3E5A82;
-  --slate-tint: #CFDBEA;
-  --slate-glow: #AEC5E0;
-  --slate-dark: #1E3350;
-
   --etsy-orange: #F1641E;
 
   --font-heading: "Fraunces", Georgia, "Iowan Old Style", "Palatino Linotype", serif;

@@ -6,6 +6,7 @@
 <title>auntie boo crafts admin</title>
 <link rel="stylesheet" href="/assets/css/bootstrap.min.css" type="text/css">
 <link rel="stylesheet" href="/assets/css/bootstrap-icons.min.css" type="text/css">
+<link rel="stylesheet" href="/assets/css/tokens.css" type="text/css">
 <link rel="stylesheet" href="/style.css" type="text/css">
 </head>
 <body>
@@ -30,7 +31,7 @@
             <div class="admin-stage" id="publish-stage" data-state="ok" hidden>
                 <span class="stage-dot" aria-hidden="true"></span>
                 <span class="stage-text" id="publish-status" aria-live="polite"></span>
-                <button type="button" class="btn btn-sm btn-publish" id="publish-btn">
+                <button type="button" class="btn btn-sm btn-primary" id="publish-btn">
                     <i class="bi bi-cloud-upload"></i> Publish site
                 </button>
                 <button type="button" class="btn btn-sm btn-outline-secondary" id="cancel-publish-btn" hidden>
@@ -49,7 +50,7 @@
 
     <div id="sections"></div>
 
-    <button type="button" class="btn btn-add" id="add-section-btn"><i class="bi bi-plus-lg"></i> Add section</button>
+    <button type="button" class="btn btn-outline-primary btn-add" id="add-section-btn"><i class="bi bi-plus-lg"></i> Add section</button>
 
     <!-- ---- section modal ---- -->
     <dialog id="section-modal">
