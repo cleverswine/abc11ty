@@ -46,15 +46,9 @@ function findSubcategory(section, name) {
 }
 
 function findItem(section, itemId) {
-    let item = (section.items || []).find(i => i.id === itemId);
-    if (item) {
-        return {item, list: section.items};
-    }
-    for (let group of section.subcategories || []) {
-        item = (group.items || []).find(i => i.id === itemId);
-        if (item) {
-            return {item, list: group.items};
-        }
+    for (let list of [section.items, ...(section.subcategories || []).map(g => g.items)]) {
+        let item = (list || []).find(i => i.id === itemId);
+        if (item) return {item, list};
     }
     return {item: null, list: null};
 }
@@ -66,8 +60,21 @@ function isLocked(item) {
     return item.source === 'Etsy';
 }
 
-function newItemId() {
-    return 'manual-' + randomUUID().split('-')[0];
+function shortId() {
+    return randomUUID().split('-')[0];
+}
+
+// Returns `list` rearranged to follow `order` (a list of keys), or null
+// unless `order` names every movable entry exactly once. Entries `isFixed`
+// picks out aren't reordered - they stay first, in their current order.
+function reorder(list, order, keyOf, isFixed = () => false) {
+    order = Array.isArray(order) ? order : [];
+    let movable = (list || []).filter(x => !isFixed(x));
+    let byKey = new Map(movable.map(x => [keyOf(x), x]));
+    if (order.length !== movable.length || new Set(order).size !== order.length || !order.every(k => byKey.has(k))) {
+        return null;
+    }
+    return [...(list || []).filter(isFixed), ...order.map(k => byKey.get(k))];
 }
 
 function sanitizeItemInput(body) {
@@ -78,10 +85,6 @@ function sanitizeItemInput(body) {
         etsyPage: String(body.etsyPage || ''),
         show: body.show !== false,
     };
-}
-
-function newEventId() {
-    return 'event-' + randomUUID().split('-')[0];
 }
 
 function sanitizeEventInput(body) {
@@ -146,6 +149,45 @@ app.delete('/api/publish', (req, res) => {
     res.json({cancelled, ...readPublishStatus()});
 });
 
+// ---- route parameters ----
+// Every route under /api/sections/:sectionId gets a fresh copy of boo.json
+// as req.boo (re-read each time, since gen.js writes the file too) and the
+// section as req.section; :name, :eventId and :itemId likewise resolve to
+// req.group, req.event and req.item (+ req.itemList, the array holding it).
+// Any of them missing is a 404 before the route runs. Routes that change
+// something finish with writeBoo(req.boo).
+
+app.param('sectionId', (req, res, next, sectionId) => {
+    req.boo = readBoo();
+    req.section = findSection(req.boo, sectionId);
+    if (!req.section) return res.status(404).json({error: 'section not found'});
+    next();
+});
+
+app.param('name', (req, res, next, name) => {
+    req.group = findSubcategory(req.section, name);
+    if (!req.group) return res.status(404).json({error: 'subcategory not found'});
+    next();
+});
+
+app.param('eventId', (req, res, next, eventId) => {
+    req.event = (req.section.events || []).find(e => e.id === eventId);
+    if (!req.event) return res.status(404).json({error: 'event not found'});
+    next();
+});
+
+// On a subcategory path the item must be in that subcategory; on a section
+// path it can be anywhere in the section.
+app.param('itemId', (req, res, next, itemId) => {
+    let {item, list} = req.group
+        ? {item: (req.group.items || []).find(i => i.id === itemId), list: req.group.items}
+        : findItem(req.section, itemId);
+    if (!item) return res.status(404).json({error: 'item not found'});
+    req.item = item;
+    req.itemList = list;
+    next();
+});
+
 // ---- sections (all freely editable - only individual Etsy-sourced items are locked) ----
 
 app.get('/api/boo', (req, res) => {
@@ -153,10 +195,7 @@ app.get('/api/boo', (req, res) => {
 });
 
 app.get('/api/sections/:sectionId', (req, res) => {
-    let boo = readBoo();
-    let section = findSection(boo, req.params.sectionId);
-    if (!section) return res.status(404).json({error: 'section not found'});
-    res.json(section);
+    res.json(req.section);
 });
 
 app.post('/api/sections', (req, res) => {
@@ -178,10 +217,7 @@ app.post('/api/sections', (req, res) => {
 });
 
 app.patch('/api/sections/:sectionId', (req, res) => {
-    let boo = readBoo();
-    let section = findSection(boo, req.params.sectionId);
-    if (!section) return res.status(404).json({error: 'section not found'});
-
+    let section = req.section;
     if (typeof req.body.sectionTitle === 'string') section.sectionTitle = req.body.sectionTitle;
     if ('sectionDescription' in req.body) {
         if (req.body.sectionDescription === null || req.body.sectionDescription === '') {
@@ -194,255 +230,135 @@ app.patch('/api/sections/:sectionId', (req, res) => {
     if (typeof req.body.newSectionId === 'string' && req.body.newSectionId !== section.sectionId) {
         let newId = req.body.newSectionId.trim();
         if (!newId) return res.status(400).json({error: 'sectionId cannot be empty'});
-        if (findSection(boo, newId)) return res.status(409).json({error: 'sectionId already exists'});
+        if (findSection(req.boo, newId)) return res.status(409).json({error: 'sectionId already exists'});
         section.sectionId = newId;
     }
-
-    writeBoo(boo);
+    writeBoo(req.boo);
     res.json(section);
 });
 
 app.delete('/api/sections/:sectionId', (req, res) => {
-    let boo = readBoo();
-    let section = findSection(boo, req.params.sectionId);
-    if (!section) return res.status(404).json({error: 'section not found'});
-    boo = boo.filter(s => s.sectionId !== req.params.sectionId);
-    writeBoo(boo);
+    writeBoo(req.boo.filter(s => s !== req.section));
     res.status(204).end();
 });
 
 // ---- events on a section (e.g. live-events' in-person event list) ----
 
 app.post('/api/sections/:sectionId/events', (req, res) => {
-    let boo = readBoo();
-    let section = findSection(boo, req.params.sectionId);
-    if (!section) return res.status(404).json({error: 'section not found'});
-    let event = {id: newEventId(), ...sanitizeEventInput(req.body)};
-    section.events = section.events || [];
-    section.events.push(event);
-    writeBoo(boo);
+    let event = {id: 'event-' + shortId(), ...sanitizeEventInput(req.body)};
+    req.section.events = req.section.events || [];
+    req.section.events.push(event);
+    writeBoo(req.boo);
     res.status(201).json(event);
 });
 
 app.patch('/api/sections/:sectionId/events/:eventId', (req, res) => {
-    let boo = readBoo();
-    let section = findSection(boo, req.params.sectionId);
-    if (!section) return res.status(404).json({error: 'section not found'});
-    let event = (section.events || []).find(e => e.id === req.params.eventId);
-    if (!event) return res.status(404).json({error: 'event not found'});
-    Object.assign(event, sanitizeEventInput({...event, ...req.body}));
-    writeBoo(boo);
-    res.json(event);
+    Object.assign(req.event, sanitizeEventInput({...req.event, ...req.body}));
+    writeBoo(req.boo);
+    res.json(req.event);
 });
 
 app.delete('/api/sections/:sectionId/events/:eventId', (req, res) => {
-    let boo = readBoo();
-    let section = findSection(boo, req.params.sectionId);
-    if (!section) return res.status(404).json({error: 'section not found'});
-    let events = section.events || [];
-    let idx = events.findIndex(e => e.id === req.params.eventId);
-    if (idx === -1) return res.status(404).json({error: 'event not found'});
-    events.splice(idx, 1);
-    writeBoo(boo);
+    req.section.events.splice(req.section.events.indexOf(req.event), 1);
+    writeBoo(req.boo);
     res.status(204).end();
 });
 
 app.put('/api/sections/:sectionId/events/order', (req, res) => {
-    let boo = readBoo();
-    let section = findSection(boo, req.params.sectionId);
-    if (!section) return res.status(404).json({error: 'section not found'});
-    let order = Array.isArray(req.body.order) ? req.body.order : [];
-    let events = section.events || [];
-    let ids = new Set(events.map(e => e.id));
-    if (order.length !== events.length || !order.every(id => ids.has(id))) {
-        return res.status(400).json({error: 'order must contain exactly the current event ids'});
-    }
-    let byId = new Map(events.map(e => [e.id, e]));
-    section.events = order.map(id => byId.get(id));
-    writeBoo(boo);
-    res.json(section);
-});
-
-// ---- items directly on a section ----
-
-app.post('/api/sections/:sectionId/items', (req, res) => {
-    let boo = readBoo();
-    let section = findSection(boo, req.params.sectionId);
-    if (!section) return res.status(404).json({error: 'section not found'});
-    let item = {id: newItemId(), ...sanitizeItemInput(req.body), source: 'Manual'};
-    section.items = section.items || [];
-    section.items.push(item);
-    writeBoo(boo);
-    res.status(201).json(item);
-});
-
-app.patch('/api/sections/:sectionId/items/:itemId', (req, res) => {
-    let boo = readBoo();
-    let section = findSection(boo, req.params.sectionId);
-    if (!section) return res.status(404).json({error: 'section not found'});
-    let {item} = findItem(section, req.params.itemId);
-    if (!item) return res.status(404).json({error: 'item not found'});
-    if (isLocked(item)) return res.status(403).json({error: 'this item comes from Etsy and cannot be edited here'});
-    Object.assign(item, sanitizeItemInput({...item, ...req.body}));
-    writeBoo(boo);
-    res.json(item);
-});
-
-app.delete('/api/sections/:sectionId/items/:itemId', (req, res) => {
-    let boo = readBoo();
-    let section = findSection(boo, req.params.sectionId);
-    if (!section) return res.status(404).json({error: 'section not found'});
-    let {item, list} = findItem(section, req.params.itemId);
-    if (!item) return res.status(404).json({error: 'item not found'});
-    if (isLocked(item)) return res.status(403).json({error: 'this item comes from Etsy and cannot be deleted here'});
-    let idx = list.indexOf(item);
-    list.splice(idx, 1);
-    writeBoo(boo);
-    res.status(204).end();
-});
-
-// Reorders only the non-Etsy items in section.items, leaving any Etsy items
-// exactly where they were (gen.js always re-appends them after the
-// freshly-scraped Etsy ones, so that's the only order that survives a scrape).
-app.put('/api/sections/:sectionId/items/order', (req, res) => {
-    let boo = readBoo();
-    let section = findSection(boo, req.params.sectionId);
-    if (!section) return res.status(404).json({error: 'section not found'});
-    let order = Array.isArray(req.body.order) ? req.body.order : [];
-    let items = section.items || [];
-    let lockedItems = items.filter(isLocked);
-    let freeItems = items.filter(i => !isLocked(i));
-    let freeIds = new Set(freeItems.map(i => i.id));
-    if (order.length !== freeItems.length || !order.every(id => freeIds.has(id))) {
-        return res.status(400).json({error: 'order must contain exactly the non-Etsy item ids for this section'});
-    }
-    let byId = new Map(freeItems.map(i => [i.id, i]));
-    section.items = [...lockedItems, ...order.map(id => byId.get(id))];
-    writeBoo(boo);
-    res.json(section);
+    let events = reorder(req.section.events, req.body.order, e => e.id);
+    if (!events) return res.status(400).json({error: 'order must contain exactly the current event ids'});
+    req.section.events = events;
+    writeBoo(req.boo);
+    res.json(req.section);
 });
 
 // ---- subcategories (any section - structure here is always editable) ----
 
 app.post('/api/sections/:sectionId/subcategories', (req, res) => {
-    let boo = readBoo();
-    let section = findSection(boo, req.params.sectionId);
-    if (!section) return res.status(404).json({error: 'section not found'});
     let name = String(req.body.name || '').trim();
     if (!name) return res.status(400).json({error: 'name is required'});
-    section.subcategories = section.subcategories || [];
-    if (findSubcategory(section, name)) return res.status(409).json({error: 'a subcategory with that name already exists'});
+    req.section.subcategories = req.section.subcategories || [];
+    if (findSubcategory(req.section, name)) return res.status(409).json({error: 'a subcategory with that name already exists'});
     let group = {name, show: req.body.show !== false, items: []};
-    section.subcategories.push(group);
-    writeBoo(boo);
+    req.section.subcategories.push(group);
+    writeBoo(req.boo);
     res.status(201).json(group);
 });
 
 app.patch('/api/sections/:sectionId/subcategories/:name', (req, res) => {
-    let boo = readBoo();
-    let section = findSection(boo, req.params.sectionId);
-    if (!section) return res.status(404).json({error: 'section not found'});
-    let group = findSubcategory(section, req.params.name);
-    if (!group) return res.status(404).json({error: 'subcategory not found'});
+    let group = req.group;
     if (typeof req.body.show === 'boolean') group.show = req.body.show;
     if (typeof req.body.name === 'string' && req.body.name.trim() && req.body.name !== group.name) {
-        if (findSubcategory(section, req.body.name)) return res.status(409).json({error: 'a subcategory with that name already exists'});
+        if (findSubcategory(req.section, req.body.name)) return res.status(409).json({error: 'a subcategory with that name already exists'});
         group.name = req.body.name.trim();
     }
-    writeBoo(boo);
+    writeBoo(req.boo);
     res.json(group);
 });
 
 app.delete('/api/sections/:sectionId/subcategories/:name', (req, res) => {
-    let boo = readBoo();
-    let section = findSection(boo, req.params.sectionId);
-    if (!section) return res.status(404).json({error: 'section not found'});
-    if (!findSubcategory(section, req.params.name)) return res.status(404).json({error: 'subcategory not found'});
-    section.subcategories = section.subcategories.filter(g => g.name !== req.params.name);
-    writeBoo(boo);
+    req.section.subcategories = req.section.subcategories.filter(g => g !== req.group);
+    writeBoo(req.boo);
     res.status(204).end();
 });
 
 app.put('/api/sections/:sectionId/subcategories/order', (req, res) => {
-    let boo = readBoo();
-    let section = findSection(boo, req.params.sectionId);
-    if (!section) return res.status(404).json({error: 'section not found'});
-    let order = Array.isArray(req.body.order) ? req.body.order : [];
-    let groups = section.subcategories || [];
-    let names = new Set(groups.map(g => g.name));
-    if (order.length !== groups.length || !order.every(n => names.has(n))) {
-        return res.status(400).json({error: 'order must contain exactly the current subcategory names'});
-    }
-    let byName = new Map(groups.map(g => [g.name, g]));
-    section.subcategories = order.map(n => byName.get(n));
-    writeBoo(boo);
-    res.json(section);
+    let groups = reorder(req.section.subcategories, req.body.order, g => g.name);
+    if (!groups) return res.status(400).json({error: 'order must contain exactly the current subcategory names'});
+    req.section.subcategories = groups;
+    writeBoo(req.boo);
+    res.json(req.section);
 });
 
-// ---- items inside a subcategory group ----
+// ---- items, directly on a section or inside one of its subcategories ----
+// Each handler is registered on both paths; the item list is the
+// subcategory's when there is one (req.group), the section's own otherwise.
+// (Registered once per path rather than with an array of paths: with an
+// array, Express resolves :itemId before :name, so req.group wouldn't be set
+// yet when the item is looked up.)
 
-app.post('/api/sections/:sectionId/subcategories/:name/items', (req, res) => {
-    let boo = readBoo();
-    let section = findSection(boo, req.params.sectionId);
-    if (!section) return res.status(404).json({error: 'section not found'});
-    let group = findSubcategory(section, req.params.name);
-    if (!group) return res.status(404).json({error: 'subcategory not found'});
-    let item = {id: newItemId(), ...sanitizeItemInput(req.body), source: 'Manual'};
-    group.items = group.items || [];
-    group.items.push(item);
-    writeBoo(boo);
+function itemRoute(method, suffix, handler) {
+    for (let base of ['/api/sections/:sectionId/items', '/api/sections/:sectionId/subcategories/:name/items']) {
+        app[method](base + suffix, handler);
+    }
+}
+
+itemRoute('post', '', (req, res) => {
+    let container = req.group || req.section;
+    let item = {id: 'manual-' + shortId(), ...sanitizeItemInput(req.body), source: 'Manual'};
+    container.items = container.items || [];
+    container.items.push(item);
+    writeBoo(req.boo);
     res.status(201).json(item);
 });
 
-app.patch('/api/sections/:sectionId/subcategories/:name/items/:itemId', (req, res) => {
-    let boo = readBoo();
-    let section = findSection(boo, req.params.sectionId);
-    if (!section) return res.status(404).json({error: 'section not found'});
-    let group = findSubcategory(section, req.params.name);
-    if (!group) return res.status(404).json({error: 'subcategory not found'});
-    let item = (group.items || []).find(i => i.id === req.params.itemId);
-    if (!item) return res.status(404).json({error: 'item not found'});
-    if (isLocked(item)) return res.status(403).json({error: 'this item comes from Etsy and cannot be edited here'});
-    Object.assign(item, sanitizeItemInput({...item, ...req.body}));
-    writeBoo(boo);
-    res.json(item);
+itemRoute('patch', '/:itemId', (req, res) => {
+    if (isLocked(req.item)) return res.status(403).json({error: 'this item comes from Etsy and cannot be edited here'});
+    Object.assign(req.item, sanitizeItemInput({...req.item, ...req.body}));
+    writeBoo(req.boo);
+    res.json(req.item);
 });
 
-app.delete('/api/sections/:sectionId/subcategories/:name/items/:itemId', (req, res) => {
-    let boo = readBoo();
-    let section = findSection(boo, req.params.sectionId);
-    if (!section) return res.status(404).json({error: 'section not found'});
-    let group = findSubcategory(section, req.params.name);
-    if (!group) return res.status(404).json({error: 'subcategory not found'});
-    let item = (group.items || []).find(i => i.id === req.params.itemId);
-    if (!item) return res.status(404).json({error: 'item not found'});
-    if (isLocked(item)) return res.status(403).json({error: 'this item comes from Etsy and cannot be deleted here'});
-    let idx = group.items.indexOf(item);
-    group.items.splice(idx, 1);
-    writeBoo(boo);
+itemRoute('delete', '/:itemId', (req, res) => {
+    if (isLocked(req.item)) return res.status(403).json({error: 'this item comes from Etsy and cannot be deleted here'});
+    req.itemList.splice(req.itemList.indexOf(req.item), 1);
+    writeBoo(req.boo);
     res.status(204).end();
 });
 
-// Reorders only the non-Etsy items within the group, same idea as the
-// section-level flat-item reorder above.
-app.put('/api/sections/:sectionId/subcategories/:name/items/order', (req, res) => {
-    let boo = readBoo();
-    let section = findSection(boo, req.params.sectionId);
-    if (!section) return res.status(404).json({error: 'section not found'});
-    let group = findSubcategory(section, req.params.name);
-    if (!group) return res.status(404).json({error: 'subcategory not found'});
-    let order = Array.isArray(req.body.order) ? req.body.order : [];
-    let items = group.items || [];
-    let lockedItems = items.filter(isLocked);
-    let freeItems = items.filter(i => !isLocked(i));
-    let freeIds = new Set(freeItems.map(i => i.id));
-    if (order.length !== freeItems.length || !order.every(id => freeIds.has(id))) {
-        return res.status(400).json({error: 'order must contain exactly the non-Etsy item ids in this subcategory'});
+// Reorders only the non-Etsy items, which go after the Etsy ones (gen.js
+// always re-appends hand-added items after the freshly scraped Etsy ones, so
+// that's the only order that survives a scrape).
+itemRoute('put', '/order', (req, res) => {
+    let container = req.group || req.section;
+    let items = reorder(container.items, req.body.order, i => i.id, isLocked);
+    if (!items) {
+        let where = req.group ? 'in this subcategory' : 'for this section';
+        return res.status(400).json({error: `order must contain exactly the non-Etsy item ids ${where}`});
     }
-    let byId = new Map(freeItems.map(i => [i.id, i]));
-    group.items = [...lockedItems, ...order.map(id => byId.get(id))];
-    writeBoo(boo);
-    res.json(group);
+    container.items = items;
+    writeBoo(req.boo);
+    res.json(container);
 });
 
 // ---- uploading a new product image ----
@@ -462,7 +378,7 @@ app.post('/api/images', upload.single('image'), async (req, res) => {
     if (!req.file) return res.status(400).json({error: 'no image file received (or file type not allowed)'});
     // GIFs stay GIFs (they may be animated); everything else becomes WebP.
     let animated = path.extname(req.file.originalname).toLowerCase() === '.gif';
-    let filename = `upload-${randomUUID().split('-')[0]}${animated ? '.gif' : '.webp'}`;
+    let filename = `upload-${shortId()}${animated ? '.gif' : '.webp'}`;
     try {
         // Re-encoding through sharp drops EXIF/GPS/camera metadata unless
         // .withMetadata() is called, which is exactly the point here - so

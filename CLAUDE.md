@@ -197,10 +197,12 @@ Plain Express server + static vanilla-JS/Bootstrap frontend (`admin/public/`,
 no build step). Resolves all paths (`_data/`, `img-product/`, `css/`)
 relative to `../web` from wherever it's run, so it always edits the real
 site data. REST-ish JSON API over `boo.json`, structured around the section →
-(events | items | subcategories → items) hierarchy, with the lookups and
-checks written into each route rather than a shared middleware. Every
-request re-reads `boo.json` (`gen.js` writes it too), and writes go through
-a tmp file + rename.
+(events | items | subcategories → items) hierarchy. `app.param` handlers
+resolve `:sectionId`, `:name`, `:eventId` and `:itemId` into `req.section`,
+`req.group`, `req.event` and `req.item` (404 if missing) from a fresh read
+of `boo.json` (`gen.js` writes it too); item routes are registered on both
+the section and the subcategory path (`itemRoute()`), and all four reorder
+endpoints share `reorder()`. Writes go through a tmp file + rename.
 
 - Sections, subcategories and events are freely editable on any section,
   including `etsy-shop` (whose title/description/show `gen.js` keeps).
