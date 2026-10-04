@@ -5,6 +5,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
+import { isEtsyItem, readBoo as readBooFile, writeBoo as writeBooFile } from '../web/lib/boo.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..', 'web');
@@ -27,15 +28,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/img-product', express.static(imgProductDir));
 app.use('/assets/css', express.static(path.join(rootDir, 'css')));
 
-function readBoo() {
-    return JSON.parse(fs.readFileSync(booPath, 'utf8'));
-}
-
-function writeBoo(boo) {
-    let tmpPath = booPath + '.tmp';
-    fs.writeFileSync(tmpPath, JSON.stringify(boo, null, 2) + '\n');
-    fs.renameSync(tmpPath, booPath);
-}
+const readBoo = () => readBooFile(booPath);
+const writeBoo = boo => writeBooFile(booPath, boo);
 
 function findSection(boo, sectionId) {
     return boo.find(s => s.sectionId === sectionId);
@@ -56,9 +50,7 @@ function findItem(section, itemId) {
 // An item sourced from Etsy is read-only and excluded from reordering here -
 // gen.js re-scrapes and re-appends it on every run, so edits made here would
 // just be clobbered. Anything else (source: "Manual", or unset) is ours.
-function isLocked(item) {
-    return item.source === 'Etsy';
-}
+const isLocked = isEtsyItem;
 
 function shortId() {
     return randomUUID().split('-')[0];

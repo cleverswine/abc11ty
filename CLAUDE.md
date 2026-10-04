@@ -110,8 +110,8 @@ The file is **both** generated and hand-edited, and `item.source` is the
 only thing that tells the two apart:
 
 - **`source: "Etsy"`** items are written by `gen.js` and replaced on every
-  run, so they're read-only in the admin tool (`isLocked()` in
-  `admin/server.js`, mirrored in `admin/public/app.js`).
+  run, so they're read-only in the admin tool (`isEtsyItem()` in
+  `web/lib/boo.js`, mirrored in `admin/public/app.js`).
 - **Everything else** (`source: "Manual"`, set by the admin tool) is
   hand-made and never touched by `gen.js` — including hand-added items
   inside `etsy-shop`'s subcategories, which `gen.js` keeps after the fresh
@@ -129,6 +129,12 @@ same picture, so the image-viewer modal skips `images[0]` for Etsy items
 (`slide_offset` in `_includes/item-card.html`). For manual items every image
 is a real photo.
 
+`web/lib/boo.js` is the one place that reads and writes the file, imported
+by both `gen.js` and `admin/server.js` (as `../web/lib/boo.js`): `readBoo`,
+`writeBoo` (a tmp file + rename, so a concurrent reader - the admin server,
+`git-sync.sh`, the eleventy dev server - never sees half a file) and
+`isEtsyItem`.
+
 ### `web/gen.js` (the scraper)
 
 Run by hand, not part of the eleventy build. The comment block at the top
@@ -140,7 +146,9 @@ of the file describes the phases and safety rules; in short:
    `scrapeSection()` reads every listing card (title, URL, thumbnail), saving
    the thumbnail as `img-product/<listingId>.webp` (340px wide) via
    `@11ty/eleventy-img`, then fetches each listing's own page and downloads
-   every carousel photo full-size as `img-product/<listingId>-<n>.jpg`.
+   every carousel photo full-size as `img-product/<listingId>-<n>.jpg`
+   (a listing's photos download in parallel; they come from Etsy's image
+   CDN, not the rate-limited pages). Items are built by `etsyItem()`.
    An item's title is the first comma-separated phrase of Etsy's
    keyword-list title, which becomes its `description`.
 2. `buildBoo()` / `mergeSubcategories()` rebuild `etsy-shop`: each Etsy
@@ -206,7 +214,7 @@ resolve `:sectionId`, `:name`, `:eventId` and `:itemId` into `req.section`,
 `req.group`, `req.event` and `req.item` (404 if missing) from a fresh read
 of `boo.json` (`gen.js` writes it too); item routes are registered on both
 the section and the subcategory path (`itemRoute()`), and all four reorder
-endpoints share `reorder()`. Writes go through a tmp file + rename.
+endpoints share `reorder()`.
 
 - Sections, subcategories and events are freely editable on any section,
   including `etsy-shop` (whose title/description/show `gen.js` keeps).

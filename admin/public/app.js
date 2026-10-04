@@ -20,8 +20,8 @@ function esc(s) {
     }[c]));
 }
 
-// Mirrors isLocked() in server.js - an Etsy-sourced item is read-only here,
-// re-scraped and re-appended by gen.js on every run.
+// Mirrors isEtsyItem() in web/lib/boo.js - an Etsy-sourced item is
+// read-only here, re-scraped and re-appended by gen.js on every run.
 function isLocked(item) {
     return item.source === 'Etsy';
 }

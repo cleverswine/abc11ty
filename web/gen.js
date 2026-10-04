@@ -38,6 +38,7 @@ import * as readline from 'node:readline/promises';
 import * as parser from 'node-html-parser';
 import { chromium } from 'playwright';
 import Image from "@11ty/eleventy-img";
+import { isEtsyItem, readBoo, writeBoo } from './lib/boo.js';
 
 // the shop's address, shared with the site's templates
 const SHOP_URL = JSON.parse(fs.readFileSync('_data/shop.json', 'utf8')).url;
@@ -53,6 +54,8 @@ const SESSION_PATH = '.etsy-session.json';
 // show flag are safe to edit in the admin tool, but renaming this id would
 // stop gen.js from finding it again.
 const ETSY_SECTION_ID = 'etsy-shop';
+// ...and its title until someone renames it in the admin tool
+const DEFAULT_ETSY_TITLE = 'Etsy Items';
 
 // Etsy section titles to leave off the site.
 const IGNORE_SECTIONS = ["On sale"];
@@ -81,7 +84,7 @@ if (itemUrl && skipFetch) {
 const headed = !process.argv.includes('--headless');
 
 // The current boo.json - the starting point everything is merged into.
-const previousBoo = fs.existsSync(BOO_PATH) ? JSON.parse(fs.readFileSync(BOO_PATH, 'utf8')) : [];
+const previousBoo = fs.existsSync(BOO_PATH) ? readBoo(BOO_PATH) : [];
 const previousEtsySection = previousBoo.find(s => s.sectionId === ETSY_SECTION_ID);
 const previousGroups = previousEtsySection?.subcategories ?? [];
 
@@ -90,7 +93,7 @@ const previousGroups = previousEtsySection?.subcategories ?? [];
 const previousEtsyItems = [
     ...(previousEtsySection?.items ?? []),
     ...previousGroups.flatMap(group => group.items ?? []),
-].filter(item => item.source === 'Etsy');
+].filter(isEtsyItem);
 
 // Each Etsy item's images from the last run, by listing id - the fallback
 // when a listing page is blocked this time.
@@ -252,8 +255,6 @@ async function scrapeSection(sectionId) {
     let items = [];
     for (let listing of listings) {
         let id = listing.getAttribute("data-listing-id");
-        // Etsy titles are keyword lists ("Floral Chicken Magnet, Farmhouse
-        // Decor, ..."); the first phrase makes a readable title
         let fullTitle = listing.getAttribute("title");
         let etsyPage = listing.getAttribute("href").split("?")[0];
 
@@ -263,20 +264,27 @@ async function scrapeSection(sectionId) {
         let gallery = await scrapeListingGallery(id, etsyPage)
             ?? (previousImagesById.get(id) ?? []).slice(1);
 
-        items.push({
-            id,
-            show: true,
-            title: fullTitle.split(",")[0],
-            description: fullTitle,
-            // the small thumbnail comes first since it's what the site's
-            // product cards show; the popup slideshow skips it and shows
-            // the full-size gallery (whose first photo is the same picture)
-            images: [thumbnail, ...gallery],
-            etsyPage,
-            source: "Etsy",
-        });
+        items.push(etsyItem(id, fullTitle, [thumbnail, ...gallery], etsyPage));
     }
     return items;
+}
+
+// A boo.json item for an Etsy listing. Etsy titles are keyword lists
+// ("Floral Chicken Magnet, Farmhouse Decor, ..."): the first phrase makes a
+// readable title, and the whole list is the description. `images` is the
+// small card thumbnail first, since it's what the site's product cards show,
+// then the full-size gallery (whose first photo is the same picture - the
+// popup slideshow skips the thumbnail).
+function etsyItem(id, fullTitle, images, etsyPage) {
+    return {
+        id,
+        show: true,
+        title: fullTitle.split(",")[0],
+        description: fullTitle,
+        images,
+        etsyPage,
+        source: "Etsy",
+    };
 }
 
 // Downloads every photo in a listing's image carousel, full-size, as
@@ -344,11 +352,12 @@ function getBreadcrumbCategory(root) {
     return entries.at(-1) ?? null;
 }
 
+// Downloads a listing's photos all at once (they come from Etsy's image
+// CDN, not the rate-limited pages, and eleventy-img caps how many it
+// processes at a time), keeping Etsy's order in the returned paths.
 async function downloadGallery(id, urls) {
-    let paths = [];
-    for (let [i, url] of urls.entries()) {
-        paths.push(await downloadImage(url, 794, "jpeg", `${id}-${i + 1}.jpg`));
-    }
+    let paths = await Promise.all(urls.map((url, i) =>
+        downloadImage(url, 794, "jpeg", `${id}-${i + 1}.jpg`)));
     console.log(`  -> ${paths.length} images`);
     return paths;
 }
@@ -374,7 +383,7 @@ function mergeSubcategories(scraped) {
             // undefined = section no longer on Etsy, null = its page was blocked
             let fresh = scrapedItems.get(name);
             if (fresh === null) return previous ?? {name, show: true, items: []};
-            let handAdded = (previous?.items ?? []).filter(item => item.source !== 'Etsy');
+            let handAdded = (previous?.items ?? []).filter(item => !isEtsyItem(item));
             return {
                 name,
                 show: previous?.show ?? true,
@@ -398,7 +407,7 @@ function buildBoo(scraped) {
     let topItems = (previousEtsySection?.items ?? []).filter(item => !subcategoryIds.has(item.id));
     let etsySection = {
         sectionId: ETSY_SECTION_ID,
-        sectionTitle: previousEtsySection?.sectionTitle || 'Etsy Items',
+        sectionTitle: previousEtsySection?.sectionTitle || DEFAULT_ETSY_TITLE,
         show: previousEtsySection?.show ?? true,
         ...(topItems.length > 0 && {items: topItems}),
         subcategories,
@@ -458,19 +467,10 @@ async function refreshItem(url) {
     }
     let etsySection = previousEtsySection;
     if (!etsySection) {
-        etsySection = {sectionId: ETSY_SECTION_ID, sectionTitle: 'Etsy Items', show: true, subcategories: []};
+        etsySection = {sectionId: ETSY_SECTION_ID, sectionTitle: DEFAULT_ETSY_TITLE, show: true, subcategories: []};
         previousBoo.push(etsySection);
     }
-    // same shape as scrapeSection's items
-    let newItem = {
-        id,
-        show: true,
-        title: listing.title.split(",")[0],
-        description: listing.title,
-        images,
-        etsyPage,
-        source: "Etsy",
-    };
+    let newItem = etsyItem(id, listing.title, images, etsyPage);
     if (!listing.category) {
         console.log(`  -> adding it to the top of the ${etsySection.sectionTitle} section`);
         etsySection.items = [newItem, ...(etsySection.items ?? [])];
@@ -496,9 +496,6 @@ function addToCategory(etsySection, item, category) {
     group.items = [item, ...(group.items ?? [])];
 }
 
-function writeBoo(boo) {
-    fs.writeFileSync(BOO_PATH, JSON.stringify(boo, null, 2) + '\n');
-}
 
 // ---------------------------------------------------------------------------
 // Main
@@ -513,7 +510,7 @@ if (itemUrl) {
         await closeBrowser();
     }
     if (ok) {
-        writeBoo(previousBoo);
+        writeBoo(BOO_PATH, previousBoo);
     } else {
         console.log(`${BOO_PATH} not changed`);
         process.exitCode = 1;
@@ -524,7 +521,7 @@ if (itemUrl) {
         console.log('--skip-fetch passed, reusing Etsy-sourced items already in _data/boo.json instead of hitting Etsy');
         scraped = previousGroups.map(group => ({
             name: group.name,
-            items: (group.items ?? []).filter(item => item.source === 'Etsy'),
+            items: (group.items ?? []).filter(isEtsyItem),
         }));
     } else {
         try {
@@ -533,5 +530,5 @@ if (itemUrl) {
             await closeBrowser();
         }
     }
-    writeBoo(buildBoo(scraped));
+    writeBoo(BOO_PATH, buildBoo(scraped));
 }
