@@ -326,6 +326,10 @@ a {
   text-decoration: none;
   color: inherit;
   display: block;
+  /* a grid item won't shrink below its content's width by default, so a long
+     single-line name (product-card__name--single-line) would widen its
+     column - and on a phone, the whole page - instead of getting its "…" */
+  min-width: 0;
 }
 
 .product-card__image {
