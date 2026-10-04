@@ -188,7 +188,10 @@ the section reads. The shop's URL lives in `_data/shop.json`, shared with
 `gen.js`.
 
 Per-item markup is `_includes/item-card.html`: a card showing `images[0]`
-(lazy-loaded) that opens a Bootstrap image-viewer modal for every item — a
+(lazy-loaded, via the `cardImage` shortcode in `eleventy.config.js` - for
+hand-added items it makes 240/480/720px WebP copies into `_site/img-card/`
+at build time and renders a `srcset` with the photo's width/height; Etsy
+thumbnails are used as they are) that opens a Bootstrap image-viewer modal for every item — a
 carousel with a thumbnail strip if there's more than one photo, plus a
 "Purchase this item on Etsy" button for Etsy items and the description for
 manual ones. Every modal is rendered into the page at build time.

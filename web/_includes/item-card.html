@@ -9,7 +9,8 @@ skips it whenever there's a gallery to show instead.
 {% if is_etsy and item.images.size > 1 %}{% assign slide_offset = 1 %}{% endif %}
 {% assign slide_count = item.images.size | minus: slide_offset %}
 <a href="#" data-bs-toggle="modal" data-bs-target="#img-modal-{{ item.id }}" class="product-card" id="{{ item.id }}">
-    <img src="{{ item.images[0] }}" class="product-card__image abc-product-img" alt="{{ item.title }}" loading="lazy" decoding="async"/>
+    {% assign card_src = item.images | first %}
+    {% cardImage card_src, item.title, is_etsy %}
     {% if slide_count > 1 %}
     <span class="abc-multi-img-badge" title="Multiple images" aria-label="Multiple images">
         <i class="bi bi-images"></i>
