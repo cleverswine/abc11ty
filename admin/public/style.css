@@ -49,13 +49,6 @@ body {
     letter-spacing: -0.01px;
 }
 
-/* icons are decorative and sit inside clickable controls whose handlers key
-   off the button element itself (data-action etc.) - without this, a click
-   landing exactly on the glyph would target the <i> instead of the button. */
-i.bi {
-    pointer-events: none;
-}
-
 /* ---- mobile ---- */
 
 @media (max-width: 767.98px) {
@@ -285,10 +278,6 @@ i.bi {
     color: var(--sage-dark);
     cursor: pointer;
     white-space: nowrap;
-}
-
-.show-switch > * {
-    pointer-events: none;
 }
 
 .show-switch:hover {

@@ -214,7 +214,13 @@ endpoints share `reorder()`. Writes go through a tmp file + rename.
   scrape order `gen.js` re-establishes every run.
 
 The frontend (`admin/public/app.js`) re-fetches `GET /api/boo` and
-re-renders the whole page after every change. Adding a product puts it in
+re-renders the whole page after every change (`change()`). Rendered
+controls carry generic `data-action`s (`edit`, `delete`, `toggle-show`,
+`move-up`, ...); one click handler resolves the section/group/event/product
+the control sits in (`pageContext()`, which also builds its API path) and
+dispatches through the `actions` map. The add/edit dialogs share
+`fillForm()` / `onSubmit()`, and any `[data-close-modal]` button closes its
+dialog. Adding a product puts it in
 the section/group chosen in the modal's dropdowns (defaulting to where
 "Add product" was clicked); editing can't move an item, so the dropdowns
 are locked then.
