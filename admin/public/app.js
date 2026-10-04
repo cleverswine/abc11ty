@@ -846,9 +846,9 @@ function showInfo(title, body) {
     infoModal.showModal();
 }
 
-// the "To follow along, check the deploys page on Netlify" line, written once
-// in the publish confirmation dialog and reused in the "too late" popup
-const deploysLinkHtml = publishModal.querySelector('[data-deploys-link]').outerHTML;
+// the "To follow along, check the deploys page on Netlify" line - written
+// once, in the hint at the top of the page - for the "too late" popup
+const deploysLinkHtml = `<p class="small text-body-secondary mb-0">${document.querySelector('[data-deploys-link]').innerHTML}</p>`;
 
 // Nothing is requested until OK is clicked in the confirmation modal.
 publishBtn.addEventListener('click', () => publishModal.showModal());

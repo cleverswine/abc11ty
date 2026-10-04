@@ -46,6 +46,9 @@
     <p class="admin-hint">
         Your changes save as you make them and show up on the preview site right away, so you can check how things look.
         When everything looks right, press <strong>Publish site</strong> to update the public site.
+        Publishing takes 10-15 minutes.
+        <span data-deploys-link>To follow along, check the
+        <a href="https://app.netlify.com/projects/auntieboocrafts/deploys" target="_blank" rel="noopener">deploys page on Netlify <i class="bi bi-box-arrow-up-right"></i></a>.</span>
     </p>
 
     <div id="sections"></div>
@@ -142,11 +145,7 @@
     <dialog id="publish-modal">
         <form id="publish-modal-form">
             <h2 class="h5 mb-3"><i class="bi bi-cloud-upload"></i> Publish your changes?</h2>
-            <p class="mb-2">It may take 10-15 minutes for the updates to take effect on the public site.</p>
-            <p class="small text-body-secondary mb-0" data-deploys-link>
-                To follow along, check the
-                <a href="https://app.netlify.com/projects/auntieboocrafts/deploys" target="_blank" rel="noopener">deploys page on Netlify <i class="bi bi-box-arrow-up-right"></i></a>.
-            </p>
+            <p class="mb-0">It may take 10-15 minutes for the updates to take effect on the public site.</p>
             <div class="d-flex justify-content-end gap-2 mt-3">
                 <button type="button" class="btn btn-outline-secondary btn-sm" data-close-modal>Cancel</button>
                 <button type="submit" class="btn btn-primary btn-sm">OK</button>
