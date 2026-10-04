@@ -70,7 +70,8 @@ docker compose up
 # — requires exiftool; admin uploads are stripped automatically via sharp
 ./scripts/strip-image-metadata.sh
 
-# commit + push web/_data/boo.json and web/img-product/ if either changed
+# commit + push web/_data/boo.json and web/img-product/ if either changed,
+# and push dev to main if the admin page's Publish button was pressed
 # — run on a schedule via cron, see "Auto-sync" below
 ./scripts/git-sync.sh
 
@@ -198,9 +199,17 @@ once the client hits Save.
 stays hidden.
 
 Saving in the admin tool only updates the local `boo.json` (and, for image
-uploads, `img-product/`) — actually deploying it still requires a commit +
-push, which is handled by `scripts/git-sync.sh` on a cron schedule (see
-below), not by `server.js` itself.
+uploads, `img-product/`) — committing and pushing it to `dev` is handled by
+`scripts/git-sync.sh` on a cron schedule (see below), not by `server.js`
+itself. The header's **Publish site** button (`POST /api/publish`) likewise
+only writes a flag file, `web/.publish-requested`; `git-sync.sh` does the
+actual publish and writes the outcome to `web/.publish-status`, which
+`GET /api/publish` reads back for the "Last published" line. While a publish
+is pending, `DELETE /api/publish` cancels it by deleting the flag; since
+`git-sync.sh` claims the flag by renaming it to `web/.publish-in-progress`
+before pushing, the delete either wins or finds the flag gone, so the
+"cancelled" / "too late" popup is always accurate. All three files are
+gitignored.
 
 ### Auto-sync (`scripts/git-sync.sh` + cron)
 
@@ -209,6 +218,7 @@ pushes `web/_data/boo.json` and `web/img-product/` whenever either has
 changed, and no-ops cleanly otherwise. It's meant to run unattended, not to be wired into
 `admin/server.js` or `gen.js` directly, so that admin edits and scrapes
 make it to git (and Netlify deploys) without anyone having to remember.
+
 Scheduled via a user crontab entry (the `cd` matters, since the script
 assumes the repo root as its cwd):
 
@@ -216,19 +226,38 @@ assumes the repo root as its cwd):
 */15 * * * * cd /home/knoone/Code/abc11ty && ./scripts/git-sync.sh >> .git-sync.log 2>&1
 ```
 
+The server's checkout stays on `dev`, so auto-synced edits don't go live on
+their own. When `web/.publish-requested` exists, `git-sync.sh` (after the
+usual sync) runs `git push origin dev:main` — Netlify's production deploy
+follows `main` — writes the result to `web/.publish-status` (line 1 `ok` or
+`error`, line 2 the time, then the commit or git's error output), and
+deletes the flag. The push is never forced: if `main` has commits `dev`
+doesn't, it's refused and the admin page shows the error.
+
 Only works where this is actually set up (the machine running
 `npm run admin` locally) — the `docker compose up` `admin` container has no
-`.git` directory mounted and no `git` binary in its `node:20-alpine` image,
-so auto-sync doesn't apply there. The repo's remote (`git@github.com:...`)
+`.git` directory mounted and no `git` binary in its `node:24-alpine` image,
+so auto-sync doesn't run there — but since the container shares `./web` with
+the host, the Publish button still works as long as the host's cron runs
+`git-sync.sh`. The repo's remote (`git@github.com:...`)
 is SSH-based, so this also depends on the cron user's SSH key working with
 no passphrase prompt (cron has no SSH agent available).
 
 ### Docker compose
 
-`web` and `admin` run as separate `node:20-alpine` containers sharing the
+`web` and `admin` run as separate `node:24-alpine` containers sharing the
 same bind-mounted `./web` directory (so admin writes are immediately visible
 to the site's dev server), each with its own named `node_modules` volume.
 Both containers `chown` the node_modules volume to the unprivileged `node`
 user before installing/running, since Docker creates it root-owned on first
 mount. `web` uses `CHOKIDAR_USEPOLLING=true` since bind-mount file events
 don't propagate reliably on macOS/Windows Docker.
+
+### Node version and lockfiles
+
+Node 24 everywhere: `.nvmrc`, the `node:24-alpine` images in
+`docker-compose.yml`, and `NODE_VERSION` in `netlify.toml` — keep these in
+sync by hand. `package-lock.json` is committed for the root, `web/` and
+`admin/`, and the containers install with `npm ci`, so no install quietly
+picks up newer versions. After changing a `package.json`, run `npm install`
+in that directory and commit the updated lockfile.

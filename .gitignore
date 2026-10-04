@@ -1,6 +1,9 @@
 .cache/
 node_modules/
-package-lock.json
 _site/
 .git-sync.log
 .etsy-session.json
+# Publish button handshake between admin/server.js and scripts/git-sync.sh
+.publish-requested
+.publish-status
+.publish-in-progress

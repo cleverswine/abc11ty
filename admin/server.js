@@ -10,6 +10,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..', 'web');
 const booPath = path.join(rootDir, '_data', 'boo.json');
 const imgProductDir = path.join(rootDir, 'img-product');
+// Handshake with scripts/git-sync.sh, which runs on the host from cron (this
+// server may be in a container with no git): we create the flag, it pushes
+// dev to main, writes the status file, and deletes the flag.
+const publishFlagPath = path.join(rootDir, '.publish-requested');
+const publishStatusPath = path.join(rootDir, '.publish-status');
+// git-sync.sh renames the flag to this while it pushes, so a cancel that
+// finds the flag gone knows it was too late.
+const publishClaimPath = path.join(rootDir, '.publish-in-progress');
 
 const app = express();
 const PORT = process.env.PORT || 4321;
@@ -90,6 +98,52 @@ function sanitizeEventInput(body) {
 
 app.get('/api/config', (req, res) => {
     res.json({siteUrl: process.env.SITE_URL || null});
+});
+
+// ---- publishing to the live site ----
+
+function readPublishStatus() {
+    let requested = false, requestedAt = null;
+    try {
+        requestedAt = fs.readFileSync(publishFlagPath, 'utf8').trim() || null;
+        requested = true;
+    } catch (err) {
+        if (err.code !== 'ENOENT') throw err;
+    }
+    let last = null;
+    try {
+        let [result, time, ...detail] = fs.readFileSync(publishStatusPath, 'utf8').split('\n');
+        last = {ok: result === 'ok', time, detail: detail.join('\n').trim()};
+    } catch (err) {
+        if (err.code !== 'ENOENT') throw err;
+    }
+    let inProgress = fs.existsSync(publishClaimPath);
+    return {requested, requestedAt, inProgress, last};
+}
+
+app.get('/api/publish', (req, res) => {
+    res.json(readPublishStatus());
+});
+
+app.post('/api/publish', (req, res) => {
+    if (!fs.existsSync(publishFlagPath)) {
+        fs.writeFileSync(publishFlagPath, new Date().toISOString() + '\n');
+    }
+    res.json(readPublishStatus());
+});
+
+// Cancels a pending publish, if git-sync.sh hasn't claimed it yet. Deleting
+// the flag either beats git-sync.sh's rename or fails because it already
+// happened, so `cancelled` is always accurate.
+app.delete('/api/publish', (req, res) => {
+    let cancelled = true;
+    try {
+        fs.unlinkSync(publishFlagPath);
+    } catch (err) {
+        if (err.code !== 'ENOENT') throw err;
+        cancelled = false;
+    }
+    res.json({cancelled, ...readPublishStatus()});
 });
 
 // ---- sections (all freely editable - only individual Etsy-sourced items are locked) ----
@@ -420,5 +474,5 @@ app.post('/api/images', upload.single('image'), async (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`abc11ty admin running at http://localhost:${PORT}`);
-    console.log('Editing _data/boo.json directly - remember to git add/commit/push to publish changes.');
+    console.log('Editing _data/boo.json directly - scripts/git-sync.sh commits edits and handles the Publish button.');
 });

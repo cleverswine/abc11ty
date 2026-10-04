@@ -1,6 +1,6 @@
 # Roadmap: making the site easier to maintain
 
-Written October 2026. Nothing here is done yet. The goal: the home server is
+Written October 2026. Steps 1 and 2 of the suggested order are done. The goal: the home server is
 the only place work happens, and day to day, nobody needs anything but the
 admin page in a browser.
 
@@ -20,9 +20,9 @@ The problems this addresses:
 
 ## Suggested order
 
-1. Commit lockfiles and move to Node 24. Small, and it stops surprise
-   breakage now.
-2. Add the Publish button. Small, and the biggest day-to-day win.
+1. ~~Commit lockfiles and move to Node 24.~~ Done.
+2. ~~Add the Publish button.~~ Done. Still optional: Netlify branch deploys
+   for `dev` (see below).
 3. Apply for an Etsy API key. Start early, since approval takes time.
 4. Once the key arrives: rewrite `gen.js` on the API, move all tooling into
    Docker, and add a dev container.

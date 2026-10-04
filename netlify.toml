@@ -2,3 +2,7 @@
   base = "web"
   command = "npm run build"
   publish = "_site"
+
+[build.environment]
+  # keep in sync with .nvmrc and the node image in docker-compose.yml
+  NODE_VERSION = "24"

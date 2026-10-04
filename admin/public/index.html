@@ -11,29 +11,45 @@
 <body>
 
 <header class="admin-header">
-    <div class="container d-flex justify-content-between align-items-center py-2">
-        <div class="d-flex align-items-center gap-2">
-            <span class="admin-logo">Auntie Boo Crafts </span>
+    <div class="container admin-header-inner">
+        <div class="admin-brand">
+            <span class="admin-logo">Auntie Boo Crafts</span>
             <span class="text-body-secondary">admin</span>
         </div>
-        <div class="d-flex align-items-center gap-3">
-            <a id="preview-link" href="#" target="_blank" rel="noopener" class="small" hidden>
-                <i class="bi bi-box-arrow-up-right"></i> Preview site
-            </a>
-            <span id="save-status" class="text-body-secondary small"></span>
+        <!-- Two steps, left to right: edits save to the preview site, then
+             Publish site copies them to the public site. The dot in each
+             shows that step's state (data-state: ok / busy / error). -->
+        <div class="admin-stages">
+            <div class="admin-stage" id="save-stage" data-state="ok">
+                <span class="stage-dot" aria-hidden="true"></span>
+                <span class="stage-text" id="save-status" aria-live="polite">All changes saved</span>
+                <a id="preview-link" href="#" target="_blank" rel="noopener" hidden>
+                    Preview site <i class="bi bi-box-arrow-up-right"></i>
+                </a>
+            </div>
+            <div class="admin-stage" id="publish-stage" data-state="ok" hidden>
+                <span class="stage-dot" aria-hidden="true"></span>
+                <span class="stage-text" id="publish-status" aria-live="polite"></span>
+                <button type="button" class="btn btn-sm btn-publish" id="publish-btn">
+                    <i class="bi bi-cloud-upload"></i> Publish site
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="cancel-publish-btn" hidden>
+                    Cancel publish
+                </button>
+            </div>
         </div>
     </div>
 </header>
 
 <div class="container my-4">
     <p class="admin-hint">
-        Changes you make here show up right away on the preview site, so you can check how things look before anyone else sees them.
-        To make a change go live on the actual public site, one more step is needed after you're done editing.
+        Your changes save as you make them and show up on the preview site right away, so you can check how things look.
+        When everything looks right, press <strong>Publish site</strong> to update the public site.
     </p>
 
     <div id="sections"></div>
 
-    <button type="button" class="btn btn-outline-primary mt-2" id="add-section-btn"><i class="bi bi-plus-lg"></i> New manual section</button>
+    <button type="button" class="btn btn-add" id="add-section-btn"><i class="bi bi-plus-lg"></i> Add section</button>
 
     <!-- ---- section modal ---- -->
     <dialog id="section-modal">
@@ -117,6 +133,33 @@
             <div class="d-flex justify-content-end gap-2 mt-3">
                 <button type="button" class="btn btn-outline-secondary btn-sm" data-close-modal>Cancel</button>
                 <button type="submit" class="btn btn-primary btn-sm">Save</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- ---- publish confirmation modal ---- -->
+    <dialog id="publish-modal">
+        <form id="publish-modal-form">
+            <h2 class="h5 mb-3"><i class="bi bi-cloud-upload"></i> Publish your changes?</h2>
+            <p class="mb-2">It may take 10-15 minutes for the updates to take effect on the public site.</p>
+            <p class="small text-body-secondary mb-0">
+                To follow along, check the
+                <a href="https://app.netlify.com/projects/auntieboocrafts/deploys" target="_blank" rel="noopener">deploys page on Netlify <i class="bi bi-box-arrow-up-right"></i></a>.
+            </p>
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-close-modal>Cancel</button>
+                <button type="submit" class="btn btn-primary btn-sm">OK</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- ---- publish info modal (cancel result, failure details) ---- -->
+    <dialog id="publish-info-modal">
+        <form method="dialog">
+            <h2 class="h5 mb-3" data-modal-title></h2>
+            <div data-modal-body></div>
+            <div class="d-flex justify-content-end mt-3">
+                <button type="submit" class="btn btn-primary btn-sm">OK</button>
             </div>
         </form>
     </dialog>

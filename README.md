@@ -18,8 +18,10 @@ docker compose up
 # admin: http://localhost:9321
 ```
 
-Admin edits and `gen.js` runs only change local files — they reach the live
-site once committed and pushed (see `scripts/git-sync.sh` below).
+Admin edits and `gen.js` runs only change local files — they're committed and
+pushed to the `dev` branch automatically, and go live on the public site when
+someone presses **Publish site** in the admin page (see `scripts/git-sync.sh`
+below).
 
 ## Repo layout
 
@@ -72,9 +74,17 @@ All scripts below live in `scripts/` and assume they're run from the repo
 root.
 
 ```shell
-# commit + push web/_data/boo.json and web/img-product/ if either changed
+# commit + push web/_data/boo.json and web/img-product/ if either changed,
+# and push dev to main (the live site) if Publish was pressed in the admin
 ./scripts/git-sync.sh
 ```
+
+The admin page's **Publish site** button only leaves a note
+(`web/.publish-requested`); the next `git-sync.sh` run pushes `dev` to
+`main`, which Netlify deploys to production, and writes the outcome to
+`web/.publish-status` for the admin page's "Last published" line. The push
+is never forced, so if `main` ever gets commits that `dev` doesn't have, the
+publish is refused and the admin page shows the error.
 
 Meant to run unattended on a schedule rather than be triggered by hand, so
 admin edits and scrapes always make it to git without anyone remembering to
