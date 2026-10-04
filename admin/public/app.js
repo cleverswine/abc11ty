@@ -773,11 +773,11 @@ itemModalForm.addEventListener('submit', async (e) => {
         show: itemModalForm.show.checked,
     };
     try {
-        let url = itemUrl(
-            itemModalContext.sectionId,
-            itemModalContext.subcategoryName,
-            itemModalContext.mode === 'edit' ? itemModalContext.itemId : null
-        );
+        // a new product goes wherever the Section/Group dropdowns say; an
+        // existing one stays put (the dropdowns are locked while editing)
+        let url = itemModalContext.mode === 'add'
+            ? itemUrl(modalSectionSelect.value, modalSubcategorySelect.value || null, null)
+            : itemUrl(itemModalContext.sectionId, itemModalContext.subcategoryName, itemModalContext.itemId);
         await api(itemModalContext.mode === 'add' ? 'POST' : 'PATCH', url, body);
         itemModal.close();
         await loadAll();
