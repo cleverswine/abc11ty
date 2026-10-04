@@ -34,13 +34,9 @@
     </div>
     <nav class="site-header__nav">
         {% for section in boo %}
-        {% if section.sectionId != "0" and section.show != false %}
+        {% if section.show != false %}
         <a href="#{{ section.sectionId }}">
-            {% if section.sectionId == "live-events" %}
-            <i class="section__icon bi bi-geo-alt-fill"></i>
-            {% else %}
-            <i class="section__icon bi bi-bag-heart-fill"></i>
-            {% endif %}
+            {% render "section-icon.html", section: section %}
             {{ section.sectionTitle }}
         </a>
         {% endif %}
@@ -55,21 +51,22 @@
         
 I'm passionate about creating handcrafted and personalized items. I specialize in bookmarks, hair clips, glitter pens, key chains, and badge reels. I have something for every price point. Almost all items can be customized. I love working with customers to create something unique and personal. 
     </p>
-    <a class="abc-buy-btn" href="https://www.etsy.com/shop/AuntieBooCrafts" target="_blank" rel="noopener">Visit shop on <span class="abc-etsy-word">Etsy</span> <i class="bi bi-box-arrow-up-right"></i></a>
+    {% render "shop-button.html", url: shop.url %}
 </section>
 
-{% assign etsy_section = boo | where: "sectionId", "etsy-shop" | first %}
+{% comment %}
+The Etsy shop section (gen.js's ETSY_SECTION_ID) gets the sage theme and a
+"Visit shop on Etsy" button; every other section is slate.
+{% endcomment %}
+{% assign etsy_id = "etsy-shop" %}
+{% assign etsy_section = boo | where: "sectionId", etsy_id | first %}
 {% for section in boo %}
-{% if section.sectionId != "0" and section.show != false %}
-{% assign is_sage = false %}
-{% if section.sectionId == "etsy-shop" %}{% assign is_sage = true %}{% endif %}
-<section id="{{ section.sectionId }}" class="section {% if is_sage %}section--sage{% else %}section--slate{% endif %}">
+{% if section.show != false %}
+{% assign is_etsy = false %}
+{% if section.sectionId == etsy_id %}{% assign is_etsy = true %}{% endif %}
+<section id="{{ section.sectionId }}" class="section {% if is_etsy %}section--sage{% else %}section--slate{% endif %}">
     <div class="section__header">
-        {% if section.sectionId == "live-events" %}
-        <i class="section__icon bi bi-geo-alt-fill"></i>
-        {% else %}
-        <i class="section__icon bi bi-bag-heart-fill"></i>
-        {% endif %}
+        {% render "section-icon.html", section: section %}
         <h2 class="section__title">{{ section.sectionTitle }}</h2>
     </div>
 
@@ -111,8 +108,7 @@ I'm passionate about creating handcrafted and personalized items. I specialize i
         {% if group.show != false %}
         {% assign group_products = group.items | where: "show", true %}
         {% if group_products.size > 0 %}
-        <a class="chip {% if is_sage %}chip--sage{% else %}chip--slate{% endif %}"
-           href="#{{ section.sectionId }}-{{ group.name | slugify }}">{{ group.name }}</a>
+        <a class="chip" href="#{{ section.sectionId }}-{{ group.name | slugify }}">{{ group.name }}</a>
         {% endif %}
         {% endif %}
         {% endfor %}
@@ -124,7 +120,7 @@ I'm passionate about creating handcrafted and personalized items. I specialize i
     {% assign group_products = group.items | where: "show", true %}
     {% if group_products.size > 0 %}
     <div id="{{ section.sectionId }}-{{ group.name | slugify }}"
-         class="category-group {% if is_sage %}category-group--sage{% else %}category-group--slate{% endif %}">
+         class="category-group">
         <h3 class="category-group__title">{{ group.name }}</h3>
         <div class="card-grid">
             {% for item in group_products %}
@@ -134,7 +130,7 @@ I'm passionate about creating handcrafted and personalized items. I specialize i
             A hand-made category with the same name as a (visible) Etsy shop
             category gets a last card pointing down to that Etsy category.
             {% endcomment %}
-            {% if section.sectionId != "etsy-shop" and etsy_section and etsy_section.show != false %}
+            {% if is_etsy == false and etsy_section and etsy_section.show != false %}
             {% assign etsy_group = etsy_section.subcategories | where: "name", group.name | first %}
             {% if etsy_group and etsy_group.show != false %}
             {% assign etsy_group_products = etsy_group.items | where: "show", true %}
@@ -153,9 +149,9 @@ I'm passionate about creating handcrafted and personalized items. I specialize i
     {% endif %}
     {% endfor %}
 
-    {% if section.sectionId == "etsy-shop" %}
+    {% if is_etsy %}
     <div class="section__cta">
-        <a class="abc-buy-btn" href="https://www.etsy.com/shop/AuntieBooCrafts" target="_blank" rel="noopener">Visit shop on <span class="abc-etsy-word">Etsy</span> <i class="bi bi-box-arrow-up-right"></i></a>
+        {% render "shop-button.html", url: shop.url %}
     </div>
     {% endif %}
 </section>
@@ -164,8 +160,8 @@ I'm passionate about creating handcrafted and personalized items. I specialize i
 
 <footer class="site-footer">
     &copy; {{ 'now' | date: "%Y" }} Auntie Boo Crafts ·
-    <a href="https://www.etsy.com/shop/AuntieBooCrafts">Etsy shop</a> ·
-    <a href="https://www.etsy.com/shop/auntieboocrafts/rss">RSS</a>
+    <a href="{{ shop.url }}">Etsy shop</a> ·
+    <a href="{{ shop.url | downcase }}/rss">RSS</a>
 </footer>
 
 <script src="js/bootstrap.min.js"></script>

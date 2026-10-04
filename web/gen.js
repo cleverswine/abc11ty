@@ -39,7 +39,8 @@ import * as parser from 'node-html-parser';
 import { chromium } from 'playwright';
 import Image from "@11ty/eleventy-img";
 
-const SHOP_URL = 'https://www.etsy.com/shop/AuntieBooCrafts';
+// the shop's address, shared with the site's templates
+const SHOP_URL = JSON.parse(fs.readFileSync('_data/shop.json', 'utf8')).url;
 const BOO_PATH = '_data/boo.json';
 const IMAGE_DIR = './img-product/';
 

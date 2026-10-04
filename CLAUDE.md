@@ -170,10 +170,14 @@ description (rendered by the `markdown` filter in `eleventy.config.js`),
 visible events, visible flat `items`, a row of chips linking to each visible
 subcategory that has visible items, and then those subcategories. A
 hand-made subcategory whose name matches a visible `etsy-shop` subcategory
-ends with a "More <group> in <etsy-shop's title>" card linking down to it. Section
-styling is keyed off the id: `etsy-shop` gets the sage theme and a "Visit
-shop on Etsy" button, everything else slate; `live-events` gets a map-pin
-icon, everything else a shopping bag.
+ends with a "More <group> in <etsy-shop's title>" card linking down to it.
+The Etsy section (`etsy_id` in the template, which must match gen.js's
+`ETSY_SECTION_ID`) gets the sage theme and a "Visit shop on Etsy" button,
+every other section slate; a section with an `events` list gets a map-pin
+icon, others a shopping bag (`_includes/section-icon.html`). The theme
+class only sets `--accent-*` CSS variables, which everything themed inside
+the section reads. The shop's URL lives in `_data/shop.json`, shared with
+`gen.js`.
 
 Per-item markup is `_includes/item-card.html`: a card showing `images[0]`
 (lazy-loaded) that opens a Bootstrap image-viewer modal for every item — a

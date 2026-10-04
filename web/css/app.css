@@ -147,31 +147,40 @@ a {
   position: relative;
   padding: 2rem 1.25rem;
   scroll-margin-top: var(--header-height);
+  background: linear-gradient(var(--accent-glow), var(--paper) 420px);
+}
+
+/* A section's color theme. Everything themed inside a section (background,
+   wave, icon, title, chips, group headings) reads these --accent-*
+   variables, so the sage/slate difference lives only here. */
+.section--sage {
+  --accent: var(--sage);
+  --accent-tint: var(--sage-tint);
+  --accent-glow: var(--sage-glow);
+  --accent-dark: var(--sage-dark);
+}
+
+.section--slate {
+  --accent: var(--periwinkle);
+  --accent-tint: var(--slate-tint);
+  --accent-glow: var(--slate-glow);
+  --accent-dark: var(--slate-dark);
 }
 
 /* A gentle wave in the section's top color, overlapping the bottom of
    whatever comes before it, in place of a straight dividing line. */
 .section::before {
+  --wave: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 40' preserveAspectRatio='none'%3E%3Cpath d='M0 26 C 200 4, 400 4, 600 22 S 1000 40, 1200 12 L1200 40 L0 40 Z'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat;
   content: "";
   position: absolute;
   left: 0;
   right: 0;
   top: -39px;
   height: 40px;
-  background: var(--wave-color);
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 40' preserveAspectRatio='none'%3E%3Cpath d='M0 26 C 200 4, 400 4, 600 22 S 1000 40, 1200 12 L1200 40 L0 40 Z'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 40' preserveAspectRatio='none'%3E%3Cpath d='M0 26 C 200 4, 400 4, 600 22 S 1000 40, 1200 12 L1200 40 L0 40 Z'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat;
+  background: var(--accent-glow);
+  -webkit-mask: var(--wave);
+  mask: var(--wave);
   pointer-events: none;
-}
-
-.section--sage {
-  --wave-color: var(--sage-glow);
-  background: linear-gradient(var(--sage-glow), var(--paper) 420px);
-}
-
-.section--slate {
-  --wave-color: var(--slate-glow);
-  background: linear-gradient(var(--slate-glow), var(--paper) 420px);
 }
 
 .section__header {
@@ -185,25 +194,14 @@ a {
   font-size: 1.5rem;
 }
 
-.section--sage .section__header .section__icon {
-  color: var(--sage-dark);
-}
-
-.section--slate .section__header .section__icon {
-  color: var(--slate-dark);
+.section__header .section__icon {
+  color: var(--accent-dark);
 }
 
 .section__title {
   font-size: 1.9rem;
   font-weight: 600;
-}
-
-.section--sage .section__title {
-  color: var(--sage-dark);
-}
-
-.section--slate .section__title {
-  color: var(--slate-dark);
+  color: var(--accent-dark);
 }
 
 .section__intro {
@@ -234,6 +232,8 @@ a {
 
 .chip {
   display: inline-block;
+  background: var(--accent-tint);
+  color: var(--accent-dark);
   padding: 0.35rem 0.9rem;
   border-radius: var(--radius-pill);
   font-size: 0.8rem;
@@ -244,16 +244,6 @@ a {
 .chip:hover {
   transform: translateY(-1px);
   box-shadow: var(--shadow-soft);
-}
-
-.chip--sage {
-  background: var(--sage-tint);
-  color: var(--sage-dark);
-}
-
-.chip--slate {
-  background: var(--slate-tint);
-  color: var(--slate-dark);
 }
 
 /* Event cards */
@@ -319,16 +309,8 @@ a {
   text-decoration: underline;
   text-decoration-thickness: 2px;
   text-underline-offset: 0.35em;
-}
-
-.category-group--sage .category-group__title {
-  color: var(--sage-dark);
-  text-decoration-color: var(--sage);
-}
-
-.category-group--slate .category-group__title {
-  color: var(--slate-dark);
-  text-decoration-color: var(--periwinkle);
+  color: var(--accent-dark);
+  text-decoration-color: var(--accent);
 }
 
 /* Product cards */
