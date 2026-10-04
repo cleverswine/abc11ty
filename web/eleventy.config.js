@@ -1,6 +1,8 @@
 import markdownIt from "markdown-it";
 import Image from "@11ty/eleventy-img";
+import * as fs from "node:fs";
 import * as path from "node:path";
+import { BOO_PATH, CONTENT_DIR, readBoo } from "./lib/boo.js";
 
 const md = markdownIt({ html: false, linkify: true, breaks: true }).disable("code");
 
@@ -23,7 +25,13 @@ const CARD_IMAGE_SIZES = "230px";
 
 export default async function(eleventyConfig) {
   eleventyConfig.addPassthroughCopy("img");
-  eleventyConfig.addPassthroughCopy("img-product");
+  // the content (lib/boo.js): boo.json is the `boo` global data, and its
+  // photos are served at img-product/ - the paths boo.json uses
+  // (no boo.json yet - e.g. a new server whose admin is still fetching the
+  // content from GitHub - is an empty site, not a failed build)
+  eleventyConfig.addGlobalData("boo", () => fs.existsSync(BOO_PATH) ? readBoo(BOO_PATH) : []);
+  eleventyConfig.addWatchTarget(BOO_PATH);
+  eleventyConfig.addPassthroughCopy({"content/img-product": "img-product"});
   eleventyConfig.addPassthroughCopy("css");
   eleventyConfig.addPassthroughCopy("js");
   eleventyConfig.addPassthroughCopy("favicon.ico");
@@ -45,7 +53,7 @@ export default async function(eleventyConfig) {
   eleventyConfig.addShortcode("cardImage", async function (src, alt, asIs) {
     let attrs = `class="product-card__image abc-product-img" alt="${escapeAttr(alt)}" loading="lazy" decoding="async"`;
     if (asIs || !src) return `<img src="${escapeAttr(src)}" ${attrs}/>`;
-    let copies = (await Image(src, {
+    let copies = (await Image(path.join(CONTENT_DIR, src), {
       widths: CARD_IMAGE_WIDTHS,
       formats: ["webp"],
       outputDir: path.join(eleventyConfig.directories.output, "img-card"),

@@ -332,6 +332,7 @@ function render() {
 async function loadAll() {
     boo = await api('GET', '/api/boo');
     render();
+    loadPublishStatus();
 }
 
 // ---- actions on the page ----
@@ -779,13 +780,13 @@ async function loadConfig() {
     }
 }
 
-// ---- publishing (the actual push happens in scripts/git-sync.sh, from cron) ----
+// ---- publishing (admin/publish.js commits the content to GitHub) ----
 
 const publishStage = document.getElementById('publish-stage');
 const publishStatusEl = document.getElementById('publish-status');
 const publishBtn = document.getElementById('publish-btn');
-const cancelPublishBtn = document.getElementById('cancel-publish-btn');
 const publishModal = document.getElementById('publish-modal');
+const conflictModal = document.getElementById('conflict-modal');
 const infoModal = document.getElementById('info-modal');
 let publishPollTimer = null;
 let lastPublishStatus = null;
@@ -795,48 +796,101 @@ function formatTime(iso) {
     return isNaN(d) ? iso : d.toLocaleString([], {month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'});
 }
 
-// The header's "public site" step: what the public site has, plus either
-// Publish site or (while a publish is waiting to be picked up) Cancel publish.
+function changeCount(changes) {
+    return changes ? changes.changed.length + changes.added.length + changes.deleted.length : 0;
+}
+
+// "the product list and 2 photos", for a tooltip
+function describeChanges(changes) {
+    let all = [...changes.changed, ...changes.added, ...changes.deleted];
+    let photos = all.filter(p => p.startsWith('img-product/')).length;
+    let parts = [];
+    if (all.includes('boo.json')) parts.push('the products and sections');
+    if (photos) parts.push(countPhrase(photos, 'photo', 'photos'));
+    return parts.join(' and ');
+}
+
+// The paths changed both here and on GitHub, if that's what's stopping a
+// publish (from the last publish attempt, or the sync at startup).
+function conflictsOf(status) {
+    if (status.last && !status.last.ok && status.last.conflicts?.length) return status.last.conflicts;
+    return status.sync?.conflicts?.length ? status.sync.conflicts : null;
+}
+
+// The header's "public site" step: whether there's anything to publish, a
+// publish's progress, or what went wrong.
 function renderPublishStatus(status) {
     lastPublishStatus = status;
     publishStage.hidden = false;
-    publishBtn.hidden = status.requested;
-    publishBtn.disabled = status.inProgress;
-    cancelPublishBtn.hidden = !status.requested;
-
-    let state = 'ok', html;
-    if (status.requested) {
+    let count = changeCount(status.changes);
+    let conflicts = conflictsOf(status);
+    let state = 'ok', html, canPublish = false;
+    if (status.running) {
         state = 'busy';
-        html = 'Publishing in 10-15 min';
-    } else if (status.inProgress) {
-        state = 'busy';
-        html = 'Publishing now...';
-    } else if (status.last && !status.last.ok) {
+        let p = status.progress;
+        html = p?.phase === 'waiting' ? `Publishing... waiting for GitHub (${Math.ceil(p.ms / 60000)} min)`
+            : p?.total ? `Publishing... ${p.done} of ${p.total} files` : 'Publishing...';
+    } else if (!status.configured) {
+        state = 'error';
+        html = '<span title="Add GITHUB_TOKEN to web/.env (see the README)">Publishing isn\'t set up</span>';
+    } else if (conflicts) {
+        state = 'error';
+        html = '<button type="button" class="btn btn-link p-0 align-baseline stage-error-link" data-show-conflict>Changed on GitHub too</button>';
+        canPublish = true;
+    } else if (status.last && !status.last.ok && count > 0) {
         state = 'error';
         html = '<button type="button" class="btn btn-link p-0 align-baseline stage-error-link" data-show-failure>Publish failed</button>';
-    } else if (status.last) {
+        canPublish = true;
+    } else if (count > 0) {
+        state = 'busy';
+        html = `<span title="${esc(describeChanges(status.changes))}">Changes not published yet</span>`;
+        canPublish = true;
+    } else if (status.last?.ok) {
         html = `Published ${esc(formatTime(status.last.time))}`;
     } else {
-        html = 'Not published yet';
+        html = 'Everything is published';
     }
     publishStage.dataset.state = state;
     publishStatusEl.innerHTML = html;
+    publishBtn.disabled = !canPublish;
 
     clearTimeout(publishPollTimer);
-    if (status.requested || status.inProgress) {
-        publishPollTimer = setTimeout(loadPublishStatus, 30000);
+    if (status.running) publishPollTimer = setTimeout(loadPublishStatus, 1000);
+}
+
+// Plain fetch rather than api(), so polling doesn't touch the header's save
+// status. When a publish has just finished, reloads the page (it may have
+// brought in changes made on GitHub) and says how it went.
+async function loadPublishStatus() {
+    let wasRunning = lastPublishStatus?.running;
+    let status;
+    try {
+        let res = await fetch('/api/publish');
+        if (!res.ok) return;
+        status = await res.json();
+    } catch (err) {
+        console.error(err);
+        return;
+    }
+    renderPublishStatus(status);
+    if (wasRunning && !status.running) {
+        if (status.last?.ok && status.last.taken?.length) await loadAll();
+        showPublishResult(status);
     }
 }
 
-// Plain fetch rather than api(), so background polling doesn't touch the
-// header's save status.
-async function loadPublishStatus() {
-    try {
-        let res = await fetch('/api/publish');
-        if (res.ok) renderPublishStatus(await res.json());
-    } catch (err) {
-        console.error(err);
+async function startPublish(replace) {
+    let res = await fetch('/api/publish', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({replace}),
+    });
+    let body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+        showInfo('<i class="bi bi-exclamation-triangle"></i> Couldn\'t publish', `<p class="mb-0">${esc(body.error || res.statusText)}</p>`);
+        return;
     }
+    renderPublishStatus(body);
 }
 
 // A popup with a message and an OK button (publish results, Etsy check results)
@@ -847,59 +901,60 @@ function showInfo(title, body) {
 }
 
 // the "To follow along, check the deploys page on Netlify" line - written
-// once, in the hint at the top of the page - for the "too late" popup
+// once, in the hint at the top of the page
 const deploysLinkHtml = `<p class="small text-body-secondary mb-0">${document.querySelector('[data-deploys-link]').innerHTML}</p>`;
 
-// Nothing is requested until OK is clicked in the confirmation modal.
-publishBtn.addEventListener('click', () => publishModal.showModal());
-
-document.getElementById('publish-modal-form').addEventListener('submit', async e => {
-    e.preventDefault();
-    try {
-        renderPublishStatus(await api('POST', '/api/publish'));
-        publishModal.close();
-    } catch (err) {
-        // api() already reported it
+function showPublishResult(status) {
+    let last = status.last;
+    if (!last) return;
+    if (last.ok) {
+        showInfo('<i class="bi bi-check-circle"></i> Published',
+            (last.commit ? '<p class="mb-2">Your changes are on their way: the public site updates in a few minutes.</p>'
+                : '<p class="mb-2">There was nothing new to publish.</p>') + deploysLinkHtml);
+    } else if (last.conflicts?.length) {
+        showConflict(last.conflicts);
+    } else {
+        showPublishFailure(last);
     }
+}
+
+function showPublishFailure(last) {
+    showInfo('<i class="bi bi-exclamation-triangle"></i> Publish failed',
+        `<p class="mb-2">The publish on ${esc(formatTime(last.time))} didn't go through, so the public site wasn't changed. `
+        + 'Your changes are still saved here - press Publish site to try again. If it fails again, send the details below to whoever looks after the site.</p>'
+        + `<details><summary class="small">Details</summary><pre class="small mb-0 mt-1">${esc(last.error)}</pre></details>`);
+}
+
+function showConflict(conflicts) {
+    let names = conflicts.map(p => p === 'boo.json' ? 'the products and sections' : p.replace('img-product/', 'photo '));
+    conflictModal.querySelector('[data-conflict-list]').innerHTML = names.map(n => `<li>${esc(n)}</li>`).join('');
+    conflictModal.showModal();
+}
+
+// Nothing is published until OK is clicked in the confirmation modal.
+publishBtn.addEventListener('click', () => {
+    let conflicts = lastPublishStatus && conflictsOf(lastPublishStatus);
+    if (conflicts) showConflict(conflicts);
+    else publishModal.showModal();
 });
 
-cancelPublishBtn.addEventListener('click', async () => {
-    let status;
-    try {
-        status = await api('DELETE', '/api/publish');
-    } catch (err) {
-        return; // api() already reported it
-    }
-    renderPublishStatus(status);
-    if (status.cancelled) {
-        showInfo('<i class="bi bi-x-circle"></i> Publish cancelled',
-            '<p class="mb-0">Nothing was sent to the public site. Your changes are still saved here, '
-            + 'and you can press Publish site again whenever you\'re ready.</p>');
-        return;
-    }
-    let what;
-    if (status.inProgress) {
-        what = 'Publishing had already started. The public site will update within 10-15 minutes.';
-    } else if (status.last && !status.last.ok) {
-        what = 'Publishing had already been tried, but it failed, so the public site didn\'t change. '
-            + 'Click "Publish failed" at the top of the page for details.';
-    } else {
-        what = 'Your changes had already been published. The public site will update within 10-15 minutes.';
-    }
-    showInfo('<i class="bi bi-exclamation-circle"></i> Too late to cancel',
-        `<p class="mb-2">${what}</p>` + deploysLinkHtml);
+document.getElementById('publish-modal-form').addEventListener('submit', e => {
+    e.preventDefault();
+    publishModal.close();
+    startPublish(false);
+});
+
+document.getElementById('conflict-modal-form').addEventListener('submit', e => {
+    e.preventDefault();
+    conflictModal.close();
+    startPublish(true);
 });
 
 publishStatusEl.addEventListener('click', e => {
-    if (!e.target.closest('[data-show-failure]')) return;
-    let last = lastPublishStatus.last;
-    showInfo('<i class="bi bi-exclamation-triangle"></i> Publish failed',
-        `<p class="mb-2">The publish on ${esc(formatTime(last.time))} didn't go through, so the public site wasn't changed. `
-        + 'Press Publish site to try again. If it fails again, send the details below to whoever looks after the site.</p>'
-        + `<details><summary class="small">Details</summary><pre class="small mb-0 mt-1">${esc(last.detail)}</pre></details>`);
+    if (e.target.closest('[data-show-failure]')) showPublishFailure(lastPublishStatus.last);
+    if (e.target.closest('[data-show-conflict]')) showConflict(conflictsOf(lastPublishStatus));
 });
 
 loadAll();
 loadConfig();
-loadPublishStatus();
 loadEtsyStatus();

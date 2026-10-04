@@ -1,7 +1,7 @@
 {
   "name": "abc11ty-admin",
   "version": "1.0.0",
-  "description": "Local-only admin tool for editing the manually-added parts of _data/boo.json",
+  "description": "Local admin page for editing the site content (web/content) and publishing it to GitHub",
   "type": "module",
   "main": "server.js",
   "scripts": {

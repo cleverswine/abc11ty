@@ -6,13 +6,18 @@ services:
     volumes:
       - ./web:/app/web
       - web_node_modules:/app/web/node_modules
+      # the content (boo.json and photos) lives in ./content on the server,
+      # outside the git checkout, mounted where the code expects it - so
+      # `git pull` never meets edited files. On first start the admin fills
+      # an empty ./content from GitHub.
+      - ./content:/app/web/content
     ports:
       - "9080:8080"
     environment:
       # bind-mounted filesystem events don't always propagate reliably
       # inside Docker (especially on macOS/Windows) - polling is slower
       # but guarantees the dev server notices changes admin/ writes to
-      # _data/boo.json and picks up a rebuild + live reload.
+      # content/boo.json and picks up a rebuild + live reload.
       - CHOKIDAR_USEPOLLING=true
     # Docker creates the node_modules volume owned by root the first time
     # it's mounted, so chown it once as root, then drop to the image's
@@ -29,11 +34,13 @@ services:
     volumes:
       - ./admin:/app/admin
       - admin_node_modules:/app/admin/node_modules
-      # admin/server.js resolves its data/image/css paths relative to
-      # ../web, so web/ has to be mounted as its sibling here too - into
-      # the same host directory the web service uses, so writes (boo.json
-      # edits, uploaded images) are immediately visible to both.
+      # admin/server.js resolves its content/css paths relative to ../web,
+      # so web/ has to be mounted as its sibling here too, with the same
+      # ./content as the web service, so writes (boo.json edits, uploaded
+      # images) are immediately visible to both. web/.env (gitignored) holds
+      # the Etsy and GitHub keys.
       - ./web:/app/web
+      - ./content:/app/web/content
     ports:
       - "9321:4321"
     environment:
@@ -41,7 +48,9 @@ services:
       # by the admin page's "Preview site" link. Update this if you change
       # the web service's host port mapping above.
       - SITE_URL=http://192.168.50.210:9080
-    command: sh -c "chown -R node:node node_modules && su node -c 'npm ci && npm start'"
+    # (Docker creates a missing ./content root-owned too, and the admin
+    # writes into it.)
+    command: sh -c "chown -R node:node node_modules && chown node:node /app/web/content && su node -c 'npm ci && npm start'"
     restart: unless-stopped
 
 volumes:

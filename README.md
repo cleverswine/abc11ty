@@ -2,9 +2,9 @@
 
 The Auntie Boo Crafts website, built with 11ty, plus a local admin page for
 editing it. Edits made in the admin page show up on a preview of the site
-right away, are committed to the `dev` branch automatically (see
-[Auto-sync](#auto-sync-and-publishing)), and go live when someone presses
-**Publish site** in the admin page.
+right away, and go live when someone presses **Publish site**, which
+commits them to GitHub (see [Publishing](#publishing)); Netlify then
+deploys the site.
 
 ## Quick start
 
@@ -16,9 +16,13 @@ docker compose up
 # admin: http://localhost:9321
 ```
 
-The admin page's **Preview site** link uses `SITE_URL` in
+This is the server setup. The site's content (products and photos) lives in
+`./content`, outside the git checkout; on first start the admin fills it
+from GitHub. The admin page's **Preview site** link uses `SITE_URL` in
 `docker-compose.yml` — change it to the address the site is reachable at
 from your browser.
+
+To update the code later: `git pull`, then `docker compose restart`.
 
 ### Without Docker
 
@@ -64,42 +68,34 @@ node gen.js --skip-fetch          # don't contact Etsy, just re-tidy boo.json
 
 If Etsy can't be reached or rejects the key, nothing is changed.
 
-## Auto-sync and publishing
+## Publishing
 
-`scripts/git-sync.sh` commits and pushes `web/_data/boo.json` and
-`web/img-product/` to `dev` whenever they've changed. If **Publish site**
-was pressed in the admin page, it also pushes `dev` to `main`, which
-Netlify deploys to the live site. It's meant to run every 15 minutes from
-cron, on the machine where the admin page runs.
+**Publish site** in the admin page commits the content to the `main`
+branch on GitHub, which Netlify deploys a few minutes later. The admin's
+header shows whether there are changes that aren't published yet.
 
-To set it up, run this once from the repo root (it adds a line to your
-crontab):
-
-```shell
-(crontab -l 2>/dev/null; echo "*/15 * * * * cd $(pwd) && ./scripts/git-sync.sh >> .git-sync.log 2>&1") | crontab -
-crontab -l   # check the line is there
-```
-
-Cron has no SSH agent, so check once that pushing to GitHub works without
-a passphrase prompt:
+It needs a GitHub token in `web/.env`: create a
+[fine-grained token](https://github.com/settings/personal-access-tokens/new)
+for just this repository with **Contents: read and write**, and add it:
 
 ```shell
-env -i HOME="$HOME" PATH="/usr/bin:/bin" ssh -T git@github.com
+GITHUB_TOKEN=github_pat_...
 ```
 
-Cron runs on the host, so this also covers the admin page under
-`docker compose up` — the container has no git of its own, but the Publish
-button only leaves a note (`web/.publish-requested`) for `git-sync.sh` to
-act on. The push to `main` is never forced: if `main` ever gets commits
-that `dev` doesn't have, the publish is refused and the admin page shows
-the error.
+Publishing only ever changes `web/content/` on GitHub, so code changes
+pushed with git don't get in its way. If the content was also changed on
+GitHub since the last publish (e.g. someone edited `boo.json` there), the
+admin brings those changes in, or - if the same file was changed in both
+places - asks before replacing GitHub's version.
 
 ## Repo layout
 
-- **`web/`** — the 11ty site: `index.html`, `gen.js`, `_data/boo.json`,
-  `img-product/`, `css/`, `js/`. This is what Netlify builds and deploys
-  (`netlify.toml` sets `base = "web"`).
-- **`admin/`** — the local-only admin page for editing `web/_data/boo.json`.
+- **`web/`** — the 11ty site: `index.html`, `gen.js`, `lib/`, `css/`,
+  `js/`, and its content in `web/content/` (`boo.json` and `img-product/`).
+  This is what Netlify builds and deploys (`netlify.toml` sets
+  `base = "web"`).
+- **`admin/`** — the local-only admin page for editing and publishing the
+  content.
 - **`scripts/`** — maintenance scripts, run from the repo root.
 
 Each of `web/` and `admin/` has its own `package.json` and `node_modules`;
@@ -113,10 +109,12 @@ work in detail.
 # build the site once, into web/_site/
 npm run build
 
-# delete files in web/img-product/ that boo.json no longer uses (needs jq)
+# these two work on ./content if it exists (the server), else web/content
+
+# delete photos that boo.json no longer uses (needs jq)
 ./scripts/cleanup-unused-images.sh [--dry-run]
 
-# strip EXIF/ICC/C2PA metadata from every image in web/img-product/
+# strip EXIF/ICC/C2PA metadata from every photo
 # (needs exiftool; admin uploads are stripped automatically)
 ./scripts/strip-image-metadata.sh
 

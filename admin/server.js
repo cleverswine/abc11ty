@@ -5,32 +5,23 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
-import { isEtsyItem, readBoo as readBooFile, writeBoo as writeBooFile } from '../web/lib/boo.js';
+import { BOO_PATH, IMAGE_DIR, isEtsyItem, readBoo as readBooFile, writeBoo as writeBooFile } from '../web/lib/boo.js';
 import { etsyApiKey, refreshShop } from '../web/lib/etsy.js';
+import { githubConfigured, publish, syncFromGitHub, unpublishedChanges } from './publish.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..', 'web');
-const booPath = path.join(rootDir, '_data', 'boo.json');
-const imgProductDir = path.join(rootDir, 'img-product');
-// Handshake with scripts/git-sync.sh, which runs on the host from cron (this
-// server may be in a container with no git): we create the flag, it pushes
-// dev to main, writes the status file, and deletes the flag.
-const publishFlagPath = path.join(rootDir, '.publish-requested');
-const publishStatusPath = path.join(rootDir, '.publish-status');
-// git-sync.sh renames the flag to this while it pushes, so a cancel that
-// finds the flag gone knows it was too late.
-const publishClaimPath = path.join(rootDir, '.publish-in-progress');
 
 const app = express();
 const PORT = process.env.PORT || 4321;
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/img-product', express.static(imgProductDir));
+app.use('/img-product', express.static(IMAGE_DIR));
 app.use('/assets/css', express.static(path.join(rootDir, 'css')));
 
-const readBoo = () => readBooFile(booPath);
-const writeBoo = boo => writeBooFile(booPath, boo);
+const readBoo = () => readBooFile(BOO_PATH);
+const writeBoo = boo => writeBooFile(BOO_PATH, boo);
 
 function findSection(boo, sectionId) {
     return boo.find(s => s.sectionId === sectionId);
@@ -96,50 +87,46 @@ app.get('/api/config', (req, res) => {
     res.json({siteUrl: process.env.SITE_URL || null});
 });
 
-// ---- publishing to the live site ----
+// ---- publishing to the live site (admin/publish.js does the work) ----
+// A publish runs in the background (uploading many photos can take a while);
+// the page starts one with POST and polls GET. One at a time. `sync` is the
+// result of bringing in changes from GitHub when the server started.
 
-function readPublishStatus() {
-    let requested = false, requestedAt = null;
-    try {
-        requestedAt = fs.readFileSync(publishFlagPath, 'utf8').trim() || null;
-        requested = true;
-    } catch (err) {
-        if (err.code !== 'ENOENT') throw err;
-    }
-    let last = null;
-    try {
-        let [result, time, ...detail] = fs.readFileSync(publishStatusPath, 'utf8').split('\n');
-        last = {ok: result === 'ok', time, detail: detail.join('\n').trim()};
-    } catch (err) {
-        if (err.code !== 'ENOENT') throw err;
-    }
-    let inProgress = fs.existsSync(publishClaimPath);
-    return {requested, requestedAt, inProgress, last};
+let publishJob = {running: false, progress: null, last: null};
+let lastSync = {ok: null, error: null, conflicts: []};
+
+function publishStatus() {
+    let configured = githubConfigured();
+    return {
+        configured,
+        changes: configured ? unpublishedChanges() : null,
+        sync: lastSync,
+        ...publishJob,
+    };
 }
 
 app.get('/api/publish', (req, res) => {
-    res.json(readPublishStatus());
+    res.json(publishStatus());
 });
 
+// {replace: true} publishes even files that were also changed on GitHub,
+// replacing GitHub's version (see publish() in publish.js).
 app.post('/api/publish', (req, res) => {
-    if (!fs.existsSync(publishFlagPath)) {
-        fs.writeFileSync(publishFlagPath, new Date().toISOString() + '\n');
+    if (!githubConfigured()) return res.status(400).json({error: 'no GitHub token - add GITHUB_TOKEN to web/.env'});
+    if (!publishJob.running) {
+        publishJob = {running: true, progress: null, last: publishJob.last};
+        publish({replace: req.body?.replace === true, onProgress: progress => { publishJob.progress = progress; }})
+            .then(result => {
+                publishJob.last = {ok: true, time: new Date().toISOString(), ...result};
+                lastSync = {ok: true, error: null, conflicts: []};
+            })
+            .catch(err => {
+                console.error('publish failed', err);
+                publishJob.last = {ok: false, time: new Date().toISOString(), error: err.message, conflicts: err.conflicts ?? null};
+            })
+            .finally(() => { publishJob.running = false; publishJob.progress = null; });
     }
-    res.json(readPublishStatus());
-});
-
-// Cancels a pending publish, if git-sync.sh hasn't claimed it yet. Deleting
-// the flag either beats git-sync.sh's rename or fails because it already
-// happened, so `cancelled` is always accurate.
-app.delete('/api/publish', (req, res) => {
-    let cancelled = true;
-    try {
-        fs.unlinkSync(publishFlagPath);
-    } catch (err) {
-        if (err.code !== 'ENOENT') throw err;
-        cancelled = false;
-    }
-    res.json({cancelled, ...readPublishStatus()});
+    res.status(202).json(publishStatus());
 });
 
 // ---- checking Etsy for changes (web/lib/etsy.js does the work) ----
@@ -413,7 +400,7 @@ app.post('/api/images', upload.single('image'), async (req, res) => {
         if (!animated) image = image.rotate();
         image = image.resize({width: UPLOAD_MAX_SIZE, height: UPLOAD_MAX_SIZE, fit: 'inside', withoutEnlargement: true});
         image = animated ? image.gif() : image.webp({quality: 80});
-        await image.toFile(path.join(imgProductDir, filename));
+        await image.toFile(path.join(IMAGE_DIR, filename));
     } catch (err) {
         console.error('failed to process uploaded image', err);
         return res.status(400).json({error: 'uploaded file could not be processed as an image'});
@@ -423,5 +410,17 @@ app.post('/api/images', upload.single('image'), async (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`abc11ty admin running at http://localhost:${PORT}`);
-    console.log('Editing _data/boo.json directly - scripts/git-sync.sh commits edits and handles the Publish button.');
+    console.log(`Editing ${BOO_PATH} - the Publish button commits it to GitHub.`);
+    if (githubConfigured()) {
+        syncFromGitHub()
+            .then(({taken, conflicts}) => {
+                lastSync = {ok: true, error: null, conflicts};
+                if (taken.length) console.log(`brought in ${taken.length} files changed on GitHub`);
+                if (conflicts.length) console.log(`changed both here and on GitHub: ${conflicts.join(', ')}`);
+            })
+            .catch(err => {
+                console.error("couldn't sync with GitHub", err);
+                lastSync = {ok: false, error: err.message, conflicts: []};
+            });
+    }
 });

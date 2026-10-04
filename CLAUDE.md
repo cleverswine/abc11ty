@@ -9,12 +9,13 @@ listings, plus a local-only admin tool for layering hand-added content on top
 of the data imported from Etsy. Two independent Node projects live side by side, each
 with its own `package.json`/`node_modules`:
 
-- **`web/`** — the 11ty site (`index.html`, `gen.js`, `_data/boo.json`,
-  `img-product/`, `css/`, `js/`). This is what Netlify builds and deploys
-  (`netlify.toml` sets `base = "web"`, `command = "npm run build"`,
-  `publish = "_site"`).
+- **`web/`** — the 11ty site (`index.html`, `gen.js`, `lib/`, `css/`,
+  `js/`) and its content, `web/content/` (`boo.json` + `img-product/`).
+  This is what Netlify builds and deploys from `main` (`netlify.toml` sets
+  `base = "web"`, `command = "npm run build"`, `publish = "_site"`).
 - **`admin/`** — a local-only Express + vanilla-JS admin page for editing
-  `web/_data/boo.json` without hand-editing JSON. Not deployed anywhere.
+  the content without hand-editing JSON, and publishing it to GitHub
+  (`admin/publish.js`). Not deployed anywhere.
 
 The root `package.json` is a thin wrapper: `build`/`serve`/`clean` delegate
 into `web/`, and `admin` delegates into `admin/`.
@@ -34,7 +35,7 @@ npm run serve      # eleventy --serve, with live reload
 npm run admin      # or: cd admin && npm start
 # open http://localhost:4321
 
-# refresh web/_data/boo.json from the Etsy shop via Etsy's Open API - the
+# refresh web/content/boo.json from the Etsy shop via Etsy's Open API - the
 # same as the admin page's "Check Etsy for changes" button (run from web/ —
 # not wrapped at the root). Needs ETSY_KEYSTRING and ETSY_SHARED_SECRET, in
 # the environment or in web/.env (gitignored). Only new/changed photos are
@@ -50,24 +51,20 @@ cd web && node gen.js --skip-fetch
 # run files it):
 cd web && node gen.js --item https://www.etsy.com/listing/<id>/...
 
-# run site + admin together, sharing the same web/ dir (admin edits show up
-# live in the site's dev server)
+# run site + admin together (the server setup), sharing the same web/ dir and
+# ./content (admin edits show up live in the site's dev server)
 docker compose up
 
 # scripts/ below all assume they're run from the repo root
 
-# sweep web/img-product/ for orphaned files (not referenced in boo.json)
+# both work on ./content if it exists (the server's), else web/content
+# sweep img-product/ for orphaned files (not referenced in boo.json)
 # — requires jq
 ./scripts/cleanup-unused-images.sh [--dry-run]
 
-# strip EXIF/ICC/C2PA metadata from every image in web/img-product/ in place
+# strip EXIF/ICC/C2PA metadata from every image in img-product/ in place
 # — requires exiftool; admin uploads are stripped automatically via sharp
 ./scripts/strip-image-metadata.sh
-
-# commit + push web/_data/boo.json and web/img-product/ if either changed,
-# and push dev to main if the admin page's Publish button was pressed
-# — run on a schedule via cron, see "Auto-sync" below
-./scripts/git-sync.sh
 
 # update vendored bootstrap assets (run from web/)
 cd web
@@ -80,11 +77,13 @@ There is no test suite, linter, or type checker in this repo.
 
 ## Architecture
 
-### Data model: `web/_data/boo.json`
+### Data model: `web/content/boo.json`
 
-Everything the site renders flows from this single 11ty global-data file,
-loaded as the `boo` data object that `index.html` consumes. It's an array of
-*sections*:
+Everything the site renders flows from this one file, loaded as the `boo`
+global data that `index.html` consumes (`addGlobalData` in
+`eleventy.config.js`; its photos are passthrough-copied from
+`content/img-product/` to `img-product/`, the paths `boo.json` uses). It's an
+array of *sections*:
 
 ```
 { sectionId, sectionTitle, sectionDescription?, show,
@@ -124,11 +123,15 @@ same picture, so the image-viewer modal skips `images[0]` for Etsy items
 (`slide_offset` in `_includes/item-card.html`). For manual items every image
 is a real photo.
 
-`web/lib/boo.js` is the one place that reads and writes the file, imported
-by both `gen.js` and `admin/server.js` (as `../web/lib/boo.js`): `readBoo`,
-`writeBoo` (a tmp file + rename, so a concurrent reader - the admin server,
-`git-sync.sh`, the eleventy dev server - never sees half a file) and
-`isEtsyItem`.
+`web/lib/boo.js` is the one place that knows where the content lives
+(`CONTENT_DIR`, `BOO_PATH`, `IMAGE_DIR`, resolved from the module's own
+location) and reads and writes the file, imported by `gen.js`,
+`lib/etsy.js`, `eleventy.config.js` and `admin/server.js` (as
+`../web/lib/boo.js`): `readBoo`, `writeBoo` (a tmp file + rename, so a
+concurrent reader - the admin server, the eleventy dev server - never sees
+half a file) and `isEtsyItem`. API keys come from `web/lib/env.js`
+(`envValue()`: the environment, else the gitignored `web/.env`, re-read on
+each use).
 
 ### The Etsy import (`web/lib/etsy.js`, `web/gen.js`)
 
@@ -245,9 +248,8 @@ build`/`serve` or deploy previews.
 ### `admin/server.js` (local editing tool)
 
 Plain Express server + static vanilla-JS/Bootstrap frontend (`admin/public/`,
-no build step). Resolves all paths (`_data/`, `img-product/`, `css/`)
-relative to `../web` from wherever it's run, so it always edits the real
-site data. REST-ish JSON API over `boo.json`, structured around the section →
+no build step). Gets the content's paths from `web/lib/boo.js` and serves
+`web/css` at `/assets/css`, so it always edits the real site content. REST-ish JSON API over `boo.json`, structured around the section →
 (events | items | subcategories → items) hierarchy. `app.param` handlers
 resolve `:sectionId`, `:name`, `:eventId` and `:itemId` into `req.section`,
 `req.group`, `req.event` and `req.item` (404 if missing) from a fresh read
@@ -289,61 +291,68 @@ once the client hits Save.
 "Preview site" link; unset when running `server.js` directly, so the link
 stays hidden.
 
-Saving in the admin tool only updates the local `boo.json` (and, for image
-uploads, `img-product/`) — committing and pushing it to `dev` is handled by
-`scripts/git-sync.sh` on a cron schedule (see below), not by `server.js`
-itself. The header's **Publish site** button (`POST /api/publish`) likewise
-only writes a flag file, `web/.publish-requested`; `git-sync.sh` does the
-actual publish and writes the outcome to `web/.publish-status`, which
-`GET /api/publish` reads back for the "Last published" line. While a publish
-is pending, `DELETE /api/publish` cancels it by deleting the flag; since
-`git-sync.sh` claims the flag by renaming it to `web/.publish-in-progress`
-before pushing, the delete either wins or finds the flag gone, so the
-"cancelled" / "too late" popup is always accurate. All three files are
-gitignored.
+Saving in the admin tool only updates the local content (the working copy).
 
-### Auto-sync (`scripts/git-sync.sh` + cron)
+### Publishing (`admin/publish.js`)
 
-`scripts/git-sync.sh` (assumes it's run from the repo root) commits and
-pushes `web/_data/boo.json` and `web/img-product/` whenever either has
-changed, and no-ops cleanly otherwise. It's meant to run unattended, not to be wired into
-`admin/server.js` or `gen.js` directly, so that admin edits and Etsy imports
-make it to git (and Netlify deploys) without anyone having to remember.
+**Publish site** commits the content to `main` on GitHub through GitHub's
+REST API - no git, SSH key or cron - and Netlify deploys `main` as before.
+It needs `GITHUB_TOKEN` (`web/.env`): a fine-grained token for this repo with
+"Contents: read and write" (`GITHUB_REPO` overrides the repo,
+`cleverswine/abc11ty` by default). Code still reaches `main` through normal
+git; a publish only ever touches `web/content/`, so code and content never
+block each other.
 
-Scheduled via a user crontab entry (the `cd` matters, since the script
-assumes the repo root as its cwd):
+How it stays in sync (details in the comment at the top of `publish.js`):
 
-```
-*/15 * * * * cd /home/knoone/Code/abc11ty && ./scripts/git-sync.sh >> .git-sync.log 2>&1
-```
+- **The base** (`content/.publish-base.json`, gitignored): the `main`
+  commit the working copy was last in sync with, and the git blob id of
+  each content file in it. A local file whose blob id (a SHA-1 of the
+  contents, computed without git; cached by size+mtime) differs is an
+  unpublished change - `unpublishedChanges()` needs no network, so the
+  header can say "Changes not published yet" after every edit.
+- **Publishing** (`publish()`): reads `main`'s commit and file list, uploads
+  only the files that differ (POST `/git/blobs`), builds a tree on top of
+  `main`'s (`base_tree`, only `web/content/...` entries, `sha: null` for
+  deletions), creates a commit with `main` as parent and moves `main` to it
+  with `force: false` - a 422 (someone pushed meanwhile) starts it over.
+  Content changed only on GitHub since the base comes into the working copy;
+  a file changed on both sides is a conflict (`ConflictError`), refused
+  unless the page asks to replace GitHub's version (`{replace: true}`).
+  Rate limits are waited out per GitHub's docs (retry-after / reset /
+  backoff) - GitHub allows only 80 new files a minute and 500 an hour, so a
+  publish of hundreds of photos takes a while (large one-offs are better
+  committed with git).
+- **At startup** (`syncFromGitHub()`): with no base, an empty content
+  directory (a new server) is filled from `main`, and an existing one is
+  taken to be `main`'s; otherwise changes made on GitHub since the base are
+  brought in (conflicts are left for the next publish) and the base moves
+  to `main`'s latest commit.
 
-The server's checkout stays on `dev`, so auto-synced edits don't go live on
-their own. When `web/.publish-requested` exists, `git-sync.sh` (after the
-usual sync) runs `git push origin dev:main` — Netlify's production deploy
-follows `main` — writes the result to `web/.publish-status` (line 1 `ok` or
-`error`, line 2 the time, then the commit or git's error output), and
-deletes the flag. The push is never forced: if `main` has commits `dev`
-doesn't, it's refused and the admin page shows the error.
-
-Only works where this is actually set up (the machine running
-`npm run admin` locally) — the `docker compose up` `admin` container has no
-`.git` directory mounted and no `git` binary in its `node:24-alpine` image,
-so auto-sync doesn't run there — but since the container shares `./web` with
-the host, the Publish button still works as long as the host's cron runs
-`git-sync.sh`. The repo's remote (`git@github.com:...`)
-is SSH-based, so this also depends on the cron user's SSH key working with
-no passphrase prompt (cron has no SSH agent available).
+The server runs a publish in the background (`POST /api/publish`, one at a
+time) and `GET /api/publish` reports `{configured, changes: {changed, added,
+deleted}, sync, running, progress, last}`; the page polls it every second
+while a publish runs, then says how it went (or shows the conflict dialog,
+whose "Publish mine anyway" posts `{replace: true}`). Netlify doesn't report
+deploy results back to GitHub for this site, so the page points at Netlify's
+deploys page rather than showing deploy status.
 
 ### Docker compose
 
-`web` and `admin` run as separate `node:24-alpine` containers sharing the
-same bind-mounted `./web` directory (so admin writes are immediately visible
-to the site's dev server), each with its own named `node_modules` volume.
+The server setup. `web` and `admin` run as separate `node:24-alpine`
+containers sharing the same bind-mounted `./web` directory, each with its
+own named `node_modules` volume. The content lives in `./content` at the
+repo root (gitignored), outside the checkout, mounted over
+`/app/web/content` in both containers - so admin writes are immediately
+visible to the site's dev server, and the checkout's own `web/content` is
+never edited, which keeps updating the code a plain `git pull`. On first
+start the admin fills an empty `./content` from GitHub (`syncFromGitHub()`).
 Both containers `chown` the node_modules volume to the unprivileged `node`
 user before installing/running, since Docker creates it root-owned on first
-mount. `web` uses `CHOKIDAR_USEPOLLING=true` since bind-mount file events
-don't propagate reliably on macOS/Windows Docker.
-
+mount (the admin also chowns `./content`, which Docker creates root-owned if
+missing). `web` uses `CHOKIDAR_USEPOLLING=true` since bind-mount file events
+don't propagate reliably on macOS/Windows Docker. Run without Docker, the
+admin edits the checkout's `web/content` directly (fine on a dev machine).
 
 ### Dev container
 

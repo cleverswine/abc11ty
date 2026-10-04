@@ -32,6 +32,11 @@ The problems this addresses:
 
 ## A "Publish" button that keeps the server on `dev` (problems 1 and 4)
 
+Superseded (October 2026): Publish now commits the content straight to
+`main` through GitHub's API (`admin/publish.js`, see CLAUDE.md), the content
+lives outside the server's checkout, and `git-sync.sh`, the cron job and the
+`dev` branch's draft role are gone. The plan below is kept for history.
+
 A flag that a cron job checks works well, with two adjustments:
 
 - **Use a flag file, not a flag in `boo.json`.** For example

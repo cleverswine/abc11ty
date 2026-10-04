@@ -1,11 +1,10 @@
 .cache/
 node_modules/
 _site/
-.git-sync.log
 .etsy-session.json
-# Etsy API key for web/gen.js
+# API keys (Etsy, GitHub) - see web/lib/env.js
 .env
-# Publish button handshake between admin/server.js and scripts/git-sync.sh
-.publish-requested
-.publish-status
-.publish-in-progress
+# the server's content, outside the checkout (see docker-compose.yml)
+/content/
+# which main commit the content was last in sync with (admin/publish.js)
+.publish-base.json

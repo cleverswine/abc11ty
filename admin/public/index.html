@@ -34,9 +34,6 @@
                 <button type="button" class="btn btn-sm btn-primary" id="publish-btn">
                     <i class="bi bi-cloud-upload"></i> Publish site
                 </button>
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="cancel-publish-btn" hidden>
-                    Cancel publish
-                </button>
             </div>
         </div>
     </div>
@@ -46,7 +43,7 @@
     <p class="admin-hint">
         Your changes save as you make them and show up on the preview site right away, so you can check how things look.
         When everything looks right, press <strong>Publish site</strong> to update the public site.
-        Publishing takes 10-15 minutes.
+        The public site updates a few minutes after you publish.
         <span data-deploys-link>To follow along, check the
         <a href="https://app.netlify.com/projects/auntieboocrafts/deploys" target="_blank" rel="noopener">deploys page on Netlify <i class="bi bi-box-arrow-up-right"></i></a>.</span>
     </p>
@@ -145,10 +142,24 @@
     <dialog id="publish-modal">
         <form id="publish-modal-form">
             <h2 class="h5 mb-3"><i class="bi bi-cloud-upload"></i> Publish your changes?</h2>
-            <p class="mb-0">It may take 10-15 minutes for the updates to take effect on the public site.</p>
+            <p class="mb-0">This puts your changes on the public site, which updates a few minutes later.</p>
             <div class="d-flex justify-content-end gap-2 mt-3">
                 <button type="button" class="btn btn-outline-secondary btn-sm" data-close-modal>Cancel</button>
                 <button type="submit" class="btn btn-primary btn-sm">OK</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- ---- publish conflict modal (changed both here and on GitHub) ---- -->
+    <dialog id="conflict-modal">
+        <form id="conflict-modal-form">
+            <h2 class="h5 mb-3"><i class="bi bi-exclamation-triangle"></i> Also changed on GitHub</h2>
+            <p class="mb-2">Since your last publish, these were changed on GitHub as well as here:</p>
+            <ul class="small mb-2" data-conflict-list></ul>
+            <p class="mb-0">Publishing now replaces GitHub's version with yours. If you're not sure, ask whoever changed it first.</p>
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-close-modal>Cancel</button>
+                <button type="submit" class="btn btn-primary btn-sm">Publish mine anyway</button>
             </div>
         </form>
     </dialog>

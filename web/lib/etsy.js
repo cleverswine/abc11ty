@@ -1,4 +1,4 @@
-// The Etsy import: brings the "etsy-shop" section of web/_data/boo.json up
+// The Etsy import: brings the "etsy-shop" section of web/content/boo.json up
 // to date with the Auntie Boo Crafts Etsy shop, using Etsy's Open API v3.
 // Used by the admin page's "Check Etsy for changes" button (admin/server.js)
 // and by the command-line web/gen.js.
@@ -34,15 +34,12 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { parseEnv } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import Image from "@11ty/eleventy-img";
-import { isEtsyItem, readBoo, writeBoo } from './boo.js';
+import { BOO_PATH, CONTENT_DIR, IMAGE_DIR, isEtsyItem, readBoo, writeBoo } from './boo.js';
+import { envValue } from './env.js';
 
 const WEB_DIR = fileURLToPath(new URL('..', import.meta.url));
-const BOO_PATH = path.join(WEB_DIR, '_data', 'boo.json');
-const IMAGE_DIR = path.join(WEB_DIR, 'img-product');
-const ENV_PATH = path.join(WEB_DIR, '.env');
 const API_BASE = 'https://openapi.etsy.com/v3/application';
 
 // the shop's address, shared with the site's templates...
@@ -70,13 +67,10 @@ const GALLERY_SIZE = 'il_794xN';
 const LISTING_CONCURRENCY = 4;
 
 // The API key ("keystring:shared_secret") from ETSY_KEYSTRING and
-// ETSY_SHARED_SECRET - the environment's, or else web/.env's (read afresh
-// each time, so fixing the file needs no restart) - or null if either is
-// missing.
+// ETSY_SHARED_SECRET (see lib/env.js), or null if either is missing.
 export function etsyApiKey() {
-    let file = fs.existsSync(ENV_PATH) ? parseEnv(fs.readFileSync(ENV_PATH, 'utf8')) : {};
-    let keystring = process.env.ETSY_KEYSTRING || file.ETSY_KEYSTRING;
-    let secret = process.env.ETSY_SHARED_SECRET || file.ETSY_SHARED_SECRET;
+    let keystring = envValue('ETSY_KEYSTRING');
+    let secret = envValue('ETSY_SHARED_SECRET');
     return keystring && secret ? `${keystring}:${secret}` : null;
 }
 
@@ -392,7 +386,7 @@ export async function refreshShop({apiKey, onProgress = () => {}, log = console.
         let images = previous?.images;
         let keptIds = previous?.etsyImageIds;
         let upToDate = previous && sameIds(previous.etsyImageIds, imageIds)
-            && previous.images.every(p => fs.existsSync(path.join(WEB_DIR, p)));
+            && previous.images.every(p => fs.existsSync(path.join(CONTENT_DIR, p)));
         if (!upToDate) {
             try {
                 images = await downloadListingImages(listing);

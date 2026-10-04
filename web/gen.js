@@ -1,4 +1,4 @@
-// gen.js - updates _data/boo.json from the Auntie Boo Crafts Etsy shop, from
+// gen.js - updates content/boo.json from the Auntie Boo Crafts Etsy shop, from
 // the command line (e.g. for a scheduled run). The work is done by
 // lib/etsy.js - see the top of that file for what a refresh does and the API
 // key it needs - which the admin page's "Check Etsy for changes" button
@@ -27,7 +27,7 @@ if (itemUrl && skipFetch) {
 }
 
 if (skipFetch) {
-    console.log('--skip-fetch passed, re-merging the Etsy items already in _data/boo.json instead of contacting Etsy');
+    console.log('--skip-fetch passed, re-merging the Etsy items already in content/boo.json instead of contacting Etsy');
     rebuildEtsySection();
     process.exit(0);
 }
@@ -42,13 +42,13 @@ try {
     if (itemUrl) {
         let result = await refreshListing({apiKey, url: itemUrl});
         if (!result.ok) {
-            console.log(`${result.message}\n_data/boo.json not changed`);
+            console.log(`${result.message}\ncontent/boo.json not changed`);
             process.exitCode = 1;
         }
     } else {
         await refreshShop({apiKey});
     }
 } catch (e) {
-    console.log(`\n${e.message}\n_data/boo.json not changed`);
+    console.log(`\n${e.message}\ncontent/boo.json not changed`);
     process.exitCode = 1;
 }
