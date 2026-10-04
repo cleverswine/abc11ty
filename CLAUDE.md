@@ -37,8 +37,8 @@ npm run admin      # or: cd admin && npm start
 # re-scrape Etsy and regenerate web/_data/boo.json (run from web/ — not
 # wrapped at the root)
 cd web && node gen.js
-# or, to reuse the Etsy-sourced sections already in boo.json without hitting
-# Etsy (re-sort pinned sections, normalize the file, dry run):
+# or, to rebuild the etsy-shop section from the Etsy items already in
+# boo.json without hitting Etsy (normalizes the file; a dry run of the merge):
 cd web && node gen.js --skip-fetch
 # or, to re-download just one listing's images (thumbnail + photo
 # gallery) without scraping the whole shop - e.g. after changing its photos
@@ -88,79 +88,103 @@ There is no test suite, linter, or type checker in this repo.
 
 ### Data model: `web/_data/boo.json`
 
-Everything the site renders flows from this single 11ty global-data file: an
-array of *sections*, each with `sectionId`, `sectionTitle`, `items[]`, and
-optionally `subcategories[]` (each `{ name, show, items[] }`). 11ty loads it
-as the `boo` data object consumed by `index.html`.
+Everything the site renders flows from this single 11ty global-data file,
+loaded as the `boo` data object that `index.html` consumes. It's an array of
+*sections*:
 
-The file is **both** generated and hand-edited: `gen.js` scrapes Etsy and
-overwrites the Etsy-sourced parts, but anything tagged `"manual": true` is
-preserved across regeneration. There are two forms of manual content:
+```
+{ sectionId, sectionTitle, sectionDescription?, show,
+  events?: [{ id, name, date, location, link, show }],
+  items?: [item],
+  subcategories?: [{ name, show, items: [item] }] }      // "groups" in the admin UI
 
-- **A whole manual section** — `sectionId` doesn't match any real Etsy
-  section, section itself tagged `"manual": true`. Carried forward
-  completely untouched by `gen.js`, so its internal shape (including
-  `subcategories`) is entirely author-defined.
-- **Manual items on a real Etsy section** — same `sectionId` as an Etsy
-  section, but only the *item* is tagged `"manual": true` (the section
-  itself stays untagged). `gen.js` re-appends these onto the freshly
-  scraped section on every run, matched purely by the per-item tag.
+item = { id, title, description, images: [path], etsyPage, show,
+         source: "Etsy" | "Manual" }
+```
 
-A few fields on an Etsy-backed section (`pinned`, `sectionDescription`,
-`show`) are never set by a raw scrape, so their presence always means a
-human set them — `gen.js` and `admin/server.js` both carry these forward via
-a shared allowlist (`OVERLAY_FIELDS` in `admin/server.js`, mirrored inline in
-`preserveManualContent()` in `gen.js` — **keep these two in sync by hand**,
-there's no shared module).
+Today there are two sections: `live-events` (hand-made: events plus groups
+of hand-added products) and `etsy-shop` (owned by `gen.js`: one subcategory
+per Etsy shop section). Display order is array order.
+
+The file is **both** generated and hand-edited, and `item.source` is the
+only thing that tells the two apart:
+
+- **`source: "Etsy"`** items are written by `gen.js` and replaced on every
+  run, so they're read-only in the admin tool (`isLocked()` in
+  `admin/server.js`, mirrored in `admin/public/app.js`).
+- **Everything else** (`source: "Manual"`, set by the admin tool) is
+  hand-made and never touched by `gen.js` — including hand-added items
+  inside `etsy-shop`'s subcategories, which `gen.js` keeps after the fresh
+  Etsy items.
+
+`gen.js` only ever rewrites the `etsy-shop` section (`ETSY_SECTION_ID`);
+every other section is passed through untouched. Within `etsy-shop` it keeps
+the admin-edited `sectionTitle`, `sectionDescription` and `show`, each
+subcategory's `show`, and the subcategory order. Renaming `etsy-shop`'s id
+would make `gen.js` create a fresh one.
+
+`images[0]` is the card image. For Etsy items it's a small thumbnail
+(`<listingId>.webp`) followed by the full-size gallery, which starts with the
+same picture, so the image-viewer modal skips `images[0]` for Etsy items
+(`slide_offset` in `_includes/item-card.html`). For manual items every image
+is a real photo.
 
 ### `web/gen.js` (the scraper)
 
-Run manually, not part of the eleventy build. Two phases:
+Run by hand, not part of the eleventy build. The comment block at the top
+of the file describes the phases and safety rules; in short:
 
-1. Fetch the shop home page, parse its section nav (`button.wt-menu__item`)
-   for `sectionId`/`sectionTitle`, skipping sections in `ignoreSections` and
-   the catch-all section `"0"`. For each section, fetch its listing page and
-   scrape every product card (title, Etsy URL, image), downloading/resizing
-   each image to `img-product/<listingId>.webp` via `@11ty/eleventy-img`.
-   Then each listing's own page is fetched (another 3s delay apiece) and
-   every image in its carousel is downloaded full-size (the `il_75x75`
-   thumbnail URL with `il_794xN` swapped in) to
-   `img-product/<listingId>-<n>.jpg`. An item's `images` is the card
-   thumbnail first, then that gallery; if a listing page is blocked, the
-   item keeps its previous gallery.
-2. `preserveManualContent()` merges the fresh scrape with the previous
-   `boo.json`, per the manual-content rules above, then pinned sections are
-   sorted to the front (stable otherwise).
+1. `scrapeShop()` fetches the shop home page and reads its section nav
+   (`button.wt-menu__item[data-section-id]`), skipping Etsy's catch-all
+   section `"0"` and anything in `IGNORE_SECTIONS`. For each section,
+   `scrapeSection()` reads every listing card (title, URL, thumbnail), saving
+   the thumbnail as `img-product/<listingId>.webp` (340px wide) via
+   `@11ty/eleventy-img`, then fetches each listing's own page and downloads
+   every carousel photo full-size as `img-product/<listingId>-<n>.jpg`.
+   An item's title is the first comma-separated phrase of Etsy's
+   keyword-list title, which becomes its `description`.
+2. `buildBoo()` / `mergeSubcategories()` rebuild `etsy-shop`: each Etsy
+   section becomes a subcategory (new ones appended, ones gone from Etsy
+   dropped if nothing hand-added is left in them), fresh Etsy items first,
+   then that subcategory's hand-added items.
 
-Etsy pages are fetched through a real Playwright-driven Chromium instance
-(plain `fetch()` gets a 403), with a 3s delay between section requests; no
-disk caching, since gen.js is run manually and rarely. If Etsy blocks even
-Chromium with a DataDome captcha, see the headed/`--headless` notes above. If the shop home page
-or an individual section page comes back blocked/unparseable, gen.js leaves
-that section's (or, if the home page itself is blocked, *all* Etsy
-sections') existing listings untouched rather than merging in an empty
-scrape — a blocked run is a no-op, not a wipe. `--skip-fetch` skips both
-network calls entirely and treats the *existing* Etsy-sourced sections in
-`boo.json` as the scrape baseline.
+`--item <url>` (`refreshItem()`) re-downloads one listing's images in place;
+a listing not in `boo.json` yet goes to the top of the subcategory named by
+the last entry of its page's breadcrumb (created if missing), or the top of
+`etsy-shop`'s own `items` if there's no breadcrumb, until a full run files
+it properly.
+
+Pages are fetched through Playwright-driven Chromium (plain `fetch()` gets a
+403), with a 3s delay (`REQUEST_DELAY_MS`) before every request, and the
+browser session is saved to `.etsy-session.json` between runs. A blocked
+page never wipes data: a blocked home page keeps all of `etsy-shop`, a
+blocked section page keeps that subcategory, and a blocked listing page
+keeps that item's previous gallery. `--skip-fetch` skips Etsy entirely and
+re-runs the merge with the Etsy items already in `boo.json`.
 
 ### `web/index.html` and rendering
 
-Single-page 11ty template (Nunjucks/Liquid-style tags). Renders a nav button
-per visible section (`section.show != false`) plus one content block per
-section, each showing that section's flat `items` (filtered to `show: true`)
-and each visible `subcategories` group under its own sub-heading. Per-item
-markup is factored into `_includes/item-card.html`, used for both flat items
-and subcategory items — it renders a Bootstrap card whose click target is
-either an image-viewer modal (manual items — carousel if multiple `images`)
-or a direct link to `item.etsyPage` (Etsy items, open in a new tab).
+Single-page 11ty (Liquid) template. Every visible section (`show != false`)
+gets a nav link (a plain `#sectionId` anchor) and a `<section>` with its
+description (rendered by the `markdown` filter in `eleventy.config.js`),
+visible events, visible flat `items`, a row of chips linking to each visible
+subcategory that has visible items, and then those subcategories. A
+hand-made subcategory whose name matches a visible `etsy-shop` subcategory
+ends with a "More <group> in <etsy-shop's title>" card linking down to it. Section
+styling is keyed off the id: `etsy-shop` gets the sage theme and a "Visit
+shop on Etsy" button, everything else slate; `live-events` gets a map-pin
+icon, everything else a shopping bag.
 
-All section switching happens client-side in `web/js/app.js`: every section's
-content block is rendered into the page at build time, and a `nav`
-button/`data-role="item"` div pairing toggles which one is visible
-(`abc-items-active` vs `abc-items-hidden`) — there's no per-section route or
-rebuild. `app.js` also blocks right-click/drag on product images
-(`.abc-product-img`, a soft deterrent only) and keeps a carousel's thumbnail
-strip in sync with the active slide.
+Per-item markup is `_includes/item-card.html`: a card showing `images[0]`
+(lazy-loaded) that opens a Bootstrap image-viewer modal for every item — a
+carousel with a thumbnail strip if there's more than one photo, plus a
+"Purchase this item on Etsy" button for Etsy items and the description for
+manual ones. Every modal is rendered into the page at build time.
+
+`web/js/app.js` is small: it blocks right-click/drag on product images
+(`.abc-product-img`, a soft deterrent only), keeps each carousel's thumbnail
+strip in sync with the active slide, and sizes the "More …" cards to the
+photo beside them with a `ResizeObserver`.
 
 The Cloudflare Web Analytics beacon script in `<head>` is gated behind
 `env.isProduction` (`web/_data/env.js`, true only when Netlify's `CONTEXT`
@@ -173,19 +197,25 @@ Plain Express server + static vanilla-JS/Bootstrap frontend (`admin/public/`,
 no build step). Resolves all paths (`_data/`, `img-product/`, `css/`)
 relative to `../web` from wherever it's run, so it always edits the real
 site data. REST-ish JSON API over `boo.json`, structured around the section →
-(items | subcategories → items) hierarchy, with authorization baked into
-each route rather than a shared middleware:
+(events | items | subcategories → items) hierarchy, with the lookups and
+checks written into each route rather than a shared middleware. Every
+request re-reads `boo.json` (`gen.js` writes it too), and writes go through
+a tmp file + rename.
 
-- Full sections can only be created/deleted/renamed if `manual: true`; the
-  three overlay fields (`sectionDescription`/`pinned`/`show`) are editable on
-  *any* section since `gen.js` preserves them regardless.
-- Items can only be edited/deleted through the API if `item.manual === true`
-  (Etsy-sourced items are read-only here — editing them would just be
-  clobbered by the next `gen.js` run).
-- Subcategories exist only on manual sections.
-- Reordering endpoints (`PUT .../order`) reorder only the manual items
-  within a section (Etsy items keep the scrape order gen.js re-establishes
-  every run) or the full list within a subcategory/section-of-subcategories.
+- Sections, subcategories and events are freely editable on any section,
+  including `etsy-shop` (whose title/description/show `gen.js` keeps).
+- Items are editable/deletable only if they aren't `source: "Etsy"`
+  (`isLocked()`, 403 otherwise) — edits to Etsy items would be overwritten
+  by the next `gen.js` run. New items are created with `source: "Manual"`.
+- Reordering endpoints (`PUT .../order`) take the full list of ids/names;
+  for items, only the non-Etsy ones are reordered and Etsy items keep the
+  scrape order `gen.js` re-establishes every run.
+
+The frontend (`admin/public/app.js`) re-fetches `GET /api/boo` and
+re-renders the whole page after every change. Adding a product puts it in
+the section/group chosen in the modal's dropdowns (defaulting to where
+"Add product" was clicked); editing can't move an item, so the dropdowns
+are locked then.
 
 Image uploads (`POST /api/images`, multer memory storage, 10MB cap, allowed
 extensions `.png/.jpg/.jpeg/.webp/.gif`) are re-encoded through `sharp`
