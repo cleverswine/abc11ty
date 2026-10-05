@@ -22,6 +22,8 @@ const escapeAttr = (s) => String(s ?? "").replace(/[&"<>]/g, (c) => ({"&": "&amp
 // 240px on a standard screen, 480px on a 2x one and 720px on a 3x phone.
 const CARD_IMAGE_WIDTHS = [240, 480, 720];
 const CARD_IMAGE_SIZES = "230px";
+// Section photo tiles (see sectionPhoto) go up to ~470px wide.
+const SECTION_PHOTO_WIDTHS = [240, 480, 720, 960];
 
 export default async function(eleventyConfig) {
   eleventyConfig.addPassthroughCopy("img");
@@ -53,8 +55,23 @@ export default async function(eleventyConfig) {
   eleventyConfig.addShortcode("cardImage", async function (src, alt, asIs) {
     let attrs = `class="product-card__image abc-product-img" alt="${escapeAttr(alt)}" loading="lazy" decoding="async"`;
     if (asIs || !src) return `<img src="${escapeAttr(src)}" ${attrs}/>`;
+    return resizedImage(src, CARD_IMAGE_WIDTHS, CARD_IMAGE_SIZES, attrs);
+  });
+
+  // The <img> for one tile of a section's photo mosaic, the same way: the
+  // first (large) tile is up to ~470px wide, the rest half that.
+  //   {% sectionPhoto photo, forloop.first %}
+  eleventyConfig.addShortcode("sectionPhoto", async function (src, large) {
+    let attrs = `class="section-photos__image abc-product-img" alt="" loading="lazy" decoding="async"`;
+    return resizedImage(src, SECTION_PHOTO_WIDTHS, large ? "470px" : "235px", attrs);
+  });
+
+  // An <img> with WebP copies of a content photo at `widths` (made into
+  // _site/img-card/ at build time) as its srcset, and the photo's real
+  // width/height.
+  async function resizedImage(src, widths, sizes, attrs) {
     let copies = (await Image(path.join(CONTENT_DIR, src), {
-      widths: CARD_IMAGE_WIDTHS,
+      widths,
       formats: ["webp"],
       outputDir: path.join(eleventyConfig.directories.output, "img-card"),
       urlPath: "img-card/",
@@ -65,6 +82,6 @@ export default async function(eleventyConfig) {
     let srcset = copies.map((c) => `${c.url} ${c.width}w`).join(", ");
     let fallback = copies[Math.min(1, copies.length - 1)];
     let {width, height} = copies.at(-1);
-    return `<img src="${fallback.url}" srcset="${srcset}" sizes="${CARD_IMAGE_SIZES}" width="${width}" height="${height}" ${attrs}/>`;
-  });
+    return `<img src="${fallback.url}" srcset="${srcset}" sizes="${sizes}" width="${width}" height="${height}" ${attrs}/>`;
+  }
 };

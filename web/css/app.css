@@ -229,6 +229,114 @@ a {
   box-shadow: var(--shadow-soft);
 }
 
+/* Section photos: a small mosaic of a section's photos (index.html), the
+   first one large, the rest in a 2x2 block beside it. On a phone it's one
+   row you scroll sideways instead. */
+.section-photos {
+  max-width: 720px;
+  margin: 0 0 1.5rem;
+}
+
+.section-photos__grid {
+  display: grid;
+  gap: 0.5rem;
+  height: clamp(220px, 30vw, 320px);
+}
+
+.section-photos__grid--2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.section-photos__grid--3 {
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+.section-photos__grid--4,
+.section-photos__grid--5 {
+  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+.section-photos__grid--3 .section-photos__tile:first-child,
+.section-photos__grid--4 .section-photos__tile:first-child,
+.section-photos__grid--5 .section-photos__tile:first-child {
+  grid-row: span 2;
+}
+
+/* with 4, the last one fills the bottom of the 2x2 block */
+.section-photos__grid--4 .section-photos__tile:last-child {
+  grid-column: span 2;
+}
+
+.section-photos__tile {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  min-width: 0;
+  border-radius: 14px;
+  box-shadow: var(--shadow-soft);
+  background: var(--surface);
+}
+
+.section-photos__grid > .section-photos__tile:first-child {
+  border-radius: var(--radius-soft);
+}
+
+.section-photos__image {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  transition: transform .3s ease;
+}
+
+.section-photos__tile:hover .section-photos__image,
+.section-photos__tile:focus-visible .section-photos__image {
+  transform: scale(1.04);
+}
+
+.section-photos__more {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  color: #ffffff;
+  font-family: var(--font-heading);
+  font-size: 1.6rem;
+  pointer-events: none;
+}
+
+.section-photos__caption {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+@media (max-width: 575.98px) {
+  .section-photos__grid {
+    display: flex;
+    height: 200px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    /* room for the tiles' shadows, which overflow clips */
+    padding: 0.25rem 0.25rem 0.75rem;
+    margin: -0.25rem -0.25rem -0.75rem;
+  }
+
+  .section-photos__tile {
+    flex: 0 0 auto;
+    width: 72%;
+    scroll-snap-align: start;
+  }
+
+  .section-photos__grid--1 .section-photos__tile {
+    width: 100%;
+  }
+}
+
 /* Event cards */
 .event-list {
   display: grid;

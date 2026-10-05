@@ -25,6 +25,19 @@ document.querySelectorAll('.carousel').forEach((carouselEl) => {
     });
 });
 
+// A control opening an image popup with data-slide="<n>" (a section
+// photo tile) opens it at that photo. The popup's still hidden, so the slide and
+// its thumbnail are just marked active, with no slide animation.
+document.querySelectorAll('.modal').forEach((modalEl) => {
+    modalEl.addEventListener('show.bs.modal', (event) => {
+        let slide = event.relatedTarget?.dataset.slide;
+        if (slide === undefined) return;
+        [modalEl.querySelectorAll('.carousel-item'), modalEl.querySelectorAll('.abc-carousel-thumb')].forEach((list) => {
+            list.forEach((el, idx) => el.classList.toggle('active', idx === Number(slide)));
+        });
+    });
+});
+
 // Make each "More ... in the Etsy Shop" card exactly as tall as the photo
 // of the last product card before it, so their bottoms line up. Product
 // photos vary in height, so CSS alone can't do this. A ResizeObserver

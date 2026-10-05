@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Deletes files in the content's img-product/ that aren't referenced by any
-# item's "images" array in its boo.json - in ./content if there is one (the
+# item's "images" array or section's "photos" in its boo.json - in ./content if there is one (the
 # server's, see docker-compose.yml), else web/content.
 # Pass --dry-run to only list what would be deleted.
 set -euo pipefail
@@ -19,7 +19,7 @@ fi
 # assumes it's run from the repo root
 if [ -d content ]; then cd content; else cd web/content; fi
 
-referenced=$(jq -r '.[] | (.items[]?, (.subcategories[]?.items[]?)) | .images[]?' \
+referenced=$(jq -r '.[] | (.photos[]?, ((.items[]?, (.subcategories[]?.items[]?)) | .images[]?))' \
     boo.json | sed 's#^img-product/##' | sort -u)
 
 unused=()

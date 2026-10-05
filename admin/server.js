@@ -221,6 +221,7 @@ app.post('/api/sections', (req, res) => {
         subcategories: [],
     };
     if (req.body.sectionDescription) section.sectionDescription = String(req.body.sectionDescription);
+    if (req.body.photosCaption?.trim?.()) section.photosCaption = req.body.photosCaption.trim();
     if (req.body.show === false) section.show = false;
     boo.push(section);
     writeBoo(boo);
@@ -238,6 +239,17 @@ app.patch('/api/sections/:sectionId', (req, res) => {
         }
     }
     if (typeof req.body.show === 'boolean') section.show = req.body.show;
+    // photos shown at the top of the section (paths from POST /api/images)
+    if (Array.isArray(req.body.photos)) {
+        let photos = req.body.photos.map(String).filter(Boolean);
+        if (photos.length) section.photos = photos;
+        else delete section.photos;
+    }
+    if (typeof req.body.photosCaption === 'string') {
+        let caption = req.body.photosCaption.trim();
+        if (caption) section.photosCaption = caption;
+        else delete section.photosCaption;
+    }
     if (typeof req.body.newSectionId === 'string' && req.body.newSectionId !== section.sectionId) {
         let newId = req.body.newSectionId.trim();
         if (!newId) return res.status(400).json({error: 'sectionId cannot be empty'});

@@ -430,6 +430,12 @@ body {
     margin-top: 0.5rem;
 }
 
+.part-hint {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin: -0.4rem 0 0.5rem;
+}
+
 .empty-note {
     color: var(--text-muted);
     font-size: 0.875rem;

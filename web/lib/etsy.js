@@ -301,7 +301,7 @@ function buildBoo(boo, fetched) {
     if (!previous) {
         return [...boo, {sectionId: ETSY_SECTION_ID, sectionTitle: DEFAULT_ETSY_TITLE, show: true, subcategories}];
     }
-    // keeps the section's other fields (title, description, show...) and
+    // keeps the section's other fields (title, description, show, photos...) and
     // their order in the file
     let section = {...previous, subcategories};
     if (topItems.length > 0) section.items = topItems;

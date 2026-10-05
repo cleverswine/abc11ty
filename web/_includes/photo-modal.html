@@ -1,0 +1,62 @@
+{% comment %}
+The image-viewer popup for a set of photos: a carousel with a thumbnail strip
+if there's more than one, else the one photo. Shared by product cards and a
+section's photos.
+  id, title    - the popup's element id suffix and heading
+  description  - HTML shown under the heading ("" for none)
+  images       - the photo paths, shown from index `offset` on
+  buy_url      - an Etsy listing for the "Purchase" button ("" for none)
+A control that opens it can say which photo to show first with
+data-slide="<n>" (js/app.js).
+{% endcomment %}
+{% assign slide_count = images.size | minus: offset %}
+<div class="modal fade" id="img-modal-{{ id }}" tabindex="-1" aria-labelledby="img-modal-label-{{ id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header align-items-start">
+                <div>
+                    <h5 class="modal-title mb-1" id="img-modal-label-{{ id }}">{{ title }}</h5>
+                    {% if description != "" %}
+                    <div class="modal-description text-muted small">{{ description }}</div>
+                    {% endif %}
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% if buy_url != "" %}
+                <div class="abc-modal-buy">
+                    <a href="{{ buy_url }}" target="_blank" rel="noopener" class="abc-buy-btn">Purchase this item on <span class="abc-etsy-word">Etsy</span> <i class="bi bi-box-arrow-up-right"></i></a>
+                </div>
+                {% endif %}
+                {% if slide_count > 1 %}
+                <div class="abc-carousel-thumbs">
+                    {% for img in images offset: offset %}
+                    <button type="button" class="abc-carousel-thumb {% if forloop.first %}active{% endif %}" data-bs-target="#carousel-{{ id }}" data-bs-slide-to="{{ forloop.index0 }}" aria-label="View image {{ forloop.index }} of {{ slide_count }}">
+                        <img src="{{ img }}" alt="" loading="lazy"/>
+                    </button>
+                    {% endfor %}
+                </div>
+                <div id="carousel-{{ id }}" class="carousel slide">
+                    <div class="carousel-inner">
+                        {% for img in images offset: offset %}
+                        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                            <img src="{{ img }}" class="abc-modal-img abc-product-img" alt="{{ title }}" loading="lazy"/>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#carousel-{{ id }}" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#carousel-{{ id }}" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                    </button>
+                </div>
+                {% else %}
+                <img src="{{ images[0] }}" class="abc-modal-img abc-product-img" alt="{{ title }}" loading="lazy"/>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>

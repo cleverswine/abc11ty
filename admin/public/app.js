@@ -82,15 +82,19 @@ function itemsUrl(sectionId, groupName) {
     return groupName ? apiUrl(sectionId, 'subcategories', groupName, 'items') : apiUrl(sectionId, 'items');
 }
 
-// ---- image thumbnail strip (rendered directly on the page, per manual item) ----
+// ---- image thumbnail strip (rendered directly on the page, per manual item,
+// and for a section's photos) ----
 // Every action here (reorder, remove, upload) saves immediately via the API,
 // the same way item/subcategory reordering elsewhere on the page already does.
+// `field` is the list it edits on its product (`images`) or section
+// (`photos`) - see imageList(). `mainTitle` explains the first photo's
+// "Main photo" tag.
 
-function imageStripHtml(images) {
+function imageStripHtml(images, field = 'images', mainTitle = "Shown on the product's card on the site") {
     let thumbs = images.map((src, i) => `
         <span class="thumb-chip" data-path="${esc(src)}">
             <img src="/${esc(src)}" alt="" loading="lazy">
-            ${i === 0 ? '<span class="thumb-main" title="Shown on the product\'s card on the site">Main photo</span>' : ''}
+            ${i === 0 ? `<span class="thumb-main" title="${esc(mainTitle)}">Main photo</span>` : ''}
             <span class="thumb-controls">
                 <button type="button" class="btn-arrow" data-action="move-image-left" title="Move left" ${i === 0 ? 'disabled' : ''}><i class="bi bi-chevron-left"></i></button>
                 <button type="button" class="btn-icon btn-icon-danger" data-action="remove-image" title="Remove photo"><i class="bi bi-trash"></i></button>
@@ -98,7 +102,7 @@ function imageStripHtml(images) {
             </span>
         </span>`).join('');
     return `
-        <div class="thumb-strip">
+        <div class="thumb-strip" data-image-field="${field}">
             ${thumbs}
             <label class="thumb-upload-label" title="Add a photo">
                 <i class="bi bi-plus-lg"></i><span>Add photo</span>
@@ -203,9 +207,8 @@ function itemsSummary(items) {
 }
 
 // Which <details> are open survives the full re-render after every change.
-// Unless toggled by hand this session, sections start open, and groups start
-// open only if they have something editable - a group made only of Etsy
-// products starts closed.
+// Unless toggled by hand this session, sections start open and groups start
+// closed.
 const openState = new Map();
 
 function isOpen(key, defaultOpen) {
@@ -219,9 +222,8 @@ sectionsEl.addEventListener('toggle', e => {
 function subcategoryHtml(section, group, groupIdx, totalGroups) {
     let items = group.items || [];
     let key = `g:${section.sectionId}/${group.name}`;
-    let defaultOpen = items.length === 0 || items.some(i => !isLocked(i));
     return `
-        <details class="subcategory-block ${group.show === false ? 'is-hidden' : ''}" data-subcategory="${esc(group.name)}" data-open-key="${esc(key)}" ${isOpen(key, defaultOpen) ? 'open' : ''}>
+        <details class="subcategory-block ${group.show === false ? 'is-hidden' : ''}" data-subcategory="${esc(group.name)}" data-open-key="${esc(key)}" ${isOpen(key, false) ? 'open' : ''}>
             <summary>
                 ${reorderHtml(groupIdx > 0, groupIdx < totalGroups - 1)}
                 <span class="block-title">${esc(group.name)}</span>
@@ -305,6 +307,10 @@ function sectionHtml(section) {
                         <span class="etsy-check-status" data-etsy-status aria-live="polite"></span>
                     </div>
                 </div>` : ''}
+
+                <h3 class="part-heading">Photos</h3>
+                <p class="part-hint">Shown at the top of the section on the site, the first one largest${section.photosCaption ? `, captioned "${esc(section.photosCaption)}"` : ''}. Edit the section to change the caption.</p>
+                ${imageStripHtml(section.photos || [], 'photos', 'Shown largest on the site')}
 
                 ${Array.isArray(section.events) ? `
                 <h3 class="part-heading">Events</h3>
@@ -394,10 +400,17 @@ async function moveTarget({section, group, target}, delta) {
     if (order) await change('PUT', url, {order});
 }
 
+// The photo list a thumbnail strip control edits: its product's `images` or
+// its section's `photos`, as {field, list}.
+function imageList(target, el) {
+    let field = el.closest('[data-image-field]').dataset.imageField;
+    return {field, list: target.obj[field] || []};
+}
+
 async function moveImage({target}, btn, delta) {
-    let images = target.obj.images || [];
-    images = swapped(images, images.indexOf(btn.closest('.thumb-chip').dataset.path), delta);
-    if (images) await change('PATCH', target.url, {images});
+    let {field, list} = imageList(target, btn);
+    list = swapped(list, list.indexOf(btn.closest('.thumb-chip').dataset.path), delta);
+    if (list) await change('PATCH', target.url, {[field]: list});
 }
 
 function deleteMessage({kind, obj}) {
@@ -432,11 +445,13 @@ const actions = {
     'move-image-left': (ctx, btn) => moveImage(ctx, btn, -1),
     'move-image-right': (ctx, btn) => moveImage(ctx, btn, 1),
     'remove-image': ({target}, btn) => {
-        let message = `Remove this photo from "${target.obj.title}"?\n\n` +
+        let what = target.kind === 'section' ? `this photo from the ${target.obj.sectionTitle} section` : `this photo from "${target.obj.title}"`;
+        let message = `Remove ${what}?\n\n` +
             `It will no longer show on the site. You'd need to upload it again if you change your mind.`;
         if (!confirm(message)) return;
         let path = btn.closest('.thumb-chip').dataset.path;
-        return change('PATCH', target.url, {images: (target.obj.images || []).filter(p => p !== path)});
+        let {field, list} = imageList(target, btn);
+        return change('PATCH', target.url, {[field]: list.filter(p => p !== path)});
     },
 };
 
@@ -457,11 +472,12 @@ sectionsEl.addEventListener('change', async (e) => {
     let file = e.target.files[0];
     if (!file) return;
     let {target} = pageContext(e.target);
+    let {field, list} = imageList(target, e.target);
     let form = new FormData();
     form.append('image', file);
     try {
         let {path} = await api('POST', '/api/images', form, 'Uploading photo...');
-        await change('PATCH', target.url, {images: [...(target.obj.images || []), path]});
+        await change('PATCH', target.url, {[field]: [...list, path]});
     } catch {
         setSaveStatus('error', "Couldn't upload the photo. Try again.");
     }
@@ -613,6 +629,7 @@ function openSectionModal(section) {
         sectionTitle: section?.sectionTitle,
         sectionId: section?.sectionId,
         sectionDescription: section?.sectionDescription,
+        photosCaption: section?.photosCaption,
         show: section ? section.show !== false : true,
     });
     sectionModal.showModal();
@@ -638,6 +655,7 @@ onSubmit(sectionModal, () => {
             sectionId,
             sectionTitle: sectionFields.sectionTitle.value,
             sectionDescription: sectionFields.sectionDescription.value || undefined,
+            photosCaption: sectionFields.photosCaption.value,
             show: sectionFields.show.checked === false ? false : undefined,
         }};
     }
@@ -645,6 +663,7 @@ onSubmit(sectionModal, () => {
         sectionTitle: sectionFields.sectionTitle.value,
         newSectionId: sectionFields.sectionId.value,
         sectionDescription: sectionFields.sectionDescription.value || null,
+        photosCaption: sectionFields.photosCaption.value,
         show: sectionFields.show.checked,
     }};
 });

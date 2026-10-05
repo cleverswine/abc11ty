@@ -75,6 +75,36 @@ The Etsy shop section (gen.js's ETSY_SECTION_ID) gets the sage theme and a
     <div class="section__intro">{{ section.sectionDescription | markdown }}</div>
     {% endif %}
 
+    {% comment %}
+    The section's photos (e.g. the booth at in-person events): up to 5 tiles
+    (the first one large), the last saying how many more there are, and the
+    section's photo caption if it has one. Any tile opens the popup with
+    every photo, at that photo.
+    {% endcomment %}
+    {% if section.photos.size > 0 %}
+    {% assign photo_tiles = section.photos | slice: 0, 5 %}
+    {% assign photos_more = section.photos.size | minus: 5 %}
+    {% assign photos_id = section.sectionId | append: "-photos" %}
+    {% assign photos_title = section.photosCaption | default: section.sectionTitle %}
+    <figure class="section-photos">
+        <div class="section-photos__grid section-photos__grid--{{ photo_tiles.size }}">
+            {% for photo in photo_tiles %}
+            <a href="#" class="section-photos__tile" data-bs-toggle="modal" data-bs-target="#img-modal-{{ photos_id }}" data-slide="{{ forloop.index0 }}"
+               aria-label="View photo {{ forloop.index }} of {{ section.photos.size }}">
+                {% sectionPhoto photo, forloop.first %}
+                {% if forloop.last and photos_more > 0 %}
+                <span class="section-photos__more">+{{ photos_more }}</span>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+        {% if section.photosCaption %}
+        <figcaption class="section-photos__caption"><i class="bi bi-camera"></i> {{ section.photosCaption }}</figcaption>
+        {% endif %}
+    </figure>
+    {% render "photo-modal.html", id: photos_id, title: photos_title, description: "", images: section.photos, offset: 0, buy_url: "" %}
+    {% endif %}
+
     {% assign these_events = section.events | where: "show", true %}
     {% if these_events.size > 0 %}
     <div class="event-list">

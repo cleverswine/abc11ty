@@ -19,53 +19,7 @@ skips it whenever there's a gallery to show instead.
     <div class="product-card__name{% if is_etsy %} product-card__name--single-line{% endif %}">{{ item.title }}</div>
 </a>
 
-<div class="modal fade" id="img-modal-{{ item.id }}" tabindex="-1" aria-labelledby="img-modal-label-{{ item.id }}" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header align-items-start">
-                <div>
-                    <h5 class="modal-title mb-1" id="img-modal-label-{{ item.id }}">{{ item.title }}</h5>
-                    {% if item.description and is_etsy == false %}
-                    <div class="modal-description text-muted small">{{ item.description | markdown }}</div>
-                    {% endif %}
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                {% if is_etsy %}
-                <div class="abc-modal-buy">
-                    <a href="{{ item.etsyPage }}" target="_blank" rel="noopener" class="abc-buy-btn">Purchase this item on <span class="abc-etsy-word">Etsy</span> <i class="bi bi-box-arrow-up-right"></i></a>
-                </div>
-                {% endif %}
-                {% if slide_count > 1 %}
-                <div class="abc-carousel-thumbs">
-                    {% for img in item.images offset: slide_offset %}
-                    <button type="button" class="abc-carousel-thumb {% if forloop.first %}active{% endif %}" data-bs-target="#carousel-{{ item.id }}" data-bs-slide-to="{{ forloop.index0 }}" aria-label="View image {{ forloop.index }} of {{ slide_count }}">
-                        <img src="{{ img }}" alt="" loading="lazy"/>
-                    </button>
-                    {% endfor %}
-                </div>
-                <div id="carousel-{{ item.id }}" class="carousel slide">
-                    <div class="carousel-inner">
-                        {% for img in item.images offset: slide_offset %}
-                        <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                            <img src="{{ img }}" class="abc-modal-img abc-product-img" alt="{{ item.title }}" loading="lazy"/>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    <button class="carousel-control-prev" type="button" data-bs-target="#carousel-{{ item.id }}" data-bs-slide="prev">
-                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                        <span class="visually-hidden">Previous</span>
-                    </button>
-                    <button class="carousel-control-next" type="button" data-bs-target="#carousel-{{ item.id }}" data-bs-slide="next">
-                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                        <span class="visually-hidden">Next</span>
-                    </button>
-                </div>
-                {% else %}
-                <img src="{{ item.images[0] }}" class="abc-modal-img abc-product-img" alt="{{ item.title }}" loading="lazy"/>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
+{% capture description %}{% if item.description and is_etsy == false %}{{ item.description | markdown }}{% endif %}{% endcapture %}
+{% assign buy_url = "" %}
+{% if is_etsy %}{% assign buy_url = item.etsyPage %}{% endif %}
+{% render "photo-modal.html", id: item.id, title: item.title, description: description, images: item.images, offset: slide_offset, buy_url: buy_url %}

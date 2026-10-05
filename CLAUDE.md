@@ -87,6 +87,7 @@ array of *sections*:
 
 ```
 { sectionId, sectionTitle, sectionDescription?, show,
+  photos?: [path], photosCaption?,                       // shown at the top
   events?: [{ id, name, date, location, link, show }],
   items?: [item],
   subcategories?: [{ name, show, items: [item] }] }      // "groups" in the admin UI
@@ -96,8 +97,8 @@ item = { id, title, description, images: [path], etsyPage, show,
          etsyImageIds?: [number] }   // Etsy items: the Etsy photo ids `images` came from
 ```
 
-Today there are two sections: `live-events` (hand-made: events plus groups
-of hand-added products) and `etsy-shop` (owned by `gen.js`: one subcategory
+Today there are two sections: `live-events` (hand-made: photos of the
+booth, events, and groups of hand-added products) and `etsy-shop` (owned by `gen.js`: one subcategory
 per Etsy shop section). Display order is array order.
 
 The file is **both** generated and hand-edited, and `item.source` is the
@@ -113,7 +114,8 @@ only thing that tells the two apart:
 
 `gen.js` only ever rewrites the `etsy-shop` section (`ETSY_SECTION_ID`);
 every other section is passed through untouched. Within `etsy-shop` it keeps
-the admin-edited `sectionTitle`, `sectionDescription` and `show`, each
+the admin-edited `sectionTitle`, `sectionDescription`, `show` and photos
+(every field but its items, in fact), each
 subcategory's `show`, and the subcategory order. Renaming `etsy-shop`'s id
 would make `gen.js` create a fresh one.
 
@@ -209,7 +211,10 @@ term 'Etsy' is a trademark of Etsy, Inc. ...").
 Single-page 11ty (Liquid) template. Every visible section (`show != false`)
 gets a nav link (a plain `#sectionId` anchor) and a `<section>` with its
 description (rendered by the `markdown` filter in `eleventy.config.js`),
-visible events, visible flat `items`, a row of chips linking to each visible
+its `photos` (a mosaic of up to 5 tiles, the first large and the last
+saying "+N" more, made by the `sectionPhoto` shortcode, under the
+`photosCaption` if there is one - one scrolling row on a phone; any tile
+opens a popup of all of them at that photo, via `data-slide`), visible events, visible flat `items`, a row of chips linking to each visible
 subcategory that has visible items, and then those subcategories. A
 hand-made subcategory whose name matches a visible `etsy-shop` subcategory
 ends with a "More <group> in <etsy-shop's title>" card linking down to it.
@@ -228,11 +233,13 @@ at build time and renders a `srcset` with the photo's width/height; Etsy
 thumbnails are used as they are) that opens a Bootstrap image-viewer modal for every item — a
 carousel with a thumbnail strip if there's more than one photo, plus a
 "Purchase this item on Etsy" button for Etsy items and the description for
-manual ones. Every modal is rendered into the page at build time.
+manual ones (`_includes/photo-modal.html`, shared with the section photos).
+Every modal is rendered into the page at build time.
 
 `web/js/app.js` is small: it blocks right-click/drag on product images
 (`.abc-product-img`, a soft deterrent only), keeps each carousel's thumbnail
-strip in sync with the active slide, and sizes the "More …" cards to the
+strip in sync with the active slide, opens a popup at the photo its opener's
+`data-slide` names, and sizes the "More …" cards to the
 photo beside them with a `ResizeObserver`.
 
 The colour palette (`--ink`, `--paper`, `--sage*`, `--slate*`, ...) lives in
@@ -284,8 +291,11 @@ before being written to `img-product/` as `upload-<8-hex-id>.webp` (GIFs
 stay `.gif`, since they may be animated): EXIF-rotated upright, capped at
 1200px on the longest side (the first photo is also the item's card image),
 and stripped of EXIF/GPS/camera metadata as a side effect of not calling
-`.withMetadata()`. The returned path is added to an item's `images[]` only
-once the client hits Save.
+`.withMetadata()`. The page adds the returned path to the item's `images[]`
+straight away - or to the section's `photos[]`, edited with the same
+thumbnail strip on every section (`PATCH /api/sections/:sectionId` takes
+`photos` and `photosCaption`, the latter set in the section dialog; an
+empty one removes it).
 
 `SITE_URL` env var (set in `docker-compose.yml`) powers the admin header's
 "Preview site" link; unset when running `server.js` directly, so the link
