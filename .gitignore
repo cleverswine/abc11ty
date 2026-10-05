@@ -1,7 +1,6 @@
 .cache/
 node_modules/
 _site/
-.etsy-session.json
 # API keys (Etsy, GitHub) - see web/lib/env.js
 .env
 # the server's content, outside the checkout (see docker-compose.yml)
