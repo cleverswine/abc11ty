@@ -33,7 +33,7 @@
     "subcategories": [
       {
         "name": "Past Events",
-        "show": true,
+        "show": false,
         "items": [
           {
             "id": "manual-94171933",
