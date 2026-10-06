@@ -32,6 +32,28 @@
     ],
     "subcategories": [
       {
+        "name": "Past Events",
+        "show": false,
+        "items": [
+          {
+            "id": "manual-94171933",
+            "title": "JC Penney Days",
+            "description": "The annual JC Penney Day in Hamilton, Missouri",
+            "images": [
+              "img-product/upload-514df5f0.webp",
+              "img-product/upload-d5133276.webp",
+              "img-product/upload-b696e8c7.webp",
+              "img-product/upload-afe9d2e0.webp",
+              "img-product/upload-1793d980.webp",
+              "img-product/upload-d42b0194.webp"
+            ],
+            "etsyPage": "",
+            "show": true,
+            "source": "Manual"
+          }
+        ]
+      },
+      {
         "name": "Composition Notebooks",
         "show": true,
         "items": [
@@ -267,17 +289,7 @@
           }
         ]
       }
-    ],
-    "photos": [
-      "img-product/upload-2cbe98af.webp",
-      "img-product/upload-514df5f0.webp",
-      "img-product/upload-d5133276.webp",
-      "img-product/upload-b696e8c7.webp",
-      "img-product/upload-afe9d2e0.webp",
-      "img-product/upload-1793d980.webp",
-      "img-product/upload-d42b0194.webp"
-    ],
-    "photosCaption": "At the booth"
+    ]
   },
   {
     "sectionId": "etsy-shop",
@@ -1059,20 +1071,24 @@
               "img-product/1452507244-6.jpg",
               "img-product/1452507244-7.jpg",
               "img-product/1452507244-8.jpg",
-              "img-product/1452507244-9.jpg"
+              "img-product/1452507244-9.jpg",
+              "img-product/1452507244-10.jpg",
+              "img-product/1452507244-11.jpg"
             ],
             "etsyPage": "https://www.etsy.com/listing/1452507244/nursing-student-badge-reel-for",
             "source": "Etsy",
             "etsyImageIds": [
-              6525160617,
-              6525177737,
-              6525192885,
-              6525279209,
-              6477091000,
-              6477139042,
-              6525277013,
-              5556437598,
-              6212774723
+              8678080121,
+              8677918907,
+              8677899989,
+              8630069752,
+              8630099256,
+              8630070644,
+              8677898569,
+              8630072042,
+              8630072046,
+              8630067728,
+              8630172900
             ]
           },
           {
@@ -2611,6 +2627,31 @@
         "name": "Stickers",
         "show": true,
         "items": [
+          {
+            "id": "4588710139",
+            "show": true,
+            "title": "Horrors Persist Sticker",
+            "description": "Horrors Persist Sticker, Funny Office Sticker, Cute Hamster Decal, Hand Drawn Sticker, Waterproof, Dishwasher Safe",
+            "images": [
+              "img-product/4588710139.webp",
+              "img-product/4588710139-1.jpg",
+              "img-product/4588710139-2.jpg",
+              "img-product/4588710139-3.jpg",
+              "img-product/4588710139-4.jpg",
+              "img-product/4588710139-5.jpg",
+              "img-product/4588710139-6.jpg"
+            ],
+            "etsyPage": "https://www.etsy.com/listing/4588710139/horrors-persist-sticker-funny-office",
+            "source": "Etsy",
+            "etsyImageIds": [
+              8672702247,
+              8672700099,
+              8624878928,
+              8672700097,
+              8624928990,
+              8672700089
+            ]
+          },
           {
             "id": "4588484924",
             "show": true,
