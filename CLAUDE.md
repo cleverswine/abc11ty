@@ -329,6 +329,13 @@ How it stays in sync (details in the comment at the top of `publish.js`):
   Content changed only on GitHub since the base comes into the working copy;
   a file changed on both sides is a conflict (`ConflictError`), refused
   unless the page asks to replace GitHub's version (`{replace: true}`).
+  `boo.json` is never replaced wholesale: when both sides changed it,
+  `mergeBoo()` does a three-way merge against the base's version, section
+  by section (by `sectionId`) and field by field within a section, so only
+  a field of a section changed differently on both sides is a conflict
+  (reported as `boo.json#<section title>`); `{replace: true}` settles just
+  those in the working copy's favour. The startup sync merges it the same
+  way.
   Rate limits are waited out per GitHub's docs (retry-after / reset /
   backoff) - GitHub allows only 80 new files a minute and 500 an hour, so a
   publish of hundreds of photos takes a while (large one-offs are better

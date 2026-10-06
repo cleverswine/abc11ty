@@ -20,7 +20,9 @@
 // other. Content changed on GitHub since the base (someone pushed a change
 // to web/content/) is brought into the working copy, unless the same file
 // was changed here too: that's a conflict, which a publish refuses unless
-// told to replace GitHub's version.
+// told to replace GitHub's version. boo.json, which holds every section, is
+// merged section by section instead (mergeBoo()), so only a section changed
+// on both sides is a conflict.
 //
 // Needs GITHUB_TOKEN (see web/lib/env.js): a fine-grained token for this
 // repository with "Contents: read and write".
@@ -28,7 +30,7 @@
 import * as crypto from 'node:crypto';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { CONTENT_DIR } from '../web/lib/boo.js';
+import { BOO_PATH, CONTENT_DIR, readBoo, writeBoo } from '../web/lib/boo.js';
 import { envValue } from '../web/lib/env.js';
 
 const REPO = envValue('GITHUB_REPO') || 'cleverswine/abc11ty';
@@ -203,11 +205,13 @@ export function unpublishedChanges() {
 
 // Brings content changed on GitHub (between the base and `main`'s commit
 // `head`, whose files are `remote`) into the working copy, except files also
-// changed here, whose paths are returned as conflicts.
-async function takeRemoteChanges(base, remote, local, log) {
+// changed here, whose paths are returned as conflicts. `resolved` paths
+// already have GitHub's changes merged in (see mergeBoo()), so are skipped.
+async function takeRemoteChanges(base, remote, local, log, resolved = []) {
     let conflicts = [];
     let take = [];
     for (let p of differences(base.files, remote)) {
+        if (resolved.includes(p)) continue;
         if (local.get(p) === remote.get(p)) continue;        // already the same
         if (local.get(p) === base.files.get(p)) take.push(p); // untouched here
         else conflicts.push(p);
@@ -218,6 +222,108 @@ async function takeRemoteChanges(base, remote, local, log) {
     }
     return {taken: take, conflicts};
 }
+
+// ---------------------------------------------------------------------------
+// Merging boo.json
+// ---------------------------------------------------------------------------
+
+// boo.json is one file holding everything, so when it's changed both here
+// and on GitHub it's merged rather than one side replacing the other: a
+// three-way merge against the base's version, section by section (matched
+// by sectionId) and, within a section, field by field (sectionTitle, photos,
+// items, subcategories, ...). A section or field changed on only one side
+// takes that side's version; one changed on both sides differently is a
+// conflict - reported by section title, and settled in this copy's favour
+// when `replace` is set. Section order follows whichever side reordered
+// (this copy's, if both did); a section added on one side goes after the
+// section it follows there.
+
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+// three-way pick for one value; undefined means absent
+function pick(base, local, remote) {
+    if (same(local, remote) || same(remote, base)) return {value: local};
+    if (same(local, base)) return {value: remote};
+    return {value: local, conflict: true};
+}
+
+// keys/ids in order: `primary`'s, with ones only in `other` inserted after
+// the key they follow there
+function mergeOrder(primary, other) {
+    let order = [...primary];
+    other.forEach((key, i) => {
+        if (order.includes(key)) return;
+        let at = i === 0 ? 0 : order.indexOf(other[i - 1]) + 1;
+        order.splice(at, 0, key);
+    });
+    return order;
+}
+
+// whether `list`'s order differs from `base`'s, among the ids both have
+function reordered(base, list) {
+    let a = base.filter(id => list.includes(id));
+    let b = list.filter(id => base.includes(id));
+    return !same(a, b);
+}
+
+function mergeSection(base = {}, local, remote) {
+    let merged = {};
+    let conflict = false;
+    for (let key of mergeOrder(Object.keys(local), Object.keys(remote))) {
+        let r = pick(base[key], local[key], remote[key]);
+        conflict ||= r.conflict;
+        if (r.value !== undefined) merged[key] = r.value;
+    }
+    return {section: merged, conflict};
+}
+
+// Returns {boo, conflicts: [section titles]}; `boo` takes this copy's side
+// of any conflict.
+export function mergeBooSections(base, local, remote) {
+    let byId = list => new Map(list.map(s => [s.sectionId, s]));
+    let [b, l, r] = [byId(base), byId(local), byId(remote)];
+    let ids = list => list.map(s => s.sectionId);
+    let order = reordered(ids(base), ids(local)) || !reordered(ids(base), ids(remote))
+        ? mergeOrder(ids(local), ids(remote))
+        : mergeOrder(ids(remote), ids(local));
+    let boo = [];
+    let conflicts = [];
+    for (let id of order) {
+        let [bs, ls, rs] = [b.get(id), l.get(id), r.get(id)];
+        let title = (ls ?? rs ?? bs).sectionTitle || id;
+        if (ls && rs && !same(ls, rs)) {
+            let {section, conflict} = mergeSection(bs, ls, rs);
+            if (conflict) conflicts.push(title);
+            boo.push(section);
+            continue;
+        }
+        // the same on both sides, or added/removed on one side
+        let {value, conflict} = pick(bs, ls, rs);
+        if (conflict) conflicts.push(title);
+        if (value) boo.push(value);
+    }
+    return {boo, conflicts};
+}
+
+// Merges GitHub's boo.json (blob `remoteSha`) into this copy's, against the
+// base's (blob `baseSha`, null if it had none). With conflicts and no
+// `replace`, nothing is written. Returns {merged: whether this copy now
+// includes GitHub's changes, conflicts: [section titles]}.
+async function mergeBoo(baseSha, remoteSha, {replace, log}) {
+    let base = baseSha ? JSON.parse(await downloadBlob(baseSha)) : [];
+    let remote = remoteSha ? JSON.parse(await downloadBlob(remoteSha)) : [];
+    // read and written with no await in between, so an edit made here
+    // meanwhile isn't lost
+    let local = readBoo(BOO_PATH);
+    let {boo, conflicts} = mergeBooSections(base, local, remote);
+    if (conflicts.length && !replace) return {merged: false, conflicts};
+    log(`  merging GitHub's changes to boo.json${conflicts.length ? ` (keeping this copy's ${conflicts.join(', ')})` : ''}`);
+    if (!same(boo, local)) writeBoo(BOO_PATH, boo);
+    return {merged: true, conflicts};
+}
+
+// A conflict in boo.json, as listed to the page: "boo.json#<section title>".
+const booConflicts = titles => titles.map(t => `boo.json#${t}`);
 
 // ---------------------------------------------------------------------------
 // Syncing and publishing
@@ -243,9 +349,27 @@ export async function syncFromGitHub({log = console.log} = {}) {
         return {taken: [], conflicts: []};
     }
     if (head === base.commit) return {taken: [], conflicts: []};
-    let result = await takeRemoteChanges(base, remote, localContent(), log);
-    if (result.conflicts.length === 0) writeBase({commit: head, files: remote});
-    return result;
+    let boo = await resolveBoo(base, remote, {replace: false, log});
+    let result = await takeRemoteChanges(base, remote, localContent(), log, boo.resolved);
+    let conflicts = [...result.conflicts.filter(p => p !== 'boo.json'), ...booConflicts(boo.conflicts)];
+    if (conflicts.length === 0) writeBase({commit: head, files: remote});
+    return {taken: [...result.taken, ...boo.resolved], conflicts};
+}
+
+// If boo.json was changed both here and on GitHub (`remote`) since the base,
+// merges GitHub's changes into this copy (see mergeBoo()). Returns
+// {resolved: ['boo.json'] if it now includes GitHub's changes, else [],
+// conflicts: [section titles]}.
+async function resolveBoo(base, remote, {replace, log}) {
+    let p = 'boo.json';
+    let local = localContent();
+    let changedHere = local.get(p) !== base.files.get(p);
+    let changedThere = remote.get(p) !== base.files.get(p);
+    if (!changedHere || !changedThere || local.get(p) === remote.get(p) || !local.has(p)) {
+        return {resolved: [], conflicts: []};
+    }
+    let {merged, conflicts} = await mergeBoo(base.files.get(p), remote.get(p), {replace, log});
+    return {resolved: merged ? [p] : [], conflicts};
 }
 
 async function mapLimit(list, limit, fn) {
@@ -293,11 +417,16 @@ export async function publish({replace = false, onProgress = () => {}, log = con
         let head = await mainHead();
         let {treeSha, files: remote} = await remoteContent(head);
         let base = readBase() ?? {commit: head, files: remote};
+        // boo.json is merged rather than replaced, even with `replace` -
+        // which only settles conflicting sections in this copy's favour
+        let boo = await resolveBoo(base, remote, {replace, log});
         let local = localContent();
 
         let localChanges = differences(base.files, local);
         let remoteChanges = differences(base.files, remote);
-        let conflicts = localChanges.filter(p => remoteChanges.includes(p) && local.get(p) !== remote.get(p));
+        let conflicts = localChanges.filter(p => remoteChanges.includes(p) && local.get(p) !== remote.get(p)
+            && !boo.resolved.includes(p));
+        conflicts = [...conflicts.filter(p => p !== 'boo.json'), ...booConflicts(boo.conflicts)];
         if (conflicts.length && !replace) throw new ConflictError(conflicts);
 
         // what GitHub needs from here: every file that differs from main's,
@@ -343,7 +472,8 @@ export async function publish({replace = false, onProgress = () => {}, log = con
 
         // bring in what changed only on GitHub (none of it is a conflict
         // left unpublished: conflicting files were published above)
-        let {taken} = await takeRemoteChanges(base, remote, local, log);
+        let {taken} = await takeRemoteChanges(base, remote, local, log, boo.resolved);
+        taken.push(...boo.resolved);
 
         // the new base: main's files as they now are
         let files = new Map(remote);

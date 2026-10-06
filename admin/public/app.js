@@ -945,7 +945,8 @@ function showPublishFailure(last) {
 }
 
 function showConflict(conflicts) {
-    let names = conflicts.map(p => p === 'boo.json' ? 'the products and sections' : p.replace('img-product/', 'photo '));
+    let names = conflicts.map(p => p.startsWith('boo.json#') ? `the "${p.slice('boo.json#'.length)}" section`
+        : p === 'boo.json' ? 'the products and sections' : p.replace('img-product/', 'photo '));
     conflictModal.querySelector('[data-conflict-list]').innerHTML = names.map(n => `<li>${esc(n)}</li>`).join('');
     conflictModal.showModal();
 }
