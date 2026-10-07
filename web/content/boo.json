@@ -1088,14 +1088,18 @@
               "img-product/1246784136.webp",
               "img-product/1246784136-1.jpg",
               "img-product/1246784136-2.jpg",
-              "img-product/1246784136-3.jpg"
+              "img-product/1246784136-3.jpg",
+              "img-product/1246784136-4.jpg",
+              "img-product/1246784136-5.jpg"
             ],
             "etsyPage": "https://www.etsy.com/listing/1246784136/cute-hedgehog-retractable-badge-reel",
             "source": "Etsy",
             "etsyImageIds": [
-              4896537372,
-              4034304791,
-              4896533868
+              8678197737,
+              8678197741,
+              8630372110,
+              8678197733,
+              8630372116
             ]
           },
           {
@@ -2395,15 +2399,15 @@
             "etsyPage": "https://www.etsy.com/listing/1739720128/personalized-teacher-hair-clip",
             "source": "Etsy",
             "etsyImageIds": [
-              6223707994,
-              6223695232,
-              6223695656,
-              6092958756,
-              6271743717,
-              6271766571,
-              6141123733,
-              6093050274,
-              6156450397
+              8681933947,
+              8682028311,
+              8634202732,
+              8634253626,
+              8634086714,
+              8634353712,
+              8634200360,
+              8682285371,
+              8681954239
             ]
           },
           {
@@ -2484,19 +2488,17 @@
               "img-product/1740946448-3.jpg",
               "img-product/1740946448-4.jpg",
               "img-product/1740946448-5.jpg",
-              "img-product/1740946448-6.jpg",
-              "img-product/1740946448-7.jpg"
+              "img-product/1740946448-6.jpg"
             ],
             "etsyPage": "https://www.etsy.com/listing/1740946448/teacher-claw-clip-personalized-notebook",
             "source": "Etsy",
             "etsyImageIds": [
-              6094621468,
-              6142712693,
-              6142712687,
-              6094648214,
-              6094635328,
-              6108364688,
-              6142596615
+              8635670278,
+              8635664806,
+              8635664808,
+              8683486981,
+              8683486979,
+              8635664820
             ]
           },
           {
@@ -2579,8 +2581,8 @@
           {
             "id": "1629635922",
             "show": true,
-            "title": "Personalize Teacher Hair Clip Back to School",
-            "description": "Personalize Teacher Hair Clip Back to School, Teacher Appreciation, Pencil Claw Clip Gift, In My Teaching Era, In My Teacher Era, Teacher Li",
+            "title": "Personalized Teacher Pencil Hair Accessory",
+            "description": "Personalized Teacher Pencil Hair Accessory, Glitter Acrylic Claw Clip, Teacher Appreciation",
             "images": [
               "img-product/1629635922.webp",
               "img-product/1629635922-1.jpg",
@@ -2592,20 +2594,24 @@
               "img-product/1629635922-7.jpg",
               "img-product/1629635922-8.jpg",
               "img-product/1629635922-9.jpg",
-              "img-product/1629635922-10.jpg"
+              "img-product/1629635922-10.jpg",
+              "img-product/1629635922-11.jpg",
+              "img-product/1629635922-12.jpg"
             ],
             "etsyPage": "https://www.etsy.com/listing/1629635922/personalize-teacher-hair-clip-back-to",
             "source": "Etsy",
             "etsyImageIds": [
-              5785104476,
-              5833191287,
-              5833396725,
-              5785249004,
-              5833338561,
-              5785306324,
-              5833355779,
-              5785282628,
-              5953682510,
+              8682950077,
+              8682945533,
+              8682945735,
+              8635122984,
+              8682945559,
+              8682945547,
+              8635122992,
+              8682945553,
+              8635123172,
+              8635123034,
+              8635123036,
               6156428213
             ]
           }
@@ -3092,19 +3098,21 @@
               "img-product/1342848767-5.jpg",
               "img-product/1342848767-6.jpg",
               "img-product/1342848767-7.jpg",
-              "img-product/1342848767-8.jpg"
+              "img-product/1342848767-8.jpg",
+              "img-product/1342848767-9.jpg"
             ],
             "etsyPage": "https://www.etsy.com/listing/1342848767/personalized-penguin-ornament-baby-first",
             "source": "Etsy",
             "etsyImageIds": [
-              6434243765,
-              6361513500,
+              8630385818,
+              8678215463,
               6386131586,
               6383708432,
               6434281345,
               6431865085,
-              6383797534,
-              6431782911
+              8630387922,
+              8630386958,
+              8678221865
             ]
           }
         ]
