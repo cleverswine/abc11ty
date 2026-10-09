@@ -7,3 +7,5 @@ _site/
 /content/
 # which main commit the content was last in sync with (admin/publish.js)
 .publish-base.json
+# WordPress application password
+wpapi.txt
